@@ -11,22 +11,22 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Conv1d, Conv2d
-from torch.utils import weight_norm
+from torch.nn.utils import weight_norm
 
-from utils import get_padding
+from .utils import get_padding
 
 
 # from BigVGAN paper
-class DiscriminatorP(nn.Moduel):
+class DiscriminatorP(nn.Module):
     def __init__(self, period, kernel_size=5, stride=3):
         super().__init__()
         self.period = period
         norm_f = weight_norm
         self.convs = nn.ModuleList([
-            norm_f(Conv2d(1, 32, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=get_padding((5, 1), 0))),
-            norm_f(Conv2d(32, 128, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=get_padding((5, 1), 0))),
-            norm_f(Conv2d(128, 256, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=get_padding((5, 1), 0))),
-            norm_f(Conv2d(256, 512, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=get_padding((5, 1), 0))),
+            norm_f(Conv2d(1, 32, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=(get_padding(5, 1), 0))),
+            norm_f(Conv2d(32, 128, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=(get_padding(5, 1), 0))),
+            norm_f(Conv2d(128, 256, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=(get_padding(5, 1), 0))),
+            norm_f(Conv2d(256, 512, kernel_size=(kernel_size, 1), stride=(stride, 1), padding=(get_padding(5, 1), 0))),
             norm_f(Conv2d(512, 1024, kernel_size=(kernel_size, 1), stride=1, padding=(2, 0))),
         ])
         self.conv_post = norm_f(Conv2d(1024, 1, kernel_size=(3, 1), stride=1, padding=(1, 0)))
