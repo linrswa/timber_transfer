@@ -17,6 +17,7 @@ def mlp(in_size, hidden_size, n_layers):
 def gru(n_input, hidden_size):
     return nn.GRU(n_input * hidden_size, hidden_size, batch_first=True)
 
+# from nvc-net paper
 class SpeakerEncoder(nn.Module):
     def __init__(
         self,
@@ -38,7 +39,7 @@ class SpeakerEncoder(nn.Module):
         )
         self.conv = nn.Sequential(
             nn.Conv1d(80, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
         )
 
         self.downblocks_list = nn.ModuleList(
@@ -54,7 +55,7 @@ class SpeakerEncoder(nn.Module):
     def build_downblock(self, in_ch):
         return nn.Sequential(
             nn.Conv1d(in_ch, in_ch * 2, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.AvgPool1d(2),
         )
     
