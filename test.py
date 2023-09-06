@@ -2,7 +2,7 @@
 from dataset import NSynthDataset
 from torch.utils.data import DataLoader
 
-from components.encoders import SpeakerEncoder
+from components.encoders import TimbreEncoder
 from components.discriminators import MulitiPeriodDiscriminator, MultiResolutionDiscriminator
 from components.utils import discriminator_loss
 from components.ddsp_modify.autoencoder import Encoder

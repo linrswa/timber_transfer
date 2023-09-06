@@ -18,7 +18,7 @@ def gru(n_input, hidden_size):
     return nn.GRU(n_input * hidden_size, hidden_size, batch_first=True)
 
 # from nvc-net paper
-class SpeakerEncoder(nn.Module):
+class TimbreEncoder(nn.Module):
     def __init__(
         self,
         sample_rate=16000,
@@ -97,7 +97,7 @@ class Encoder(nn.Module):
         super().__init__()
         self.sr = sample_rate
         self.hop_length = hop_length
-        self.speaker_encoder = SpeakerEncoder(
+        self.speaker_encoder = TimbreEncoder(
             sample_rate=sample_rate,
             n_fft=n_fft,
             hop_length=hop_length,
