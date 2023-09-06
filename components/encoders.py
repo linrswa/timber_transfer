@@ -5,7 +5,7 @@ import torchaudio
 
 
 # from nvc-net paper
-class SpeakerEncoder(nn.Module):
+class TimbreEncoder(nn.Module):
     def __init__(
         self,
         sample_rate=16000,
