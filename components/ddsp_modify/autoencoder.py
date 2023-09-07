@@ -93,7 +93,6 @@ class Encoder(nn.Module):
         n_mfcc=80,
         n_mels=128,
         timbre_emb_dim=256,
-        # gru_units=512,
         ):
         super().__init__()
         self.sr = sample_rate
@@ -143,8 +142,8 @@ class Decoder(nn.Module):
     def __init__(
         self,
         mlp_layer=3,
-        n_harms = 101,
         temporal = 250,
+        n_harms = 101,
         noise_filter_bank = 65
         ):
         super().__init__()
