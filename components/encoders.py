@@ -13,7 +13,7 @@ class TimbreEncoder(nn.Module):
         hop_length=256,
         n_mels=128,
         n_mfcc=80,
-        spk_emb_dim=128, 
+        spk_emb_dim=256, 
         ):
 
         super().__init__()

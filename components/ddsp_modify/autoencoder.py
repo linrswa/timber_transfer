@@ -4,18 +4,6 @@ import torch.nn.functional as F
 import torchaudio
 import math
 
-def mlp(in_size, hidden_size, n_layers):
-    channels = [in_size] + (n_layers) * [hidden_size]
-    net = []
-    for i in range(n_layers):
-        net.append(nn.Linear(channels[i], channels[i + 1]))
-        net.append(nn.LayerNorm(channels[i+1]))
-        net.append(nn.LeakyReLU())
-    return nn.Sequential(*net)
-
-
-def gru(n_input, hidden_size):
-    return nn.GRU(n_input * hidden_size, hidden_size, batch_first=True)
 
 # from nvc-net paper
 class TimbreEncoder(nn.Module):
@@ -26,7 +14,7 @@ class TimbreEncoder(nn.Module):
         hop_length=256,
         n_mels=128,
         n_mfcc=80,
-        spk_emb_dim=128, 
+        timbre_emb_dim=256 
         ):
 
         super().__init__()
@@ -48,9 +36,9 @@ class TimbreEncoder(nn.Module):
 
         self.downblocks = nn.Sequential(*self.downblocks_list)
 
-        self.conv_mean = nn.Conv1d(512, spk_emb_dim, kernel_size=1, stride=1, padding=0)
+        self.conv_mean = nn.Conv1d(512, timbre_emb_dim, kernel_size=1, stride=1, padding=0)
 
-        self.conv_covariance = nn.Conv1d(512, spk_emb_dim, kernel_size=1, stride=1, padding=0)
+        self.conv_covariance = nn.Conv1d(512, timbre_emb_dim, kernel_size=1, stride=1, padding=0)
 
     def build_downblock(self, in_ch):
         return nn.Sequential(
@@ -80,8 +68,21 @@ class TimbreEncoder(nn.Module):
 
         # Reparameterize the speaker embedding
         speaker_embedding = mean_emb + torch.sqrt(covariance_emb) * epsilon
+        speaker_embedding = speaker_embedding.permute(0, 2, 1).contiguous() # (batch, spk_emb_dim, 1) -> (batch, 1, spk_emb_dim)
         return speaker_embedding
+    
 
+class MultiDimEmbHeader(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.down_dense1 = nn.Linear(256, 128)
+        self.down_dense2 = nn.Linear(128, 64)
+
+    def forward(self, timbre_embedding):
+        dd1 = self.down_dense1(timbre_embedding)
+        dd2 = self.down_dense2(dd1)
+        return dd2, dd1, timbre_embedding
+        
 
 class Encoder(nn.Module):
     def __init__(
@@ -91,60 +92,85 @@ class Encoder(nn.Module):
         hop_length=256,
         n_mfcc=80,
         n_mels=128,
-        spk_emb_dim=128,
+        timbre_emb_dim=256,
         # gru_units=512,
         ):
         super().__init__()
         self.sr = sample_rate
         self.hop_length = hop_length
-        self.speaker_encoder = TimbreEncoder(
+        self.timbre_encoder = TimbreEncoder(
             sample_rate=sample_rate,
             n_fft=n_fft,
             hop_length=hop_length,
             n_mels=n_mels,
             n_mfcc=n_mfcc,
-            spk_emb_dim=spk_emb_dim, 
+            timbre_emb_dim=timbre_emb_dim, 
         )
+        self.multi_dim_emb_header = MultiDimEmbHeader()
             
     def forward(self, signal, loundness, frequency):
         f0 = frequency.unsqueeze(dim=-1)
-        # f0 = frequency
-        z = self.speaker_encoder(signal)
+
+        timbre_emb = self.timbre_encoder(signal)
+        multi_dim_emb = self.multi_dim_emb_header(timbre_emb)
+
         l = loundness.unsqueeze(dim=-1)
-        # l = loundness
-        return  (f0, z, l)
+        return  (f0, multi_dim_emb, l)
+
+
+class TCUB(nn.Module):
+    def __init__(self, temporal, in_ch, out_ch):
+        super().__init__()
+        self.conv_1x1_input = nn.Conv1d(temporal, temporal, kernel_size=1, stride=1, padding=0)
+        self.conv_1x1_condition = nn.Conv1d(temporal, temporal, kernel_size=1, stride=1, padding=0)
+        self.dense_upsample = nn.Linear(in_ch, out_ch)
+        self.conv_1x1_output = nn.Conv1d(temporal, temporal, kernel_size=1, stride=1, padding=0)
+        
+    def forward(self, x, condition):
+        x_input = self.conv_1x1_input(x)
+        x_condition = self.conv_1x1_condition(condition)
+        x_upsample = self.dense_upsample(x)
+        mix = torch.cat([x_input, x_condition], dim=-1)
+        mix_tanh = torch.tanh(mix)
+        mix_sigmoid = torch.sigmoid(mix)
+        mix_output = mix_tanh * mix_sigmoid
+        mix_output = self.conv_1x1_output(mix_output)
+        output = nn.LeakyReLU(0.2)(x_upsample + mix_output) 
+        return output 
 
 
 class Decoder(nn.Module):
     def __init__(
         self,
         mlp_layer=3,
-        z_unit=16,
-        gru_unit=512,
         n_harms = 101,
+        temporal = 250,
         noise_filter_bank = 65
         ):
         super().__init__()
-        self.mlp_f = mlp(1, gru_unit, mlp_layer) # input (batch, 250, 1), ouptut (batch, 250, 512)
-        self.mlp_z = mlp(z_unit, gru_unit, mlp_layer) # input (batch, 250, 16), output (batch, 250, 512)
-        self.mlp_l = mlp(1, gru_unit, mlp_layer) # input (batch, 250, 1), output (batch, 250, 512)
-        self.gru = gru(3, gru_unit) # n_input=3 -> (f, z, l)
-        self.mlp_gru = mlp(3*gru_unit, gru_unit, mlp_layer) # mlp input ?
-        self.dense_harm = nn.Linear(gru_unit, n_harms + 1)
-        self.dense_noise = nn.Linear(gru_unit, noise_filter_bank)
+        self.mlp_f0 = self.mlp(1, 32, mlp_layer)
+        self.mlp_loudness = self.mlp(1, 32, mlp_layer)
+
+        self.tcrb_1 = TCUB(temporal=temporal, in_ch=64, out_ch=128)
+        self.tcrb_2 = TCUB(temporal=temporal, in_ch=128, out_ch=256)
+        self.tcrb_3 = TCUB(temporal=temporal, in_ch=256, out_ch=512)
+    
+        self.mlp_final = self.mlp(512, 512, mlp_layer) # mlp input ?
+        self.dense_harm = nn.Linear(512, n_harms + 1)
+        self.dense_noise = nn.Linear(512, noise_filter_bank)
         
     def forward(self, encoder_output):
-        # encoder_output -> (f0, z, l)
-        out_mlp_f = self.mlp_f(encoder_output[0])
-        out_mlp_z = self.mlp_z(encoder_output[1])
-        out_mlp_l = self.mlp_l(encoder_output[2])
-        out_cat_mlps = torch.cat((out_mlp_f, out_mlp_z, out_mlp_l), dim=2)
-        out_gru, _ = self.gru(out_cat_mlps)
-        out_cat_gru_mlps = torch.cat((out_gru, out_mlp_f, out_mlp_l), dim=2)
-        out_mlp_gru = self.mlp_gru(out_cat_gru_mlps)
+        # encoder_output -> (f0, (timbre_emb64, timbre_emb128, timbre_emb256), l)
+        out_mlp_f0 = self.mlp_f0(encoder_output[0])
+        out_mlp_loudness = self.mlp_loudness(encoder_output[2])
+        out_cat_mlp = torch.cat([out_mlp_f0, out_mlp_loudness], dim=-1)
+        out_tcrb_1 = self.tcrb_1(out_cat_mlp, encoder_output[1][0].expand_as(out_cat_mlp).contiguous())
+        out_tcrb_2 = self.tcrb_2(out_tcrb_1, encoder_output[1][1].expand_as(out_tcrb_1).contiguous())
+        out_tcrb_3 = self.tcrb_3(out_tcrb_2, encoder_output[1][2].expand_as(out_tcrb_2).contiguous())
+        out_mlp_final = self.mlp_final(out_tcrb_3)
         
         # harmonic part
-        out_dense_harm = self.dense_harm(out_mlp_gru)
+        out_dense_harm = self.dense_harm(out_mlp_final)
         # out_dense_harmonic output -> 1(global_amplitude) + n_harmonics 
         global_amp = self.modified_sigmoid(out_dense_harm[..., :1])
         n_harm_amps = out_dense_harm[..., 1:]
@@ -153,7 +179,7 @@ class Decoder(nn.Module):
         harm_amp_distribution = global_amp * n_harm_amps_norm
 
         # noise filter part
-        out_dense_noise = self.dense_noise(out_mlp_gru)
+        out_dense_noise = self.dense_noise(out_mlp_final)
         noise_filter_bank = self.modified_sigmoid(out_dense_noise)
 
         return harm_amp_distribution, noise_filter_bank
@@ -163,3 +189,13 @@ class Decoder(nn.Module):
     @staticmethod
     def modified_sigmoid(x):
         return 2 * torch.sigmoid(x)**(math.log(10)) + 1e-7
+
+    @staticmethod
+    def mlp(in_size, hidden_size, n_layers):
+        channels = [in_size] + (n_layers) * [hidden_size]
+        net = []
+        for i in range(n_layers):
+            net.append(nn.Linear(channels[i], channels[i + 1]))
+            net.append(nn.LayerNorm(channels[i+1]))
+            net.append(nn.LeakyReLU())
+        return nn.Sequential(*net)
