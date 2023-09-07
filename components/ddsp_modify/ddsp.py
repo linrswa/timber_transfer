@@ -8,10 +8,9 @@ class DDSP(nn.Module):
         sample_rate=16000,
         n_fft=1024,
         hop_length=256,
-        n_mfcc=30,
+        n_mfcc=80,
         n_mels=128,
-        gru_units=512,
-        z_units=16,
+        timbre_emb_dim=256,
         mlp_layer=3,
         n_harms=101,
         noise_filter_bank=65, 
@@ -23,15 +22,13 @@ class DDSP(nn.Module):
             hop_length=hop_length,
             n_mfcc=n_mfcc,
             n_mels=n_mels,
-            gru_units=gru_units,
-            z_units=z_units, 
+            timbre_emb_dim=timbre_emb_dim,
         )
         self.decoder = Decoder(
             mlp_layer=mlp_layer,
-            z_unit=z_units,
-            gru_unit=gru_units,
+            temporal=250,
             n_harms=n_harms,
-            noise_filter_bank=noise_filter_bank
+            noise_filter_bank=noise_filter_bank,
         )
         self.synthesizer = HarmonicOscillator(
             sample_rate=sample_rate,
