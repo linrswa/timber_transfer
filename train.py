@@ -27,7 +27,7 @@ h = AttrDict(json_config)
 
 train_dataset = NSynthDataset(data_mode="test", sr=16000)
 
-train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=32  , num_workers=4, shuffle=True)
 generator = DDSP().to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
