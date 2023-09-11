@@ -52,7 +52,7 @@ class DiscriminatorP(nn.Module):
 
         return x, fmap
 
-class MulitiPeriodDiscriminator(nn.Module):
+class MultiPeriodDiscriminator(nn.Module):
     def __init__(self, mpd_reshapes=[2, 3, 5, 7, 11]):
         super().__init__()
         self.mpd_reshapes = mpd_reshapes
