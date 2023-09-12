@@ -12,7 +12,7 @@ from components.utils import generator_loss, discriminator_loss, feature_loss
 from utils import mel_spectrogram
 from dataset import NSynthDataset
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -27,7 +27,7 @@ h = AttrDict(json_config)
 
 train_dataset = NSynthDataset(data_mode="test", sr=16000)
 
-train_loader = DataLoader(train_dataset, batch_size=32  , num_workers=4, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
 generator = DDSP().to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
@@ -46,7 +46,7 @@ mpd.train()
 
 
 num_epochs = 100
-for epoch in range(num_epochs):
+for epoch in tqdm(range(num_epochs)):
     for fn, s, l ,f in tqdm(train_loader):
 
         s = s.to(device)
@@ -90,10 +90,9 @@ for epoch in range(num_epochs):
         loss_gen_all.backward()
         optim_g.step() 
         
-        print(f"loss_fm_f: {loss_fm_f}, loss_fm_s: {loss_fm_s}, loss_gen_f: {loss_gen_f}, loss_gen_r: {loss_gen_r}, loss_mel: {loss_mel}")
-        print(f"loss_disc_all: {loss_disc_all}, loss_gen_all: {loss_gen_all}")
-        
         scheduler_g.step()
         scheduler_d.step()
 
+    print(f"loss_fm_f: {loss_fm_f}, loss_fm_s: {loss_fm_s}, loss_gen_f: {loss_gen_f}, loss_gen_r: {loss_gen_r}, loss_mel: {loss_mel}")
+    print(f"loss_disc_all: {loss_disc_all}, loss_gen_all: {loss_gen_all}")
 

@@ -67,7 +67,7 @@ class TimbreEncoder(nn.Module):
         epsilon = torch.randn_like(covariance_emb)
 
         # Reparameterize the speaker embedding
-        speaker_embedding = mean_emb + torch.sqrt(covariance_emb) * epsilon
+        speaker_embedding = mean_emb + torch.sqrt(F.relu(covariance_emb)) * epsilon
         speaker_embedding = speaker_embedding.permute(0, 2, 1).contiguous() # (batch, spk_emb_dim, 1) -> (batch, 1, spk_emb_dim)
         return speaker_embedding
     
