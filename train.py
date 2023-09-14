@@ -100,17 +100,17 @@ for epoch in tqdm(range(num_epochs)):
         # Train Generator
         optim_g.zero_grad()
        
-        loss_mel = F.l1_loss(y_mel, y_g_hat_mel) * 45
+        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * 45
 
-        loss_kl = kl_loss(mu, logvar) * 0.01
+        loss_gen_kl = kl_loss(mu, logvar) * 0.01
     
         y_df_hat_r, y_df_hat_g, fmap_f_r, fmap_f_g = mpd(s, y_g_hat)
         y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
-        loss_fm_f = feature_loss(fmap_f_r, fmap_f_g)
-        loss_fm_r = feature_loss(fmap_r_r, fmap_r_g)
+        loss_gen_fm_f = feature_loss(fmap_f_r, fmap_f_g)
+        loss_gen_fm_r = feature_loss(fmap_r_r, fmap_r_g)
         loss_gen_f, losses_gen_f = generator_loss(y_df_hat_g)
         loss_gen_r, losses_gen_r = generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_f + loss_fm_r + loss_fm_f + loss_mel + loss_kl
+        loss_gen_all = loss_gen_r + loss_gen_f + loss_gen_fm_r + loss_gen_fm_f + loss_gen_mel + loss_gen_kl
 
         loss_gen_all.backward()
         optim_g.step() 
@@ -129,10 +129,10 @@ for epoch in tqdm(range(num_epochs)):
         # gen
         total_mean_loss_gen_f = cal_mean_loss(total_mean_loss_gen_f, loss_gen_f, n_element)
         total_mean_loss_gen_r = cal_mean_loss(total_mean_loss_gen_r, loss_gen_r, n_element)
-        total_mean_loss_gen_fm_f = cal_mean_loss(total_mean_loss_gen_fm_f, loss_fm_f, n_element)
-        total_mean_loss_gen_fm_r = cal_mean_loss(total_mean_loss_gen_fm_r, loss_fm_r, n_element)
-        total_mean_loss_gen_mel = cal_mean_loss(total_mean_loss_gen_mel, loss_mel, n_element)
-        total_mean_loss_gen_kl = cal_mean_loss(total_mean_loss_gen_kl, loss_kl, n_element) 
+        total_mean_loss_gen_fm_f = cal_mean_loss(total_mean_loss_gen_fm_f, loss_gen_fm_f, n_element)
+        total_mean_loss_gen_fm_r = cal_mean_loss(total_mean_loss_gen_fm_r, loss_gen_fm_r, n_element)
+        total_mean_loss_gen_mel = cal_mean_loss(total_mean_loss_gen_mel, loss_gen_mel, n_element)
+        total_mean_loss_gen_kl = cal_mean_loss(total_mean_loss_gen_kl, loss_gen_kl, n_element) 
         total_mean_loss_gen_all = cal_mean_loss(total_mean_loss_gen_all, loss_gen_all, n_element)
 
         # logging
@@ -169,7 +169,7 @@ for epoch in tqdm(range(num_epochs)):
     )
 
 
-    print(f"loss_fm_f: {total_mean_loss_gen_fm_f}, loss_fm_s: {total_mean_loss_gen_fm_r}, loss_gen_f: {total_mean_loss_gen_f}, loss_gen_r: {total_mean_loss_gen_r}, loss_mel: {total_mean_loss_mel}, loss_`kl: {total_mean_loss_kl}")
+    print(f"loss_fm_f: {total_mean_loss_gen_fm_f}, loss_fm_s: {total_mean_loss_gen_fm_r}, loss_gen_f: {total_mean_loss_gen_f}, loss_gen_r: {total_mean_loss_gen_r}, loss_mel: {total_mean_loss_gen_mel}, loss_`kl: {total_mean_loss_gen_kl}")
     print(f"loss_disc_all: {total_mean_loss_disc_all}, loss_gen_all: {total_mean_loss_gen_all}")
 
     if total_mean_loss_gen_all < best_loss:
