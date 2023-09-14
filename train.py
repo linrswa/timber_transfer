@@ -8,7 +8,7 @@ import json
 
 from components.ddsp_modify.ddsp import DDSP
 from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
-from components.utils import generator_loss, discriminator_loss, feature_loss
+from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from utils import mel_spectrogram
 from dataset import NSynthDataset
 
@@ -28,7 +28,7 @@ h = AttrDict(json_config)
 train_dataset = NSynthDataset(data_mode="test", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = DDSP().to(device)
+generator = DDSP(is_train=True).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
@@ -53,7 +53,7 @@ for epoch in tqdm(range(num_epochs)):
         l = l.to(device)    
         f = f.to(device)
         
-        add, sub, y_g_hat = generator(s, l, f)
+        add, sub, y_g_hat, mu, logvar = generator(s, l, f)
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         
@@ -79,13 +79,15 @@ for epoch in tqdm(range(num_epochs)):
        
         loss_mel = F.l1_loss(y_mel, y_g_hat_mel) * 45
 
+        loss_kl = kl_loss(mu, logvar) * 0.01
+    
         y_df_hat_r, y_df_hat_g, fmap_f_r, fmap_f_g = mpd(s, y_g_hat)
         y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
         loss_fm_f = feature_loss(fmap_f_r, fmap_f_g)
         loss_fm_s = feature_loss(fmap_r_r, fmap_r_g)
         loss_gen_f, losses_gen_f = generator_loss(y_df_hat_g)
         loss_gen_r, losses_gen_r = generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_f + loss_fm_s + loss_fm_f + loss_mel
+        loss_gen_all = loss_gen_r + loss_gen_f + loss_fm_s + loss_fm_f + loss_mel + loss_kl
 
         loss_gen_all.backward()
         optim_g.step() 
@@ -93,6 +95,6 @@ for epoch in tqdm(range(num_epochs)):
         scheduler_g.step()
         scheduler_d.step()
 
-    print(f"loss_fm_f: {loss_fm_f}, loss_fm_s: {loss_fm_s}, loss_gen_f: {loss_gen_f}, loss_gen_r: {loss_gen_r}, loss_mel: {loss_mel}")
+    print(f"loss_fm_f: {loss_fm_f}, loss_fm_s: {loss_fm_s}, loss_gen_f: {loss_gen_f}, loss_gen_r: {loss_gen_r}, loss_mel: {loss_mel}, loss_`kl: {loss_kl}")
     print(f"loss_disc_all: {loss_disc_all}, loss_gen_all: {loss_gen_all}")
 
