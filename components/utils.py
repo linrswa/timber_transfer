@@ -33,3 +33,17 @@ def generator_loss(disc_outputs):
         loss += l
     
     return loss, gen_losses
+
+
+def kl_loss(mu, logvar):
+        r"""Returns the Kullback-Leibler divergence loss with a standard Gaussian.
+
+        Args:
+            mu (nn.Variable): Mean of the distribution of shape (B, D, 1).
+            logvar (nn.Variable): Log variance of the distribution of
+                shape (B, D, 1).
+
+        Returns:
+            nn.Variable: Kullback-Leibler divergence loss.
+        """
+        return 0.5 * torch.mean(torch.sum(torch.exp(logvar) + mu**2 - 1. - logvar, axis=1))

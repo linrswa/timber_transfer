@@ -52,24 +52,10 @@ class TimbreEncoder(nn.Module):
         x = self.conv(x)
         x = self.downblocks(x)
         x = nn.AvgPool1d(x.size(-1))(x)
-        mean_emb = self.conv_mean(x)
-        covariance_emb = self.conv_covariance(x)
+        mu = self.conv_mean(x)
+        logvar = self.conv_covariance(x)
 
-        """ paper discription
-        Thus, a speaker embedding is given by sampling from the output distribution, i.e., z ∼ N (µ,σ^2I). 
-        Although the sampling operation is non-differentiable, it can be reparameterized as a differentiable 
-        operation using the reparameterization trick [26], i.e., z = µ + σ (.) epsilon, where epsilon ∼ N (0, I).
-        """
-        # Assuming mean_emb and covariance_emb are obtained from the speaker encoder
-        # mean_emb and covariance_emb should be PyTorch tensors
-
-        # Sample epsilon from a normal distribution with mean 0 and standard deviation 1
-        epsilon = torch.randn_like(covariance_emb)
-
-        # Reparameterize the speaker embedding
-        speaker_embedding = mean_emb + torch.sqrt(F.relu(covariance_emb)) * epsilon
-        speaker_embedding = speaker_embedding.permute(0, 2, 1).contiguous() # (batch, spk_emb_dim, 1) -> (batch, 1, spk_emb_dim)
-        return speaker_embedding
+        return mu, logvar
     
 
 class MultiDimEmbHeader(nn.Module):
@@ -78,43 +64,24 @@ class MultiDimEmbHeader(nn.Module):
         self.down_dense1 = nn.Linear(256, 128)
         self.down_dense2 = nn.Linear(128, 64)
 
-    def forward(self, timbre_embedding):
-        dd1 = self.down_dense1(timbre_embedding)
+    def forward(self, timbre_emb):
+        dd1 = self.down_dense1(timbre_emb)
         dd2 = self.down_dense2(dd1)
-        return dd2, dd1, timbre_embedding
+        return dd2, dd1, timbre_emb
         
 
 class Encoder(nn.Module):
-    def __init__(
-        self,
-        sample_rate=16000,
-        n_fft=1024,
-        hop_length=256,
-        n_mfcc=80,
-        n_mels=128,
-        timbre_emb_dim=256,
-        ):
+    def __init__(self):
         super().__init__()
-        self.sr = sample_rate
-        self.hop_length = hop_length
-        self.timbre_encoder = TimbreEncoder(
-            sample_rate=sample_rate,
-            n_fft=n_fft,
-            hop_length=hop_length,
-            n_mels=n_mels,
-            n_mfcc=n_mfcc,
-            timbre_emb_dim=timbre_emb_dim, 
-        )
-        self.multi_dim_emb_header = MultiDimEmbHeader()
             
-    def forward(self, signal, loundness, frequency):
-        f0 = frequency.unsqueeze(dim=-1)
+    def forward(self, loundness, f0):
+        f0 = f0.unsqueeze(dim=-1)
 
-        timbre_emb = self.timbre_encoder(signal)
-        multi_dim_emb = self.multi_dim_emb_header(timbre_emb)
+        # timbre_emb = self.timbre_encoder(signal)
+        # multi_dim_emb = self.multi_dim_emb_header(timbre_emb)
 
         l = loundness.unsqueeze(dim=-1)
-        return  (f0, multi_dim_emb, l)
+        return  f0, l
 
 
 class TCUB(nn.Module):
@@ -158,14 +125,14 @@ class Decoder(nn.Module):
         self.dense_harm = nn.Linear(512, n_harms + 1)
         self.dense_noise = nn.Linear(512, noise_filter_bank)
         
-    def forward(self, encoder_output):
+    def forward(self, f0, loudness, multi_timbre_emb):
         # encoder_output -> (f0, (timbre_emb64, timbre_emb128, timbre_emb256), l)
-        out_mlp_f0 = self.mlp_f0(encoder_output[0])
-        out_mlp_loudness = self.mlp_loudness(encoder_output[2])
+        out_mlp_f0 = self.mlp_f0(f0)
+        out_mlp_loudness = self.mlp_loudness(loudness)
         out_cat_mlp = torch.cat([out_mlp_f0, out_mlp_loudness], dim=-1)
-        out_tcrb_1 = self.tcrb_1(out_cat_mlp, encoder_output[1][0].expand_as(out_cat_mlp).contiguous())
-        out_tcrb_2 = self.tcrb_2(out_tcrb_1, encoder_output[1][1].expand_as(out_tcrb_1).contiguous())
-        out_tcrb_3 = self.tcrb_3(out_tcrb_2, encoder_output[1][2].expand_as(out_tcrb_2).contiguous())
+        out_tcrb_1 = self.tcrb_1(out_cat_mlp, multi_timbre_emb[0].expand_as(out_cat_mlp).contiguous())
+        out_tcrb_2 = self.tcrb_2(out_tcrb_1, multi_timbre_emb[1].expand_as(out_tcrb_1).contiguous())
+        out_tcrb_3 = self.tcrb_3(out_tcrb_2, multi_timbre_emb[2].expand_as(out_tcrb_2).contiguous())
         out_mlp_final = self.mlp_final(out_tcrb_3)
         
         # harmonic part

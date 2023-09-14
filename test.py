@@ -16,8 +16,8 @@ train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=Tr
        
 fn, s, l, f = next(iter(train_loader)) 
 
-ddsp = DDSP()
-add, sub, rec = ddsp(s, l, f)
+ddsp = DDSP(is_train=True)
+add, sub, rec, mu, logvar= ddsp(s, l, f)
 #%%
 # model = MultiPeriodDiscriminator()
 # y_d_rs, y_d_gs, fmap_rs, fmap_gs = model(s.unsqueeze(dim=1), s.unsqueeze(dim=1))

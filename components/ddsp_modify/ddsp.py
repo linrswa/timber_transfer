@@ -1,6 +1,8 @@
+import torch
 import torch.nn as nn
 from .autoencoder import Encoder, Decoder
 from .component import HarmonicOscillator, NoiseFilter, Reverb
+from .autoencoder import MultiDimEmbHeader, TimbreEncoder
 
 class DDSP(nn.Module):
     def __init__(
@@ -14,35 +16,51 @@ class DDSP(nn.Module):
         mlp_layer=3,
         n_harms=101,
         noise_filter_bank=65, 
+        is_train=False,
         ):
+
         super().__init__()
-        self.encoder = Encoder(
+
+        self.is_train = is_train
+
+        self.timbre_encoder = TimbreEncoder(
             sample_rate=sample_rate,
             n_fft=n_fft,
             hop_length=hop_length,
-            n_mfcc=n_mfcc,
             n_mels=n_mels,
-            timbre_emb_dim=timbre_emb_dim,
+            n_mfcc=n_mfcc,
+            timbre_emb_dim=timbre_emb_dim, 
         )
+
+        self.multi_dim_emb_header = MultiDimEmbHeader()
+
+        self.encoder = Encoder()
+
         self.decoder = Decoder(
             mlp_layer=mlp_layer,
             temporal=250,
             n_harms=n_harms,
             noise_filter_bank=noise_filter_bank,
         )
+
         self.synthesizer = HarmonicOscillator(
             sample_rate=sample_rate,
             hop_length=hop_length,
             n_harms=n_harms,
         )
+
         self.noise_filter = NoiseFilter(
             hop_length=hop_length
         )
     
-    def forward(self, signal, loudness, frequency):
-        f0, z, l = self.encoder(signal, loudness, frequency)
+    def forward(self, signal, loudness, f0):
+        
+        f0, l = self.encoder(loudness, f0)
+        mu, logvar = self.timbre_encoder(signal)
+        timbre_emb = self.sample(mu, logvar)
+        multi_timbre_emb = self.multi_dim_emb_header(timbre_emb)
 
-        harm_amp_distribution, noise_filter_bank = self.decoder((f0, z, l))
+        harm_amp_distribution, noise_filter_bank = self.decoder(f0, l, multi_timbre_emb)
 
         additive_output = self.synthesizer(harm_amp_distribution, f0)
 
@@ -51,4 +69,26 @@ class DDSP(nn.Module):
         reconstruct_signal = additive_output + subtractive_output
         # reconstruct_signal = additive_output
 
-        return additive_output, subtractive_output, reconstruct_signal
+        return additive_output, subtractive_output, reconstruct_signal, mu, logvar
+
+    def sample(self, mu, logvar):
+        """ paper discription
+        Thus, a speaker embedding is given by sampling from the output distribution, i.e., z ∼ N (µ,σ^2I). 
+        Although the sampling operation is non-differentiable, it can be reparameterized as a differentiable 
+        operation using the reparameterization trick [26], i.e., z = µ + σ (.) epsilon, where epsilon ∼ N (0, I).
+        """
+        # Assuming mean_emb and covariance_emb are obtained from the speaker encoder
+        # mean_emb and covariance_emb should be PyTorch tensors
+
+        if self.is_train:
+            # Sample epsilon from a normal distribution with mean 0 and standard deviation 1
+            epsilon = torch.randn_like(logvar)
+
+            # Reparameterize the speaker embedding
+            timbre_emb = mu + torch.exp(0.5 * logvar) * epsilon 
+            # the line above ref https://github.com/sony/ai-research-code/blob/master/nvcnet/model/model.py#L16
+            timbre_emb = timbre_emb.permute(0, 2, 1).contiguous() # (batch, spk_emb_dim, 1) -> (batch, 1, spk_emb_dim)
+            return timbre_emb
+
+        mu = mu.permute(0, 2, 1).contiguous() # (batch, spk_emb_dim, 1) -> (batch, 1, spk_emb_dim)
+        return mu
