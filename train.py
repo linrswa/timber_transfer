@@ -8,12 +8,13 @@ import json
 import wandb
 
 from components.ddsp_modify.ddsp import DDSP
+from components.ddsp_modify.utils import mean_std_loudness
 from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from utils import mel_spectrogram
 from dataset import NSynthDataset
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -30,7 +31,7 @@ def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
     return (batch_mean_loss.item() - total_mean_loss) / n_element
     
 
-train_dataset = NSynthDataset(data_mode="test", sr=16000)
+train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
 generator = DDSP(is_train=True).to(device)
@@ -49,7 +50,10 @@ generator.train()
 mrd.train()
 mpd.train()
 
-wandb.init(project="ddsp_modify", name="test")
+mean_loudness, std_loudness = mean_std_loudness(train_dataset)
+
+run_name = "train1"
+wandb.init(project="ddsp_modify", name=run_name)
 
 num_epochs = 100
 # set init value for logging
@@ -75,6 +79,8 @@ for epoch in tqdm(range(num_epochs)):
         s = s.to(device)
         l = l.to(device)    
         f = f.to(device)
+        
+        l = (l - mean_loudness) / std_loudness
         
         add, sub, y_g_hat, mu, logvar = generator(s, l, f)
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
@@ -122,18 +128,18 @@ for epoch in tqdm(range(num_epochs)):
         step += 1
         n_element += 1
         # disc
-        total_mean_loss_disc_f = cal_mean_loss(total_mean_loss_disc_f, loss_disc_f, n_element)
-        total_mean_loss_disc_r = cal_mean_loss(total_mean_loss_disc_r, loss_disc_r, n_element)
-        total_mean_loss_disc_all = cal_mean_loss(total_mean_loss_disc_all, loss_disc_all, n_element)
+        total_mean_loss_disc_f += cal_mean_loss(total_mean_loss_disc_f, loss_disc_f, n_element)
+        total_mean_loss_disc_r += cal_mean_loss(total_mean_loss_disc_r, loss_disc_r, n_element)
+        total_mean_loss_disc_all += cal_mean_loss(total_mean_loss_disc_all, loss_disc_all, n_element)
 
         # gen
-        total_mean_loss_gen_f = cal_mean_loss(total_mean_loss_gen_f, loss_gen_f, n_element)
-        total_mean_loss_gen_r = cal_mean_loss(total_mean_loss_gen_r, loss_gen_r, n_element)
-        total_mean_loss_gen_fm_f = cal_mean_loss(total_mean_loss_gen_fm_f, loss_gen_fm_f, n_element)
-        total_mean_loss_gen_fm_r = cal_mean_loss(total_mean_loss_gen_fm_r, loss_gen_fm_r, n_element)
-        total_mean_loss_gen_mel = cal_mean_loss(total_mean_loss_gen_mel, loss_gen_mel, n_element)
-        total_mean_loss_gen_kl = cal_mean_loss(total_mean_loss_gen_kl, loss_gen_kl, n_element) 
-        total_mean_loss_gen_all = cal_mean_loss(total_mean_loss_gen_all, loss_gen_all, n_element)
+        total_mean_loss_gen_f += cal_mean_loss(total_mean_loss_gen_f, loss_gen_f, n_element)
+        total_mean_loss_gen_r += cal_mean_loss(total_mean_loss_gen_r, loss_gen_r, n_element)
+        total_mean_loss_gen_fm_f += cal_mean_loss(total_mean_loss_gen_fm_f, loss_gen_fm_f, n_element)
+        total_mean_loss_gen_fm_r += cal_mean_loss(total_mean_loss_gen_fm_r, loss_gen_fm_r, n_element)
+        total_mean_loss_gen_mel += cal_mean_loss(total_mean_loss_gen_mel, loss_gen_mel, n_element)
+        total_mean_loss_gen_kl += cal_mean_loss(total_mean_loss_gen_kl, loss_gen_kl, n_element) 
+        total_mean_loss_gen_all += cal_mean_loss(total_mean_loss_gen_all, loss_gen_all, n_element)
 
         # logging
         if step % 50 == 0:
@@ -169,12 +175,12 @@ for epoch in tqdm(range(num_epochs)):
     )
 
 
-    print(f"loss_fm_f: {total_mean_loss_gen_fm_f}, loss_fm_s: {total_mean_loss_gen_fm_r}, loss_gen_f: {total_mean_loss_gen_f}, loss_gen_r: {total_mean_loss_gen_r}, loss_mel: {total_mean_loss_gen_mel}, loss_`kl: {total_mean_loss_gen_kl}")
+    print(f"loss_fm_f: {total_mean_loss_gen_fm_f}, loss_fm_s: {total_mean_loss_gen_fm_r}, loss_gen_f: {total_mean_loss_gen_f}, loss_gen_r: {total_mean_loss_gen_r}, loss_mel: {total_mean_loss_gen_mel}, loss_kl: {total_mean_loss_gen_kl}")
     print(f"loss_disc_all: {total_mean_loss_disc_all}, loss_gen_all: {total_mean_loss_gen_all}")
 
     if total_mean_loss_gen_all < best_loss:
         best_loss = total_mean_loss_gen_all
-        torch.save(generator.state_dict(), f"./pt_file/generator_{epoch}.pt")
+        torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_{epoch}.pt")
         print(f"save model at epoch {epoch}")
     
 
