@@ -30,12 +30,11 @@ class HarmonicOscillator(nn.Module):
     def forward(self, harm_amp_dis, f0):
         harm_amp, harm_dis = self.separate_amplitude_and_distribution(harm_amp_dis)
         harm_dis = self.remove_above_nyquist(harm_dis, f0, self.sr)
-        harm_amp = self.upsample(harm_amp, self.hop_length)
-        harm_dis = self.upsample(harm_dis, self.hop_length)
         harm_amp_dis = harm_amp * harm_dis
+        harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length)
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
-        harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
+        # harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
         return harmonic
     
     @staticmethod
