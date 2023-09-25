@@ -121,7 +121,7 @@ class Decoder(nn.Module):
         self.tcrb_2 = TCUB(temporal=temporal, in_ch=128, out_ch=256)
         self.tcrb_3 = TCUB(temporal=temporal, in_ch=256, out_ch=512)
     
-        self.mlp_final = self.mlp(512, 512, mlp_layer) # mlp input ?
+        self.mlp_final = self.mlp(512 + 64, 512, mlp_layer) # mlp input ?
         self.dense_harm = nn.Linear(512, n_harms + 1)
         self.dense_noise = nn.Linear(512, noise_filter_bank)
         
@@ -133,7 +133,8 @@ class Decoder(nn.Module):
         out_tcrb_1 = self.tcrb_1(out_cat_mlp, multi_timbre_emb[0].expand_as(out_cat_mlp).contiguous())
         out_tcrb_2 = self.tcrb_2(out_tcrb_1, multi_timbre_emb[1].expand_as(out_tcrb_1).contiguous())
         out_tcrb_3 = self.tcrb_3(out_tcrb_2, multi_timbre_emb[2].expand_as(out_tcrb_2).contiguous())
-        out_mlp_final = self.mlp_final(out_tcrb_3)
+        out_cat_f0_loudness = torch.cat([out_tcrb_3, out_mlp_f0, out_mlp_loudness], dim=-1)
+        out_mlp_final = self.mlp_final(out_cat_f0_loudness)
         
         # harmonic part
         out_dense_harm = self.dense_harm(out_mlp_final)
