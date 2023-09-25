@@ -20,11 +20,13 @@ class HarmonicOscillator(nn.Module):
         sample_rate = 16000,
         hop_length = 256,
         n_harms = 101,
+        is_smooth = False,
         ):
         super().__init__()
         self.sr = sample_rate
         self.hop_length = hop_length
         self.n_harms = n_harms
+        self.is_smooth = is_smooth
             
     # FIXME: check smooth_envelop function is placed correctly or not
     def forward(self, harm_amp_dis, f0):
@@ -34,7 +36,8 @@ class HarmonicOscillator(nn.Module):
         harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length)
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
-        # harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
+        if self.is_smooth:
+            harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
         return harmonic
     
     @staticmethod

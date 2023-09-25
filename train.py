@@ -14,7 +14,7 @@ from components.utils import generator_loss, discriminator_loss, feature_loss, k
 from utils import mel_spectrogram
 from dataset import NSynthDataset
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -50,9 +50,8 @@ generator.train()
 mrd.train()
 mpd.train()
 
-mean_loudness, std_loudness = mean_std_loudness(train_dataset)
 
-run_name = "train1"
+run_name = "train5-add_cat_f0_l"
 wandb.init(project="ddsp_modify", name=run_name)
 
 num_epochs = 100
@@ -80,7 +79,6 @@ for epoch in tqdm(range(num_epochs)):
         l = l.to(device)    
         f = f.to(device)
         
-        l = (l - mean_loudness) / std_loudness
         
         add, sub, y_g_hat, mu, logvar = generator(s, l, f)
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
@@ -180,9 +178,11 @@ for epoch in tqdm(range(num_epochs)):
 
     if total_mean_loss_gen_all < best_loss:
         best_loss = total_mean_loss_gen_all
+        torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_best_{epoch}.pt")
+        print(f"save best model at epoch {epoch}")
+    elif epoch % 10 == 0:
         torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_{epoch}.pt")
         print(f"save model at epoch {epoch}")
-    
 
     # reset value for logging
     n_element = 0

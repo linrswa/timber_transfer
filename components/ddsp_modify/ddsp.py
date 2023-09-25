@@ -17,6 +17,7 @@ class DDSP(nn.Module):
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,
+        is_smooth=False,
         ):
 
         super().__init__()
@@ -47,6 +48,7 @@ class DDSP(nn.Module):
             sample_rate=sample_rate,
             hop_length=hop_length,
             n_harms=n_harms,
+            is_smooth=is_smooth,
         )
 
         self.noise_filter = NoiseFilter(
