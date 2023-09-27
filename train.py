@@ -66,7 +66,7 @@ total_mean_loss_disc_r = 0
 total_mean_loss_disc_all = 0
 
 total_mean_loss_gen_f = 0
-total_mean_loss_gel_loudness = 0
+total_mean_loss_gen_loudness = 0
 total_mean_loss_gen_r = 0
 total_mean_loss_gen_fm_f = 0
 total_mean_loss_gen_fm_r = 0
@@ -138,7 +138,7 @@ for epoch in tqdm(range(num_epochs)):
         total_mean_loss_disc_all += cal_mean_loss(total_mean_loss_disc_all, loss_disc_all, n_element)
 
         # gen
-        total_mean_loss_gel_loudness += cal_mean_loss(total_mean_loss_gel_loudness, loss_gen_loudness, n_element)
+        total_mean_loss_gen_loudness += cal_mean_loss(total_mean_loss_gen_loudness, loss_gen_loudness, n_element)
         total_mean_loss_gen_f += cal_mean_loss(total_mean_loss_gen_f, loss_gen_f, n_element)
         total_mean_loss_gen_r += cal_mean_loss(total_mean_loss_gen_r, loss_gen_r, n_element)
         total_mean_loss_gen_fm_f += cal_mean_loss(total_mean_loss_gen_fm_f, loss_gen_fm_f, n_element)
@@ -154,6 +154,7 @@ for epoch in tqdm(range(num_epochs)):
                     "50step_loss_disc_f": total_mean_loss_disc_f,
                     "50step_loss_disc_r": total_mean_loss_disc_r,
                     "50step_loss_disc_all": total_mean_loss_disc_all,
+                    "50step_loss_gen_loudness": total_mean_loss_gen_loudness,
                     "50step_loss_gen_f": total_mean_loss_gen_f,
                     "50step_loss_gen_r": total_mean_loss_gen_r,
                     "50step_loss_gen_fm_f": total_mean_loss_gen_fm_f,
@@ -170,6 +171,7 @@ for epoch in tqdm(range(num_epochs)):
             "epoch_loss_disc_f": total_mean_loss_disc_f,
             "epoch_loss_disc_r": total_mean_loss_disc_r,
             "epoch_loss_disc_all": total_mean_loss_disc_all,
+            "epoch_loss_gen_loudness": total_mean_loss_gen_loudness,
             "epoch_loss_gen_f": total_mean_loss_gen_f,
             "epoch_loss_gen_r": total_mean_loss_gen_r,
             "epoch_loss_gen_fm_f": total_mean_loss_gen_fm_f,
@@ -181,7 +183,12 @@ for epoch in tqdm(range(num_epochs)):
     )
 
 
-    print(f"loss_fm_f: {total_mean_loss_gen_fm_f}, loss_fm_s: {total_mean_loss_gen_fm_r}, loss_gen_f: {total_mean_loss_gen_f}, loss_gen_r: {total_mean_loss_gen_r}, loss_mel: {total_mean_loss_gen_mel}, loss_kl: {total_mean_loss_gen_kl}")
+    print(
+            f"loss_fm_f: {total_mean_loss_gen_fm_f}, loss_fm_s: {total_mean_loss_gen_fm_r}, \
+            loss_gen_f: {total_mean_loss_gen_f}, loss_gen_r: {total_mean_loss_gen_r}, \
+            loss_mel: {total_mean_loss_gen_mel}, loss_kl: {total_mean_loss_gen_kl} \
+            loss_loudness: {total_mean_loss_gen_loudness}"
+        )
     print(f"loss_disc_all: {total_mean_loss_disc_all}, loss_gen_all: {total_mean_loss_gen_all}")
 
     if total_mean_loss_gen_all < best_loss:
@@ -202,6 +209,7 @@ for epoch in tqdm(range(num_epochs)):
     total_mean_loss_disc_r = 0
     total_mean_loss_disc_all = 0
 
+    total_mean_loss_gen_loudness = 0
     total_mean_loss_gen_f = 0
     total_mean_loss_gen_r = 0
     total_mean_loss_gen_fm_f = 0
