@@ -14,7 +14,7 @@ from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_st
 
 use_mean_std = False
 
-train_dataset = NSynthDataset(data_mode="test", sr=16000)
+train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
@@ -25,11 +25,12 @@ if use_mean_std:
     l = (l - mean_loudness) / std_loudness
 
 ddsp = DDSP(is_train=False)
-ddsp.load_state_dict(torch.load("./pt_file/train5-add_cat_f0_l_generator_20.pt"))
+ddsp.load_state_dict(torch.load("./pt_file/train5-add_cat_f0_l_generator_50.pt"))
 add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 A_weight = get_A_weight()
-rec_l = extract_loudness(rec.squeeze(dim=-1).detach(), A_weight)
+rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)
+#%%
 
 if use_mean_std:
     rec_l = (rec_l.view(-1) - mean_loudness) / std_loudness

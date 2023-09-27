@@ -79,6 +79,7 @@ def get_A_weight(
     
     return a_weight.reshape(-1, 1) # type(np.ndarray)
 
+@torch.no_grad()
 def extract_loudness(
     signal: torch.Tensor,
     a_weight: torch.Tensor,
