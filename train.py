@@ -15,7 +15,7 @@ from components.ddsp_modify.utils import extract_loudness, get_A_weight
 from utils import mel_spectrogram
 from dataset import NSynthDataset
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -52,8 +52,8 @@ mrd.train()
 mpd.train()
 
 
-run_name = "train6"
-wandb.init(project="ddsp_modify", name=run_name, notes="add loudness loss")
+run_name = "train7"
+wandb.init(project="ddsp_modify", name=run_name, tags="add loudness loss")
 
 num_epochs = 300
 # set init value for logging
@@ -74,7 +74,7 @@ total_mean_loss_gen_mel = 0
 total_mean_loss_gen_kl = 0
 total_mean_loss_gen_all = 0
 
-A_weight = get_A_weight()
+A_weight = get_A_weight().to(device)
 for epoch in tqdm(range(num_epochs)):
     for fn, s, l ,f in tqdm(train_loader):
         
@@ -108,7 +108,7 @@ for epoch in tqdm(range(num_epochs)):
         optim_g.zero_grad()
        
         # Additional loudness loss
-        rec_l = extract_loudness(y_g_hat.squeeze(dim=-1), A_weight)
+        rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)
         loss_gen_loudness = F.l1_loss(rec_l[:, :-1], l) * 0.1
 
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * 45
