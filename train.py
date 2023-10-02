@@ -13,9 +13,11 @@ from components.discriminators import MultiResolutionDiscriminator, MultiPeriodD
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from components.ddsp_modify.utils import extract_loudness, get_A_weight
 from utils import mel_spectrogram
-from dataset import NSynthDataset
+from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+run_name = "train7"
+tags = "add loudness loss"
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -52,8 +54,7 @@ mrd.train()
 mpd.train()
 
 
-run_name = "train7"
-wandb.init(project="ddsp_modify", name=run_name, tags="add loudness loss")
+wandb.init(project="ddsp_modify", name=run_name, tags=tags)
 
 num_epochs = 300
 # set init value for logging
