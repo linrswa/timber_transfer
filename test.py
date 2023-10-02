@@ -1,6 +1,6 @@
 # %%
 import torch.nn as nn
-from dataset import NSynthDataset
+from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
 from torchsummary import summary
 
@@ -19,7 +19,6 @@ train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=Tr
 fn, s, l, f = next(iter(train_loader)) 
 
 ddsp = DDSP(is_train=False, is_smooth=True)
-# ddsp.load_state_dict(torch.load("./pt_file/train2_generator_7.pt"))
 add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 

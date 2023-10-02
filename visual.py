@@ -1,6 +1,6 @@
 # %%
 import torch
-from dataset import NSynthDataset
+from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
@@ -25,7 +25,7 @@ if use_mean_std:
     l = (l - mean_loudness) / std_loudness
 
 ddsp = DDSP(is_train=False)
-ddsp.load_state_dict(torch.load("./pt_file/train6_generator_best_6.pt"))
+ddsp.load_state_dict(torch.load("./pt_file/train7_generator_best_30.pt"))
 add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 A_weight = get_A_weight()
