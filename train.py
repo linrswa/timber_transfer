@@ -16,7 +16,7 @@ from utils import mel_spectrogram
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train7"
+run_name = "train8"
 tags = "add loudness loss"
 
 class AttrDict(dict):

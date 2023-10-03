@@ -1,5 +1,6 @@
 import torch
 import torch.utils.data
+import json
 from librosa.filters import mel as librosa_mel_fn
 
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
@@ -37,3 +38,20 @@ def mel_spectrogram(y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin,
     spec = spectral_normalize_torch(spec)
 
     return spec
+
+
+def get_hyparam():
+    """Get hyperparameters from config.json"""
+    class AttrDict(dict):
+        def __init__(self, *args, **kwargs):
+            super(AttrDict, self).__init__(*args, **kwargs)
+            self.__dict__ = self
+
+    with open("./config.json") as f:
+        data = f.read()
+    
+    json_config = json.loads(data)
+    h = AttrDict(json_config)
+
+    return h
+    
