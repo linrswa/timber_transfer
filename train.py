@@ -14,8 +14,9 @@ from utils import mel_spectrogram, get_hyparam
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train9"
-tags = "test code"
+run_name = "train 9"
+tags = "test code and use mfcc to train"
+use_extract_mfcc = False
 
 h = get_hyparam()
 
@@ -25,7 +26,7 @@ def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = DDSP(is_train=True).to(device)
+generator = DDSP(is_train=True, use_extract_mfcc=use_extract_mfcc).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
@@ -71,13 +72,18 @@ total_mean_gen_loss = {
 
 A_weight = get_A_weight().to(device)
 for epoch in tqdm(range(num_epochs)):
-    for fn, s, l ,f in tqdm(train_loader):
+    for fn, s, l ,f, mfcc in tqdm(train_loader):
         
         s = s.to(device)
         l = l.to(device)    
         f = f.to(device)
+        mfcc = mfcc.to(device)
         
-        add, sub, y_g_hat, mu, logvar = generator(s, l, f)
+        if use_extract_mfcc:
+            add, sub, y_g_hat, mu, logvar = generator(s, l, f)
+        else:
+            add, sub, y_g_hat, mu, logvar = generator(mfcc, l, f)
+
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         
@@ -150,9 +156,9 @@ for epoch in tqdm(range(num_epochs)):
 
     epoch_loss = {}
     for k, v in total_mean_disc_loss.items():
-        step_loss_50[f"epoch_loss_{k}"] = v
+        epoch_loss[f"epoch_loss_{k}"] = v
     for k, v in total_mean_gen_loss.items():
-        step_loss_50[f"epoch_loss_{k}"] = v
+        epoch_loss[f"epoch_loss_{k}"] = v
     wandb.log(epoch_loss)
 
 
