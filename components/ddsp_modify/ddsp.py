@@ -18,6 +18,7 @@ class DDSP(nn.Module):
         noise_filter_bank=65, 
         is_train=False,
         is_smooth=False,
+        use_extract_mfcc=True,
         ):
 
         super().__init__()
@@ -31,6 +32,7 @@ class DDSP(nn.Module):
             n_mels=n_mels,
             n_mfcc=n_mfcc,
             timbre_emb_dim=timbre_emb_dim, 
+            use_extract_mfcc=use_extract_mfcc,
         )
 
         self.multi_dim_emb_header = MultiDimEmbHeader()
@@ -55,10 +57,10 @@ class DDSP(nn.Module):
             hop_length=hop_length
         )
     
-    def forward(self, signal, loudness, f0):
+    def forward(self, signal_or_mfcc, loudness, f0):
         
         f0, l = self.encoder(loudness, f0)
-        mu, logvar = self.timbre_encoder(signal)
+        mu, logvar = self.timbre_encoder(signal_or_mfcc)
         timbre_emb = self.sample(mu, logvar)
         multi_timbre_emb = self.multi_dim_emb_header(timbre_emb)
 

@@ -2,7 +2,7 @@
 import torch.nn as nn
 from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
-from torchsummary import summary
+from torchinfo import summary
 
 from components.encoders import TimbreEncoder
 from components.discriminators import MultiPeriodDiscriminator, MultiResolutionDiscriminator
@@ -11,15 +11,20 @@ from components.ddsp_modify.autoencoder import Encoder, Decoder
 from components.ddsp_modify.ddsp import DDSP
 from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_std_loudness
 
+use_extract_mfcc = False
 
 train_dataset = NSynthDataset(data_mode="test", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
-fn, s, l, f = next(iter(train_loader)) 
+fn, s, l, f, mfcc= next(iter(train_loader)) 
 
-ddsp = DDSP(is_train=False, is_smooth=True)
-add, sub, rec, mu, logvar= ddsp(s, l, f)
+ddsp = DDSP(is_train=False, is_smooth=True, use_extract_mfcc=use_extract_mfcc)
+
+if use_extract_mfcc:
+    add, sub, rec, mu, logvar= ddsp(s, l, f)
+else: 
+    add, sub, rec, mu, logvar= ddsp(mfcc, l, f)
 
 
 def calculate_model_size(model: nn.Module):
@@ -41,8 +46,9 @@ calculate_model_size(ddsp)
 calculate_model_size(mpd)
 calculate_model_size(mrd)
 
-summary(ddsp, [(64000,), (250,), (250,)], device="cpu")
-# summary(mpd, [(1, 64000), (1, 64000)], device="cpu")
-# summary(mrd, [(64000,), (64000, )], device="cpu")
+signal_or_mfcc = s if use_extract_mfcc else mfcc
+summary(ddsp, [signal_or_mfcc.shape, l.shape, f.shape], device="cpu")
+# summary(mpd, [s.shape, s.shape], device="cpu")
+# summary(mrd, [s.shape, s.shape], device="cpu")
 
 
