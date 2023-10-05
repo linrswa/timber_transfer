@@ -10,6 +10,7 @@ from components.utils import discriminator_loss
 from components.ddsp_modify.autoencoder import Encoder, Decoder
 from components.ddsp_modify.ddsp import DDSP
 from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_std_loudness
+from ddsp_ori.ddsp import DDSP as DDSP_origin
 
 use_extract_mfcc = False
 
@@ -41,12 +42,15 @@ def calculate_model_size(model: nn.Module):
 
 mpd = MultiPeriodDiscriminator()
 mrd = MultiResolutionDiscriminator()
+ddsp_origin = DDSP_origin()
 
+calculate_model_size(ddsp_origin)
 calculate_model_size(ddsp)
 calculate_model_size(mpd)
 calculate_model_size(mrd)
 
 signal_or_mfcc = s if use_extract_mfcc else mfcc
+# summary(ddsp_origin, [s.shape, l.shape, f.shape], device="cpu")
 summary(ddsp, [signal_or_mfcc.shape, l.shape, f.shape], device="cpu")
 # summary(mpd, [s.shape, s.shape], device="cpu")
 # summary(mrd, [s.shape, s.shape], device="cpu")
