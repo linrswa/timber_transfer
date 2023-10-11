@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train 9"
-tags = "test code and use mfcc to train"
+run_name = "train 11"
+tags = "add a mlp layer, increase loss_weight of loudness from 0.1 to 0.5."
 use_extract_mfcc = False
 
 h = get_hyparam()
@@ -42,8 +42,16 @@ generator.train()
 mrd.train()
 mpd.train()
 
+config = {
+    "loss_weight": h.loss_weight,
+}
 
-wandb.init(project="ddsp_modify", name=run_name, tags=tags)
+wandb.init(
+    project="ddsp_modify",
+    name=run_name, 
+    tags=tags
+    )
+
 
 num_epochs = 300
 # set init value for logging
@@ -109,11 +117,11 @@ for epoch in tqdm(range(num_epochs)):
        
         # Additional loudness loss
         rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)
-        loss_gen_loudness = F.l1_loss(rec_l[:, :-1], l) * 0.1
+        loss_gen_loudness = F.l1_loss(rec_l[:, :-1], l) * h.loss_weight["gen_loudness"] 
 
-        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * 45
+        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
 
-        loss_gen_kl = kl_loss(mu, logvar) * 0.01
+        loss_gen_kl = kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
 
         y_df_hat_r, y_df_hat_g, fmap_f_r, fmap_f_g = mpd(s, y_g_hat)
         y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
@@ -190,3 +198,5 @@ for epoch in tqdm(range(num_epochs)):
 
     for k, v in total_mean_gen_loss.items():
         total_mean_gen_loss[k] = 0
+# %%
+
