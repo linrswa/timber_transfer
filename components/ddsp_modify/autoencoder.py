@@ -15,22 +15,17 @@ class TimbreEncoder(nn.Module):
         n_mels=128,
         n_mfcc=80,
         timbre_emb_dim=256,
-        use_extract_mfcc=True,
         ):
 
         super().__init__()
-        self.use_extract_mfcc = use_extract_mfcc
-        if use_extract_mfcc:
-            print("timbre encoder is using extract mfcc function")
-            self.extract_mfcc = torchaudio.transforms.MFCC(
-                sample_rate=sample_rate,
-                n_mfcc=n_mfcc,
-                melkwargs=dict(
-                    n_fft=n_fft, hop_length=hop_length, n_mels=n_mels, f_min=20.0, f_max=8000.0
-                )
+
+        self.extract_mfcc = torchaudio.transforms.MFCC(
+            sample_rate=sample_rate,
+            n_mfcc=n_mfcc,
+            melkwargs=dict(
+                n_fft=n_fft, hop_length=hop_length, n_mels=n_mels, f_min=20.0, f_max=8000.0
             )
-        else:
-            print("timbre encoder is not using extract mfcc function")
+        )
             
         self.conv = nn.Sequential(
             nn.Conv1d(80, 32, kernel_size=3, stride=1, padding=1),
@@ -55,9 +50,7 @@ class TimbreEncoder(nn.Module):
         )
     
     def forward(self, x):
-        # x will be signal or mfcc
-        if self.use_extract_mfcc:
-            x = self.extract_mfcc(x)
+        x = self.extract_mfcc(x)
         x = self.conv(x)
         x = self.downblocks(x)
         x = nn.AvgPool1d(x.size(-1))(x)
