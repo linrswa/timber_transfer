@@ -18,15 +18,15 @@ train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
-fn, s, l, f, mfcc = next(iter(train_loader)) 
+fn, s, l, f = next(iter(train_loader)) 
 
 if use_mean_std:
     mean_loudness, std_loudness = mean_std_loudness(train_loader)
     l = (l - mean_loudness) / std_loudness
 
-ddsp = DDSP(is_train=False, use_extract_mfcc=False)
+ddsp = DDSP(is_train=False)
 ddsp.load_state_dict(torch.load("./pt_file/train 10_generator_60.pt"))
-add, sub, rec, mu, logvar= ddsp(mfcc, l, f)
+add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)

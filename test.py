@@ -12,20 +12,16 @@ from components.ddsp_modify.ddsp import DDSP
 from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_std_loudness
 from ddsp_ori.ddsp import DDSP as DDSP_origin
 
-use_extract_mfcc = False
 
 train_dataset = NSynthDataset(data_mode="test", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
-fn, s, l, f, mfcc= next(iter(train_loader)) 
+fn, s, l, f = next(iter(train_loader)) 
 
-ddsp = DDSP(is_train=False, is_smooth=True, use_extract_mfcc=use_extract_mfcc)
+ddsp = DDSP(is_train=False, is_smooth=True)
 
-if use_extract_mfcc:
-    add, sub, rec, mu, logvar= ddsp(s, l, f)
-else: 
-    add, sub, rec, mu, logvar= ddsp(mfcc, l, f)
+add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 
 def calculate_model_size(model: nn.Module):
@@ -49,9 +45,9 @@ calculate_model_size(ddsp)
 calculate_model_size(mpd)
 calculate_model_size(mrd)
 
-signal_or_mfcc = s if use_extract_mfcc else mfcc
+
 # summary(ddsp_origin, [s.shape, l.shape, f.shape], device="cpu")
-summary(ddsp, [signal_or_mfcc.shape, l.shape, f.shape], device="cpu")
+summary(ddsp, [s.shape, l.shape, f.shape], device="cpu")
 # summary(mpd, [s.shape, s.shape], device="cpu")
 # summary(mrd, [s.shape, s.shape], device="cpu")
 

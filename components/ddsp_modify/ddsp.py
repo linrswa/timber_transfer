@@ -18,7 +18,6 @@ class DDSP(nn.Module):
         noise_filter_bank=65, 
         is_train=False,
         is_smooth=False,
-        use_extract_mfcc=True,
         ):
 
         super().__init__()
@@ -32,7 +31,6 @@ class DDSP(nn.Module):
             n_mels=n_mels,
             n_mfcc=n_mfcc,
             timbre_emb_dim=timbre_emb_dim, 
-            use_extract_mfcc=use_extract_mfcc,
         )
 
         self.multi_dim_emb_header = MultiDimEmbHeader()

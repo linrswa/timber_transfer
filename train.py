@@ -16,7 +16,6 @@ from data.dataset import NSynthDataset
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 run_name = "train 11"
 tags = "add a mlp layer, increase loss_weight of loudness from 0.1 to 0.5."
-use_extract_mfcc = False
 
 h = get_hyparam()
 
@@ -26,7 +25,7 @@ def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = DDSP(is_train=True, use_extract_mfcc=use_extract_mfcc).to(device)
+generator = DDSP(is_train=True).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
@@ -49,7 +48,8 @@ config = {
 wandb.init(
     project="ddsp_modify",
     name=run_name, 
-    tags=tags
+    tags=tags,
+    config=config
     )
 
 
@@ -80,17 +80,13 @@ total_mean_gen_loss = {
 
 A_weight = get_A_weight().to(device)
 for epoch in tqdm(range(num_epochs)):
-    for fn, s, l ,f, mfcc in tqdm(train_loader):
+    for fn, s, l ,f in tqdm(train_loader):
         
         s = s.to(device)
         l = l.to(device)    
         f = f.to(device)
-        mfcc = mfcc.to(device)
         
-        if use_extract_mfcc:
-            add, sub, y_g_hat, mu, logvar = generator(s, l, f)
-        else:
-            add, sub, y_g_hat, mu, logvar = generator(mfcc, l, f)
+        add, sub, y_g_hat, mu, logvar = generator(s, l, f)
 
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
