@@ -14,7 +14,7 @@ from utils import mel_spectrogram, get_hyparam
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train 11"
+run_name = "train 12"
 tags = "add a mlp layer, increase loss_weight of loudness from 0.1 to 0.5."
 
 h = get_hyparam()

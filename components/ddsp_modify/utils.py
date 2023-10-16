@@ -11,13 +11,15 @@ def safe_log(x):
 
 @torch.no_grad()
 def mean_std_loudness(dataset):
+    print("calculating mean and std of loudness...")
     mean = 0 
     std = 0
     n = 0
-    for _, _, l, _, _ in tqdm(dataset):
+    for _, _, l, _ in tqdm(dataset):
         n += 1 
         mean += (l.mean().item() - mean) / n
         std += (l.std().item() - std) / n
+    print(f"Doen! mean: {mean}, std: {std}")
     return mean, std
 
 
