@@ -1,1 +1,3 @@
-0.28778086483067744
+./pt_file/train12_generator_best_0.pt: 0.2822103881525907
+./pt_file/train12_generator_best_0.pt: 0.2821992149258067
+./pt_file/train12_generator_best_1.pt: 0.2817839070629962

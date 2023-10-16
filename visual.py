@@ -25,7 +25,7 @@ if use_mean_std:
     l = (l - mean_loudness) / std_loudness
 
 ddsp = DDSP(is_train=False)
-ddsp.load_state_dict(torch.load("./pt_file/train 10_generator_60.pt"))
+ddsp.load_state_dict(torch.load("./pt_file/train 11_generator_best_14.pt"))
 add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 A_weight = get_A_weight()
