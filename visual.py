@@ -5,10 +5,6 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
 
-from components.encoders import TimbreEncoder
-from components.discriminators import MultiPeriodDiscriminator, MultiResolutionDiscriminator
-from components.utils import discriminator_loss
-from components.ddsp_modify.autoencoder import Encoder, Decoder
 from components.ddsp_modify.ddsp import DDSP
 from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_std_loudness
 
@@ -25,7 +21,7 @@ if use_mean_std:
     l = (l - mean_loudness) / std_loudness
 
 ddsp = DDSP(is_train=False)
-ddsp.load_state_dict(torch.load("./pt_file/train 11_generator_best_14.pt"))
+ddsp.load_state_dict(torch.load("./pt_file/train 12_generator_best_27.pt"))
 add, sub, rec, mu, logvar= ddsp(s, l, f)
 
 A_weight = get_A_weight()

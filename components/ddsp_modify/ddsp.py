@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
-from .autoencoder import Encoder, Decoder
-from .component import HarmonicOscillator, NoiseFilter, Reverb
-from .autoencoder import MultiDimEmbHeader, TimbreEncoder
+
+from .encoders import Encoder, TimbreEncoder, MultiDimEmbHeader
+from .decoders import  Decoder
+from .component import HarmonicOscillator, NoiseFilter
 
 class DDSP(nn.Module):
     def __init__(
