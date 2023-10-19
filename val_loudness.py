@@ -36,7 +36,6 @@ def valid_model_loudness(
     model: nn.Module, data_mode: str, batch: int = 32
 ):
     mean_std_dict = {}
-    data_mode = "train"
     dataset = NSynthDataset(data_mode=data_mode, sr=16000)
     valid_loader = DataLoader(dataset, batch_size=batch, num_workers=8)
     mean_std_dict["mean_loudness"], mean_std_dict["std_loudness"]= mean_std_loudness(valid_loader)
@@ -59,7 +58,7 @@ pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
 ddsp = DDSP(is_train=False)
 ddsp.load_state_dict(torch.load(pt_file))
 
-data_mode = "train"
+data_mode = "valid"
 l1_loudness = valid_model_loudness(ddsp, data_mode, 128)
-print(f"{pt_file}: {l1_loudness}", file=open("l1_loudness.txt", "a"))
+print(f"{data_mode}: {pt_file.split('/')[-1]}: {l1_loudness}", file=open("l1_loudness.txt", "a"))
 
