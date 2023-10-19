@@ -1,5 +1,3 @@
-#%%
-import torch
 import torch.nn as nn
 import torchaudio
 
@@ -13,10 +11,11 @@ class TimbreEncoder(nn.Module):
         hop_length=256,
         n_mels=128,
         n_mfcc=80,
-        spk_emb_dim=256, 
+        timbre_emb_dim=256,
         ):
 
         super().__init__()
+
         self.extract_mfcc = torchaudio.transforms.MFCC(
             sample_rate=sample_rate,
             n_mfcc=n_mfcc,
@@ -24,6 +23,7 @@ class TimbreEncoder(nn.Module):
                 n_fft=n_fft, hop_length=hop_length, n_mels=n_mels, f_min=20.0, f_max=8000.0
             )
         )
+            
         self.conv = nn.Sequential(
             nn.Conv1d(80, 32, kernel_size=3, stride=1, padding=1),
             nn.LeakyReLU(0.2),
@@ -35,9 +35,9 @@ class TimbreEncoder(nn.Module):
 
         self.downblocks = nn.Sequential(*self.downblocks_list)
 
-        self.conv_mean = nn.Conv1d(512, spk_emb_dim, kernel_size=1, stride=1, padding=0)
+        self.conv_mean = nn.Conv1d(512, timbre_emb_dim, kernel_size=1, stride=1, padding=0)
 
-        self.conv_covariance = nn.Conv1d(512, spk_emb_dim, kernel_size=1, stride=1, padding=0)
+        self.conv_covariance = nn.Conv1d(512, timbre_emb_dim, kernel_size=1, stride=1, padding=0)
 
     def build_downblock(self, in_ch):
         return nn.Sequential(
@@ -51,21 +51,33 @@ class TimbreEncoder(nn.Module):
         x = self.conv(x)
         x = self.downblocks(x)
         x = nn.AvgPool1d(x.size(-1))(x)
-        mean_emb = self.conv_mean(x)
-        covariance_emb = self.conv_covariance(x)
+        mu = self.conv_mean(x)
+        logvar = self.conv_covariance(x)
 
-        """ paper discription
-        Thus, a speaker embedding is given by sampling from the output distribution, i.e., z ∼ N (µ,σ^2I). 
-        Although the sampling operation is non-differentiable, it can be reparameterized as a differentiable 
-        operation using the reparameterization trick [26], i.e., z = µ + σ (.) epsilon, where epsilon ∼ N (0, I).
-        """
-        # Assuming mean_emb and covariance_emb are obtained from the speaker encoder
-        # mean_emb and covariance_emb should be PyTorch tensors
+        return mu, logvar
+    
 
-        # Sample epsilon from a normal distribution with mean 0 and standard deviation 1
-        epsilon = torch.randn_like(covariance_emb)
+class MultiDimEmbHeader(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.down_dense1 = nn.Linear(256, 128)
+        self.down_dense2 = nn.Linear(128, 64)
 
-        # Reparameterize the speaker embedding
-        speaker_embedding = mean_emb + torch.sqrt(covariance_emb) * epsilon
-        return speaker_embedding
+    def forward(self, timbre_emb):
+        dd1 = self.down_dense1(timbre_emb)
+        dd2 = self.down_dense2(dd1)
+        return dd2, dd1, timbre_emb
         
+
+class Encoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+            
+    def forward(self, loundness, f0):
+        f0 = f0.unsqueeze(dim=-1)
+
+        # timbre_emb = self.timbre_encoder(signal)
+        # multi_dim_emb = self.multi_dim_emb_header(timbre_emb)
+
+        l = loundness.unsqueeze(dim=-1)
+        return  f0, l
