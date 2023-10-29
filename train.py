@@ -10,22 +10,24 @@ from components.ddsp_modify.ddsp import DDSP
 from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from components.ddsp_modify.utils import extract_loudness, get_A_weight
-from utils import mel_spectrogram, get_hyparam
+from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train 13"
-tags = "add attention mechanism into tcub block"
+run_name = "train 15"
+tags = "add attention mechanism into tcub block and add the smooth function and add mean_std_loudness"
 
 h = get_hyparam()
 
 def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
     return (batch_mean_loss.item() - total_mean_loss) / n_element
 
+mean_std_dict = get_mean_std_dict("train", 128)
+
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = DDSP(is_train=True).to(device)
+generator = DDSP(is_train=True, is_smooth=True).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
@@ -85,6 +87,8 @@ for epoch in tqdm(range(num_epochs)):
         s = s.to(device)
         l = l.to(device)    
         f = f.to(device)
+
+        l = cal_loudness(l, mean_std_dict)
         
         add, sub, y_g_hat, mu, logvar = generator(s, l, f)
 
@@ -113,7 +117,8 @@ for epoch in tqdm(range(num_epochs)):
        
         # Additional loudness loss
         rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)
-        loss_gen_loudness = F.l1_loss(rec_l[:, :-1], l) * h.loss_weight["gen_loudness"] 
+        rec_l = cal_loudness(rec_l[:, :-1], mean_std_dict)
+        loss_gen_loudness = F.l1_loss(rec_l, l) * h.loss_weight["gen_loudness"] 
 
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
 

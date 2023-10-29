@@ -163,3 +163,4 @@ wandb/
 pt_file/
 *.wav
 tmp.py
+output/

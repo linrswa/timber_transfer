@@ -31,7 +31,6 @@ def calculate_model_size(model: nn.Module):
     size_all_mb = (param_size + buffer_size) / 1024**2
     print(f'{model._get_name()} size: {size_all_mb:.3f}MB')
 
-
 mpd = MultiPeriodDiscriminator()
 mrd = MultiResolutionDiscriminator()
 ddsp_origin = DDSP_origin()
