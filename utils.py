@@ -1,7 +1,19 @@
 import torch
-import torch.utils.data
 import json
 from librosa.filters import mel as librosa_mel_fn
+
+from data.dataset import NSynthDataset
+from components.ddsp_modify.utils import mean_std_loudness
+
+def get_mean_std_dict(data_mode: str, batch: int=32):
+    mean_std_dict = {}
+    dataset = NSynthDataset(data_mode=data_mode, sr=16000)
+    valid_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, num_workers=8)
+    mean_std_dict["mean_loudness"], mean_std_dict["std_loudness"]= mean_std_loudness(valid_loader)
+    return mean_std_dict
+
+def cal_loudness(loudness, mean_std_dict):
+    return (loudness - mean_std_dict["mean_loudness"]) / mean_std_dict["std_loudness"]
 
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
     return torch.log(torch.clamp(x, min=clip_val) * C)

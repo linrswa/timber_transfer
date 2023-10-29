@@ -11,11 +11,10 @@ import numpy as np
 import inquirer
 from glob import glob
 
+from utils import cal_loudness
 from components.ddsp_modify.ddsp import DDSP
 from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_std_loudness
 
-def cal_loudness(loudness, mean_std_dict):
-    return (loudness - mean_std_dict["mean_loudness"]) / mean_std_dict["std_loudness"]
 
 def get_loudness_l1_loss(
     signal: Tensor,
@@ -33,7 +32,7 @@ def get_loudness_l1_loss(
 
 @torch.no_grad()
 def valid_model_loudness(
-    model: nn.Module, data_mode: str, batch: int = 32
+    model: nn.Module, data_mode: str, batch: int
 ):
     mean_std_dict = {}
     dataset = NSynthDataset(data_mode=data_mode, sr=16000)
