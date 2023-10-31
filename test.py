@@ -42,6 +42,7 @@ calculate_model_size(mrd)
 
 
 # summary(ddsp_origin, [s.shape, l.shape, f.shape], device="cpu")
+
 summary(ddsp, [s.shape, l.shape, f.shape], device="cpu")
 # summary(mpd, [s.shape, s.shape], device="cpu")
 # summary(mrd, [s.shape, s.shape], device="cpu")
