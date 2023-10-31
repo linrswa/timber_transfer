@@ -21,7 +21,6 @@ class NSynthDataset(torch.utils.data.Dataset):
                 "signal": "signal",
                 "loudness": "loudness",
                 "frequency": "frequency_c",
-                "mfcc": "mfcc",
             }
             if frequency_with_confidence
             else 
@@ -29,7 +28,6 @@ class NSynthDataset(torch.utils.data.Dataset):
                 "signal": "signal",
                 "loudness": "loudness",
                 "frequency": "frequency",
-                "mfcc": "mfcc",
             }
         )
 
@@ -48,8 +46,5 @@ class NSynthDataset(torch.utils.data.Dataset):
         frequency = np.load(
             os.path.join(self.dir_path, f"{self.info_type['frequency']}/{file_name}.npy")
         ).astype("float32")
-        # mfcc = np.load(
-        #     os.path.join(self.dir_path, f"{self.info_type['mfcc']}/{file_name}.npy")
-        # ).astype("float32")
 
         return (file_name, signal, loudness, frequency)
