@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train 15"
-tags = "add attention mechanism into tcub block and add the smooth function and add mean_std_loudness"
+run_name = "train17"
+tags = "TCUB with attention, add loudness loss"
 
 h = get_hyparam()
 

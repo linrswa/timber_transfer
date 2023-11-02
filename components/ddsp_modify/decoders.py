@@ -46,9 +46,9 @@ class Decoder(nn.Module):
         self.mlp_f0 = self.mlp(1, 32, mlp_layer)
         self.mlp_loudness = self.mlp(1, 32, mlp_layer)
 
-        self.tcrb_1 = TCUB(temporal=temporal, in_ch=64, out_ch=128)
-        self.tcrb_2 = TCUB(temporal=temporal, in_ch=128, out_ch=256)
-        self.tcrb_3 = TCUB(temporal=temporal, in_ch=256, out_ch=512)
+        self.tcrb_1 = TCUB(in_ch=64, out_ch=128)
+        self.tcrb_2 = TCUB(in_ch=128, out_ch=256)
+        self.tcrb_3 = TCUB(in_ch=256, out_ch=512)
     
         self.mlp_final = self.mlp(512 + 64, 512, mlp_layer) 
         self.dense_harm = nn.Linear(512, n_harms + 1)
