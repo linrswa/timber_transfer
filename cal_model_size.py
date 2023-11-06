@@ -15,7 +15,7 @@ train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=Tr
        
 fn, s, l, f = next(iter(train_loader)) 
 
-ddsp = DDSP(is_train=False, is_smooth=True)
+ddsp = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
 
 add, sub, rec, mu, logvar= ddsp(s, l, f)
 

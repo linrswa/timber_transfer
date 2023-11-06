@@ -7,3 +7,4 @@ valid: train 12_generator_best_27.pt: 0.2735390350694222
 valid: train 13_generator_best_13.pt: 0.2611295505167721
 valid: train 15_generator_best_6.pt: 0.4662052943059177
 valid: train 15_generator_40.pt: 0.46622052522255636
+valid: train18_generator_best_16.pt: 0.45914800358700597

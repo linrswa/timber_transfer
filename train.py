@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train17"
-tags = "TCUB with attention, add loudness loss"
+run_name = "train19"
+notes = "TCUB with attention, add loudness loss x 10, add mlp layer 6"
 
 h = get_hyparam()
 
@@ -27,7 +27,7 @@ mean_std_dict = get_mean_std_dict("train", 128)
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = DDSP(is_train=True, is_smooth=True).to(device)
+generator = DDSP(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
@@ -45,12 +45,13 @@ mpd.train()
 
 config = {
     "loss_weight": h.loss_weight,
+    "mlp_layer": h.mlp_layer,
 }
 
 wandb.init(
     project="ddsp_modify",
     name=run_name, 
-    tags=tags,
+    notes=notes,
     config=config
     )
 
