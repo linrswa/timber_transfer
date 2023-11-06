@@ -28,21 +28,21 @@ if use_mean_std:
     std_loudness = 52.82343779478101552
     l = (l - mean_loudness) / std_loudness
 
-ddsp = DDSP(is_train=False, is_smooth=True)
-pt_file = "train 15_generator_best_16.pt"
+ddsp = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
+pt_file = "train19_generator_best_2.pt"
 ddsp.load_state_dict(torch.load(f"pt_file/{pt_file}"))
 add, sub, rec, mu, logvar= ddsp(s, l, f0)
 
-f0_mask = f0_confidence < 0.8
+f0_mask = f0_confidence < 0.85
 f0[f0_mask] = torch.nan
 
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)
-device, cr_model, m_sec = get_extract_pitch_needs()
+device, cr_model, m_sec = get_extract_pitch_needs(device="cpu")
 rec_f0_confidence = extract_pitch(rec.squeeze(dim=-1), device=device, cr=cr_model, m_sec=m_sec, with_confidence=True)
 rec_f0, rec_f0_confidence  = rec_f0_confidence[..., 0], rec_f0_confidence[..., 1]
-rec_f0_mask = rec_f0_confidence < 0.8
+rec_f0_mask = rec_f0_confidence < 0.85
 rec_f0[rec_f0_mask] = torch.nan
 
 if use_mean_std:
@@ -87,12 +87,12 @@ def plot_result(s, rec, fn, rec_l, l):
 plot_result(s, rec, fn, rec_l, l)
 
 #%%
-# out_dir = f"output/{pt_file}"
-# os.makedirs(out_dir, exist_ok=True)
-# file_list_in_output_dir = glob(f"{out_dir}/*")
-# file_num = len(file_list_in_output_dir)//3
-# file_name_with_dir = f"{out_dir}/{file_num}"
-# wf.write(f"{file_name_with_dir}_ori.wav", 16000, s)
-# wf.write(f"{file_name_with_dir}_rec.wav", 16000, rec)
-# plot_result(s, rec, fn, rec_l, l)
-# plt.savefig(f"{file_name_with_dir}.png")
+out_dir = f"output/{pt_file}"
+os.makedirs(out_dir, exist_ok=True)
+file_list_in_output_dir = glob(f"{out_dir}/*")
+file_num = len(file_list_in_output_dir)//3
+file_name_with_dir = f"{out_dir}/{file_num}"
+wf.write(f"{file_name_with_dir}_ori.wav", 16000, s)
+wf.write(f"{file_name_with_dir}_rec.wav", 16000, rec)
+plot_result(s, rec, fn, rec_l, l)
+plt.savefig(f"{file_name_with_dir}.png")

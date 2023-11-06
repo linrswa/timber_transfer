@@ -14,7 +14,7 @@ class DDSP(nn.Module):
         n_mfcc=80,
         n_mels=128,
         timbre_emb_dim=256,
-        mlp_layer=3,
+        mlp_layer=4,
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,
