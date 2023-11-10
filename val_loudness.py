@@ -49,12 +49,13 @@ def valid_model_loudness(
     return np.mean(loss_stack)
 
 pt_list_list = glob("./pt_file/*generator*.pt")
+pt_list_list = sorted(pt_list_list)
 pt_fonfirm = {
     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
 }
 pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
 
-ddsp = DDSP(is_train=False)
+ddsp = DDSP(is_train=False, mlp_layer=6)
 ddsp.load_state_dict(torch.load(pt_file))
 
 data_mode = "valid"
