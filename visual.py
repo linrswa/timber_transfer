@@ -29,7 +29,7 @@ if use_mean_std:
     l = (l - mean_loudness) / std_loudness
 
 ddsp = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
-pt_file = "train19_generator_best_2.pt"
+pt_file = "train19_generator_best_18.pt"
 ddsp.load_state_dict(torch.load(f"pt_file/{pt_file}"))
 add, sub, rec, mu, logvar= ddsp(s, l, f0)
 
