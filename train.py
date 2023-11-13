@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train19"
-notes = "TCUB with attention, add loudness loss x 10, add mlp layer 6"
+run_name = "train20"
+notes = "TCUB with attention, cal loudness loss without norm, add mlp layer 6"
 
 h = get_hyparam()
 
@@ -42,6 +42,8 @@ scheduler_d = torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=h.lr_decay, 
 generator.train()
 mrd.train()
 mpd.train()
+
+
 
 config = {
     "loss_weight": h.loss_weight,
@@ -89,9 +91,9 @@ for epoch in tqdm(range(num_epochs)):
         l = l.to(device)    
         f = f.to(device)
 
-        l = cal_loudness(l, mean_std_dict)
+        l_norm = cal_loudness(l, mean_std_dict)
         
-        add, sub, y_g_hat, mu, logvar = generator(s, l, f)
+        add, sub, y_g_hat, mu, logvar = generator(s, l_norm, f)
 
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
@@ -117,8 +119,8 @@ for epoch in tqdm(range(num_epochs)):
         optim_g.zero_grad()
        
         # Additional loudness loss
-        rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)
-        rec_l = cal_loudness(rec_l[:, :-1], mean_std_dict)
+        rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
+        # rec_l = cal_loudness(rec_l[:, :-1], mean_std_dict)
         loss_gen_loudness = F.l1_loss(rec_l, l) * h.loss_weight["gen_loudness"] 
 
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
@@ -201,4 +203,3 @@ for epoch in tqdm(range(num_epochs)):
     for k, v in total_mean_gen_loss.items():
         total_mean_gen_loss[k] = 0
 # %%
-

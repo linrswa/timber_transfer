@@ -21,12 +21,15 @@ def get_loudness_l1_loss(
     target_l: Tensor,
     aw: Tensor,
     mean_std_dict: dict,
+    norm: bool = False
     ):
     signal = signal.view(signal.shape[0], -1)
     y_l = extract_loudness(signal, aw)[..., :-1]
 
-    target_l = cal_loudness(target_l, mean_std_dict)
-    y_l = cal_loudness(y_l, mean_std_dict)
+    if norm:
+        target_l = cal_loudness(target_l, mean_std_dict)
+        y_l = cal_loudness(y_l, mean_std_dict)
+
     l_l1_loss = F.l1_loss(y_l, target_l)
     return l_l1_loss
 
