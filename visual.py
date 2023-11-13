@@ -26,12 +26,12 @@ if frequency_with_confidence:
 if use_mean_std:
     mean_loudness = -41.27331367041325
     std_loudness = 52.82343779478101552
-    l = (l - mean_loudness) / std_loudness
+    l_mod = (l - mean_loudness) / std_loudness
 
 ddsp = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
-pt_file = "train19_generator_best_18.pt"
+pt_file = "train20_generator_best_0.pt"
 ddsp.load_state_dict(torch.load(f"pt_file/{pt_file}"))
-add, sub, rec, mu, logvar= ddsp(s, l, f0)
+add, sub, rec, mu, logvar= ddsp(s, l_mod, f0)
 
 f0_mask = f0_confidence < 0.85
 f0[f0_mask] = torch.nan
@@ -45,8 +45,8 @@ rec_f0, rec_f0_confidence  = rec_f0_confidence[..., 0], rec_f0_confidence[..., 1
 rec_f0_mask = rec_f0_confidence < 0.85
 rec_f0[rec_f0_mask] = torch.nan
 
-if use_mean_std:
-    rec_l = (rec_l.view(-1) - mean_loudness) / std_loudness
+# if use_mean_std:
+#     rec_l = (rec_l.view(-1) - mean_loudness) / std_loudness
 
 s = s.view(-1).numpy()
 rec = rec.view(-1).detach().numpy()
