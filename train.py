@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train20"
-notes = "TCUB with attention, cal loudness loss without norm, add mlp layer 6"
+run_name = "train22"
+notes = "TCUB with attention, cal loudness loss with norm, add mlp layer 6"
 
 h = get_hyparam()
 
@@ -120,8 +120,8 @@ for epoch in tqdm(range(num_epochs)):
        
         # Additional loudness loss
         rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
-        # rec_l = cal_loudness(rec_l[:, :-1], mean_std_dict)
-        loss_gen_loudness = F.l1_loss(rec_l, l) * h.loss_weight["gen_loudness"] 
+        rec_l = cal_loudness(rec_l, mean_std_dict)
+        loss_gen_loudness = F.l1_loss(rec_l, l_norm) * h.loss_weight["gen_loudness"] 
 
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
 
