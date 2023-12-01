@@ -3,7 +3,7 @@ import torch
 
 from components.ddsp_modify.ddsp import DDSP
 
-pt_file = "pt_file/train22_generator_best_11.pt"
+pt_file = "pt_file/train22_generator_best_31.pt"
 
 model = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
 model.load_state_dict(torch.load(pt_file))
