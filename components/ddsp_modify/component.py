@@ -29,10 +29,11 @@ class HarmonicOscillator(nn.Module):
         self.is_smooth = is_smooth
             
     # FIXME: check smooth_envelop function is placed correctly or not
-    def forward(self, harm_amp_dis, f0):
-        harm_amp, harm_dis = self.separate_amplitude_and_distribution(harm_amp_dis)
+    def forward(self, amp_harm_dis, f0):
+        # harm_amp_dis -> batch, frame, amp_and_n_harm(101)
+        amp, harm_dis = self.separate_amplitude_and_distribution(amp_harm_dis)
         harm_dis = self.remove_above_nyquist(harm_dis, f0, self.sr)
-        harm_amp_dis = harm_amp * harm_dis
+        harm_amp_dis = amp * harm_dis
         harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length)
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
@@ -41,17 +42,17 @@ class HarmonicOscillator(nn.Module):
         return harmonic
     
     @staticmethod
-    def separate_amplitude_and_distribution(harm_amp_dis):
-        harm_amp = torch.sum(harm_amp_dis, dim=-1, keepdim=True)
-        harm_dis = harm_amp_dis / (harm_amp + 1e-20)
-        return harm_amp, harm_dis
+    def separate_amplitude_and_distribution(amp_harm_dis):
+        amp, harm_dis = torch.split(amp_harm_dis, [1, amp_harm_dis.shape[-1] - 1], dim=-1)
+        return amp, harm_dis
+
         
     @staticmethod
-    def remove_above_nyquist(harm_amp_distribution, pitch, sample_rate):
-        n_harm = harm_amp_distribution.shape[-1]
+    def remove_above_nyquist(amp_harm_dis, pitch, sample_rate):
+        n_harm = amp_harm_dis.shape[-1]
         pitches = pitch * torch.arange(1, n_harm + 1).to(pitch)
         aa = (pitches < sample_rate / 2).float() + 1e-4
-        return harm_amp_distribution * aa
+        return amp_harm_dis * aa
     
     # paper says bilinear ?
     @staticmethod
