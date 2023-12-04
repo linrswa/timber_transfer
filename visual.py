@@ -4,7 +4,6 @@ from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
-import numpy as np
 from glob import glob
 import os 
 

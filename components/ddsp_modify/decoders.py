@@ -38,7 +38,6 @@ class Decoder(nn.Module):
     def __init__(
         self,
         mlp_layer=3,
-        temporal = 250,
         n_harms = 101,
         noise_filter_bank = 65
         ):
