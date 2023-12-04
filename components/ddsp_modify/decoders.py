@@ -37,21 +37,24 @@ class TCUB(nn.Module):
 class Decoder(nn.Module):
     def __init__(
         self,
+        in_extract_size=32,
         mlp_layer=3,
+        middle_embedding_size=256,
         n_harms = 101,
         noise_filter_bank = 65
         ):
         super().__init__()
-        self.mlp_f0 = self.mlp(1, 32, mlp_layer)
-        self.mlp_loudness = self.mlp(1, 32, mlp_layer)
+        self.mlp_f0 = self.mlp(1, in_extract_size, mlp_layer)
+        self.mlp_loudness = self.mlp(1, in_extract_size, mlp_layer)
+        in_size = in_extract_size * 2
 
-        self.tcrb_1 = TCUB(in_ch=64, out_ch=128)
-        self.tcrb_2 = TCUB(in_ch=128, out_ch=256)
-        self.tcrb_3 = TCUB(in_ch=256, out_ch=512)
+        self.tcrb_1 = TCUB(in_ch=in_size, out_ch=in_size * 2)
+        self.tcrb_2 = TCUB(in_ch=in_size * 2, out_ch=in_size * 4)
+        self.tcrb_3 = TCUB(in_ch=in_size * 4, out_ch=in_size * 8)
     
-        self.mlp_final = self.mlp(512 + 64, 512, mlp_layer) 
-        self.dense_harm = nn.Linear(512, n_harms + 1)
-        self.dense_noise = nn.Linear(512, noise_filter_bank)
+        self.mlp_final = self.mlp(in_size * 8 + in_size, middle_embedding_size, mlp_layer) 
+        self.dense_harm = nn.Linear(middle_embedding_size, n_harms + 1)
+        self.dense_noise = nn.Linear(middle_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, multi_timbre_emb):
         # encoder_output -> (f0, (timbre_emb64, timbre_emb128, timbre_emb256), l)

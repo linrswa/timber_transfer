@@ -75,9 +75,5 @@ class Encoder(nn.Module):
             
     def forward(self, loundness, f0):
         f0 = f0.unsqueeze(dim=-1)
-
-        # timbre_emb = self.timbre_encoder(signal)
-        # multi_dim_emb = self.multi_dim_emb_header(timbre_emb)
-
         l = loundness.unsqueeze(dim=-1)
         return  f0, l

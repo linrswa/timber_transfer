@@ -40,7 +40,6 @@ class DDSP(nn.Module):
 
         self.decoder = Decoder(
             mlp_layer=mlp_layer,
-            temporal=250,
             n_harms=n_harms,
             noise_filter_bank=noise_filter_bank,
         )
