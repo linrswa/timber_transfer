@@ -7,8 +7,8 @@ import scipy.io.wavfile as wf
 from glob import glob
 import os 
 
-from components.ddsp_modify.ddsp import DDSP
-from components.ddsp_modify.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
+from components.timbre_transformer.TimberTransformer import DDSP
+from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
 
 use_mean_std = True
 frequency_with_confidence = True

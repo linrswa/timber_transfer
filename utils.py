@@ -3,7 +3,7 @@ import json
 from librosa.filters import mel as librosa_mel_fn
 
 from data.dataset import NSynthDataset
-from components.ddsp_modify.utils import mean_std_loudness
+from components.timbre_transformer.utils import mean_std_loudness
 
 def get_mean_std_dict(data_mode: str, batch: int=32):
     mean_std_dict = {}

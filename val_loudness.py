@@ -12,8 +12,8 @@ import inquirer
 from glob import glob
 
 from utils import cal_loudness
-from components.ddsp_modify.ddsp import DDSP
-from components.ddsp_modify.utils import extract_loudness, get_A_weight, mean_std_loudness
+from components.timbre_transformer.TimberTransformer import DDSP
+from components.timbre_transformer.utils import extract_loudness, get_A_weight, mean_std_loudness
 
 
 def get_loudness_l1_loss(

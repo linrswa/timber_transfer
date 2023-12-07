@@ -6,10 +6,10 @@ from tqdm import tqdm
 import itertools
 import wandb
 
-from components.ddsp_modify.ddsp import DDSP
+from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
-from components.ddsp_modify.utils import extract_loudness, get_A_weight
+from components.timbre_transformer.utils import extract_loudness, get_A_weight
 from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
@@ -26,7 +26,7 @@ mean_std_dict = get_mean_std_dict("train", 128)
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = DDSP(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
+generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
