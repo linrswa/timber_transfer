@@ -5,7 +5,7 @@ from .encoders import Encoder, TimbreEncoder, MultiDimEmbHeader
 from .decoders import  Decoder
 from .component import HarmonicOscillator, NoiseFilter
 
-class DDSP(nn.Module):
+class TimbreTransformer(nn.Module):
     def __init__(
         self,
         sample_rate=16000,
@@ -13,8 +13,8 @@ class DDSP(nn.Module):
         hop_length=256,
         n_mfcc=80,
         n_mels=128,
-        timbre_emb_dim=256,
-        mlp_layer=4,
+        timbre_emb_dim=128,
+        mlp_layer=3,
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,
@@ -33,8 +33,6 @@ class DDSP(nn.Module):
             n_mfcc=n_mfcc,
             timbre_emb_dim=timbre_emb_dim, 
         )
-
-        self.multi_dim_emb_header = MultiDimEmbHeader()
 
         self.encoder = Encoder()
 
@@ -60,9 +58,8 @@ class DDSP(nn.Module):
         f0, l = self.encoder(loudness, f0)
         mu, logvar = self.timbre_encoder(signal_or_mfcc)
         timbre_emb = self.sample(mu, logvar)
-        multi_timbre_emb = self.multi_dim_emb_header(timbre_emb)
 
-        harm_amp_distribution, noise_filter_bank = self.decoder(f0, l, multi_timbre_emb)
+        harm_amp_distribution, noise_filter_bank = self.decoder(f0, l, timbre_emb)
 
         additive_output = self.synthesizer(harm_amp_distribution, f0)
 

@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from components.discriminators import MultiPeriodDiscriminator, MultiResolutionDiscriminator
-from components.ddsp_modify.ddsp import DDSP
+from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from ddsp_ori.ddsp import DDSP as DDSP_origin
 
 
@@ -15,9 +15,9 @@ train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=Tr
        
 fn, s, l, f = next(iter(train_loader)) 
 
-ddsp = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
+timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=6)
 
-add, sub, rec, mu, logvar= ddsp(s, l, f)
+add, sub, rec, mu, logvar= timbre_transformer(s, l, f)
 
 
 def calculate_model_size(model: nn.Module):
@@ -36,14 +36,14 @@ mrd = MultiResolutionDiscriminator()
 ddsp_origin = DDSP_origin()
 
 calculate_model_size(ddsp_origin)
-calculate_model_size(ddsp)
+calculate_model_size(timbre_transformer)
 calculate_model_size(mpd)
 calculate_model_size(mrd)
 
 
 # summary(ddsp_origin, [s.shape, l.shape, f.shape], device="cpu")
 
-summary(ddsp, [s.shape, l.shape, f.shape], device="cpu")
+summary(timbre_transformer, [s.shape, l.shape, f.shape], device="cpu")
 # summary(mpd, [s.shape, s.shape], device="cpu")
 # summary(mrd, [s.shape, s.shape], device="cpu")
 
