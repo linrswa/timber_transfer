@@ -26,11 +26,6 @@ class Affine(nn.Module):
     def forward(self, x, condition_emb):
         weight = self.fc_alpha(condition_emb)
         bias = self.fc_beta(condition_emb)
-
-        if x.dim() != 1:
-            weight = weight.unsqueeze(-1)
-            bias = bias.unsqueeze(-1)
-
         return x * weight + bias
 
 
