@@ -1,14 +1,15 @@
 import math
 import torch
 import torch.nn as nn
-from .utils_blocks import TCUB
+from .utils_blocks import TCUB, UpFusionBlock
 
 class Decoder(nn.Module):
     def __init__(
         self,
-        in_extract_size=32,
+        in_extract_size=64,
         mlp_layer=3,
-        middle_embedding_size=256,
+        timbre_emb_size=128,
+        final_embedding_size=512,
         n_harms = 101,
         noise_filter_bank = 65
         ):
@@ -17,23 +18,33 @@ class Decoder(nn.Module):
         self.mlp_loudness = self.mlp(1, in_extract_size, mlp_layer)
         in_size = in_extract_size * 2
 
-        self.tcrb_1 = TCUB(in_ch=in_size, out_ch=in_size * 2)
-        self.tcrb_2 = TCUB(in_ch=in_size * 2, out_ch=in_size * 4)
-        self.tcrb_3 = TCUB(in_ch=in_size * 4, out_ch=in_size * 8)
+        self.timbre_gru_1 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
+        self.timbre_gru_2 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
+        self.timbre_gru_3 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
+
+        self.upfusionblock_1 = UpFusionBlock(in_ch=in_size, emb_dim=timbre_emb_size) # in_size = 128
+        self.upfusionblock_2 = UpFusionBlock(in_ch=in_size*2, emb_dim=timbre_emb_size) # in_size = 256
+        self.upfusionblock_3 = UpFusionBlock(in_ch=in_size*4, emb_dim=timbre_emb_size) # in_size = 512
     
-        self.mlp_final = self.mlp(in_size * 8 + in_size, middle_embedding_size, mlp_layer) 
-        self.dense_harm = nn.Linear(middle_embedding_size, n_harms + 1)
-        self.dense_noise = nn.Linear(middle_embedding_size, noise_filter_bank)
+        self.mlp_final = self.mlp(in_size * 8 + in_size, final_embedding_size, mlp_layer) 
+        self.dense_harm = nn.Linear(final_embedding_size, n_harms + 1)
+        self.dense_noise = nn.Linear(final_embedding_size, noise_filter_bank)
         
-    def forward(self, f0, loudness, multi_timbre_emb):
-        # encoder_output -> (f0, (timbre_emb64, timbre_emb128, timbre_emb256), l)
+    def forward(self, f0, loudness, timbre_emb):
         out_mlp_f0 = self.mlp_f0(f0)
         out_mlp_loudness = self.mlp_loudness(loudness)
         out_cat_mlp = torch.cat([out_mlp_f0, out_mlp_loudness], dim=-1)
-        out_tcrb_1 = self.tcrb_1(out_cat_mlp, multi_timbre_emb[0].expand_as(out_cat_mlp).contiguous())
-        out_tcrb_2 = self.tcrb_2(out_tcrb_1, multi_timbre_emb[1].expand_as(out_tcrb_1).contiguous())
-        out_tcrb_3 = self.tcrb_3(out_tcrb_2, multi_timbre_emb[2].expand_as(out_tcrb_2).contiguous())
-        out_cat_f0_loudness = torch.cat([out_tcrb_3, out_mlp_f0, out_mlp_loudness], dim=-1)
+
+        out_before_up = out_cat_mlp.transpose(1, 2).contiguous()
+        timbre_emb_1, hidden_state_1 = self.timbre_gru_1(timbre_emb)
+        out_upfb_1 = self.upfusionblock_1(out_before_up, timbre_emb_1)
+        timbre_emb_2, hidden_statte_2 = self.timbre_gru_2(timbre_emb_1, hidden_state_1)
+        out_upfb_2 = self.upfusionblock_2(out_upfb_1, timbre_emb_2)
+        timbre_emb_3, _ = self.timbre_gru_3(timbre_emb_2, hidden_statte_2)
+        out_upfb_3 = self.upfusionblock_3(out_upfb_2, timbre_emb_3)
+        out_after_up = out_upfb_3.transpose(1, 2).contiguous()
+
+        out_cat_f0_loudness = torch.cat([out_after_up, out_mlp_f0, out_mlp_loudness], dim=-1)
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
         
         # harmonic part
@@ -66,3 +77,4 @@ class Decoder(nn.Module):
             net.append(nn.LayerNorm(channels[i+1]))
             net.append(nn.LeakyReLU())
         return nn.Sequential(*net)
+
