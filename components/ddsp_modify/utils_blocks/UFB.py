@@ -5,6 +5,7 @@ from collections import OrderedDict
 class Affine(nn.Module):
     def __init__(self, emb_dim):
         super().__init__()
+        self.embedding_dim = emb_dim
         self.fc_alpha = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(emb_dim, emb_dim)),
             ("relu1", nn.ReLU()),
