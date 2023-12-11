@@ -7,7 +7,7 @@ import scipy.io.wavfile as wf
 from glob import glob
 import os 
 
-from components.timbre_transformer.TimberTransformer import DDSP
+from components.timbre_transformer.TimberTransformer import TimbreTransformer 
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
 
 use_mean_std = True
@@ -27,8 +27,8 @@ if use_mean_std:
     std_loudness = 52.82343779478101552
     l_mod = (l - mean_loudness) / std_loudness
 
-ddsp = DDSP(is_train=False, is_smooth=True, mlp_layer=6)
-pt_file = "train23_generator_best_9.pt"
+ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=6)
+pt_file = "New_train_1_generator_best_32.pt"
 ddsp.load_state_dict(torch.load(f"pt_file/{pt_file}"))
 add, sub, rec, mu, logvar= ddsp(s, l_mod, f0)
 
