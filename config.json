@@ -17,5 +17,5 @@
         "gen_mel": 45.0,
         "gen_kl": 0.01
     },
-    "mlp_layer": 6
+    "mlp_layer": 3
 }

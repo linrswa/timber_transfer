@@ -20,13 +20,11 @@ class Decoder(nn.Module):
 
         self.timbre_gru_1 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
         self.timbre_gru_2 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
-        self.timbre_gru_3 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
 
         self.upfusionblock_1 = UpFusionBlock(in_ch=in_size, emb_dim=timbre_emb_size) # in_size = 128
         self.upfusionblock_2 = UpFusionBlock(in_ch=in_size*2, emb_dim=timbre_emb_size) # in_size = 256
-        self.upfusionblock_3 = UpFusionBlock(in_ch=in_size*4, emb_dim=timbre_emb_size) # in_size = 512
     
-        self.mlp_final = self.mlp(in_size * 8 + in_size, final_embedding_size, mlp_layer) 
+        self.mlp_final = self.mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
         self.dense_harm = nn.Linear(final_embedding_size, n_harms + 1)
         self.dense_noise = nn.Linear(final_embedding_size, noise_filter_bank)
         
@@ -38,11 +36,9 @@ class Decoder(nn.Module):
         out_before_up = out_cat_mlp.transpose(1, 2).contiguous()
         timbre_emb_1, hidden_state_1 = self.timbre_gru_1(timbre_emb)
         out_upfb_1 = self.upfusionblock_1(out_before_up, timbre_emb_1)
-        timbre_emb_2, hidden_statte_2 = self.timbre_gru_2(timbre_emb_1, hidden_state_1)
+        timbre_emb_2, _ = self.timbre_gru_2(timbre_emb_1, hidden_state_1)
         out_upfb_2 = self.upfusionblock_2(out_upfb_1, timbre_emb_2)
-        timbre_emb_3, _ = self.timbre_gru_3(timbre_emb_2, hidden_statte_2)
-        out_upfb_3 = self.upfusionblock_3(out_upfb_2, timbre_emb_3)
-        out_after_up = out_upfb_3.transpose(1, 2).contiguous()
+        out_after_up = out_upfb_2.transpose(1, 2).contiguous()
 
         out_cat_f0_loudness = torch.cat([out_after_up, out_mlp_f0, out_mlp_loudness], dim=-1)
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
