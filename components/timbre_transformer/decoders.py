@@ -73,4 +73,3 @@ class Decoder(nn.Module):
             net.append(nn.LayerNorm(channels[i+1]))
             net.append(nn.LeakyReLU())
         return nn.Sequential(*net)
-
