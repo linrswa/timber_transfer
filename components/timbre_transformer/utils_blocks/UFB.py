@@ -3,18 +3,18 @@ from torch import nn
 from collections import OrderedDict
 
 class Affine(nn.Module):
-    def __init__(self, emb_dim):
+    def __init__(self, emb_dim, out_dim):
         super().__init__()
         self.embedding_dim = emb_dim
         self.fc_alpha = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(emb_dim, emb_dim)),
             ("relu1", nn.ReLU()),
-            ("linear2", nn.Linear(emb_dim, 1)),
+            ("linear2", nn.Linear(emb_dim, out_dim)),
         ]))
         self.fc_beta = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(emb_dim, emb_dim)),
             ("relu1", nn.ReLU()),
-            ("linear2", nn.Linear(emb_dim, 1)),
+            ("linear2", nn.Linear(emb_dim, out_dim)),
         ]))
 
     def _initialize(self):
@@ -23,27 +23,31 @@ class Affine(nn.Module):
         nn.init.zeros_(self.fc_beta.linear2.weight.data)
         nn.init.zeros_(self.fc_beta.linear2.bias.data)
 
-    def forward(self, x, condition_emb):
+    def forward(self, x, condition_emb) -> torch.Tensor:
         weight = self.fc_alpha(condition_emb)
         bias = self.fc_beta(condition_emb)
         return x * weight + bias
 
 
 class DFBlock(nn.Module):
-    def __init__(self, in_ch, emb_dim):
+    def __init__(self, in_ch, emb_dim, out_dim=1, out_layer_mlp=False):
         super().__init__()
-        self.affine1 = Affine(emb_dim)
-        self.affine2 = Affine(emb_dim)
-        self.conv = nn.Conv1d(in_ch, in_ch, kernel_size=1)
+        self.affine1 = Affine(emb_dim, out_dim)
+        self.affine2 = Affine(emb_dim, out_dim)
 
-    def forward(self, x, condition_emb):
+        if out_layer_mlp:
+            self.out_layer = nn.Linear(in_ch, in_ch)
+        else:
+            self.out_layer = nn.Conv1d(in_ch, in_ch, kernel_size=1)
+
+    def forward(self, x, condition_emb) -> torch.Tensor:
         x = self.affine1(x, condition_emb)
         x = nn.LeakyReLU(0.2)(x)
         x = self.affine2(x, condition_emb)
         x = nn.LeakyReLU(0.2)(x)
-        x = self.conv(x)
+        x = self.out_layer(x)
         return x
-
+    
 
 class UpBlock(nn.Module):
     def __init__(self, in_ch):
@@ -62,7 +66,7 @@ class UpBlock(nn.Module):
         out = torch.sigmoid(x_sigmoid) * torch.tanh(x_tanh)
         return out
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         # input: [B, emb, T]
         x = self.conv_to_4_times(x)
         x = self.ln(x)
@@ -80,7 +84,7 @@ class UpFusionBlock(nn.Module):
         self.dfblock1 = DFBlock(out_ch, emb_dim)
         self.dfblock2 = DFBlock(out_ch, emb_dim)
         
-    def forward(self, x, condition_emb):
+    def forward(self, x, condition_emb) -> torch.Tensor:
         x_up = self.upblock(x)
         condition_out = self.dfblock1(x_up, condition_emb)
         condition_out = self.dfblock2(condition_out, condition_emb)

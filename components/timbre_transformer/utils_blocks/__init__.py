@@ -1,2 +1,2 @@
 from .TCUB import TCUB
-from .UFB import UpFusionBlock
+from .UFB import UpFusionBlock, DFBlock
