@@ -15,7 +15,7 @@ train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=Tr
        
 fn, s, l, f = next(iter(train_loader)) 
 
-timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=6)
+timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=6, n_harms=101)
 
 add, sub, rec, mu, logvar= timbre_transformer(s, l, f)
 
