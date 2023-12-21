@@ -64,4 +64,3 @@ ddsp.load_state_dict(torch.load(pt_file))
 data_mode = "valid"
 l1_loudness = valid_model_loudness(ddsp, data_mode, 128)
 print(f"{data_mode}: {pt_file.split('/')[-1]}: {l1_loudness}", file=open("l1_loudness.txt", "a"))
-

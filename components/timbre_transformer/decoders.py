@@ -13,8 +13,8 @@ class HarmonicHead(nn.Module):
         super().__init__()
         head_dim_size = n_harms + 1
         self.dense_harm = nn.Linear(in_size, head_dim_size)
-        self.dfblock1 = DFBlock(head_dim_size, timbre_emb_size, out_dim=head_dim_size, out_layer_mlp=True)
-        self.dfblock2 = DFBlock(head_dim_size, timbre_emb_size, out_dim=head_dim_size, out_layer_mlp=True)
+        self.dfblock1 = DFBlock(head_dim_size, timbre_emb_size, affine_dim=head_dim_size, out_layer_mlp=True)
+        self.dfblock2 = DFBlock(head_dim_size, timbre_emb_size, affine_dim=head_dim_size, out_layer_mlp=True)
 
     def forward(self, out_mlp_final, timbre_emb):
         out_dense_harm = self.dense_harm(out_mlp_final)

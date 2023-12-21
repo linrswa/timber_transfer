@@ -3,7 +3,7 @@ from torch import nn
 from collections import OrderedDict
 
 class Affine(nn.Module):
-    def __init__(self, emb_dim, out_dim):
+    def __init__(self, emb_dim, out_dim, is_transpose=False):
         super().__init__()
         self.embedding_dim = emb_dim
         self.fc_alpha = nn.Sequential(OrderedDict([
@@ -16,6 +16,7 @@ class Affine(nn.Module):
             ("relu1", nn.ReLU()),
             ("linear2", nn.Linear(emb_dim, out_dim)),
         ]))
+        self.is_transpose = is_transpose
 
     def _initialize(self):
         nn.init.zeros_(self.fc_alpha.linear2.weight.data)
@@ -26,14 +27,19 @@ class Affine(nn.Module):
     def forward(self, x, condition_emb) -> torch.Tensor:
         weight = self.fc_alpha(condition_emb)
         bias = self.fc_beta(condition_emb)
+
+        if self.is_transpose:
+            weight = weight.transpose(1, 2)
+            bias = bias.transpose(1, 2)
+
         return x * weight + bias
 
 
 class DFBlock(nn.Module):
-    def __init__(self, in_ch, emb_dim, out_dim=1, out_layer_mlp=False):
+    def __init__(self, in_ch, emb_dim, affine_dim=1, out_layer_mlp=False, is_transpose=False):
         super().__init__()
-        self.affine1 = Affine(emb_dim, out_dim)
-        self.affine2 = Affine(emb_dim, out_dim)
+        self.affine1 = Affine(emb_dim, affine_dim, is_transpose)
+        self.affine2 = Affine(emb_dim, affine_dim, is_transpose)
 
         if out_layer_mlp:
             self.out_layer = nn.Linear(in_ch, in_ch)
@@ -81,8 +87,8 @@ class UpFusionBlock(nn.Module):
         super().__init__()
         out_ch = in_ch * 2
         self.upblock = UpBlock(in_ch)
-        self.dfblock1 = DFBlock(out_ch, emb_dim)
-        self.dfblock2 = DFBlock(out_ch, emb_dim)
+        self.dfblock1 = DFBlock(out_ch, emb_dim, affine_dim=out_ch, is_transpose=True)
+        self.dfblock2 = DFBlock(out_ch, emb_dim, affine_dim=out_ch, is_transpose=True)
         
     def forward(self, x, condition_emb) -> torch.Tensor:
         x_up = self.upblock(x)

@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "New_train_4"
-notes = "Add more fusion block in generator"
+run_name = "New_train_6"
+notes = "Add more fusion block in generator, let affine block have more fusion component"
 h = get_hyparam()
 
 def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
