@@ -59,7 +59,7 @@ pt_fonfirm = {
 pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=3).to(device)
+generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=200).to(device)
 generator.load_state_dict(torch.load(pt_file))
 
 data_mode = "valid"

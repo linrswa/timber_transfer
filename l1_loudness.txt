@@ -14,3 +14,4 @@ valid: New_train_7_generator_best_50.pt: 35.700526761772196
 valid: New_train_7_generator_best_50.pt: 0.4666186979774474
 valid: New_train_7_generator_best_12.pt: 0.46808044361800377
 valid: New_train_6_generator_best_7.pt: 0.46995553270474083
+valid: New_train_7_generator_best_83.pt: 0.4685766180045472
