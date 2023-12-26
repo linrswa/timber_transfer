@@ -14,8 +14,8 @@ from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "New_train_6"
-notes = "Add more fusion block in generator, let affine block have more fusion component"
+run_name = "New_train_7"
+notes = "Add more fusion block in generator, let affine block have more fusion component, n_harms=200"
 h = get_hyparam()
 
 def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
@@ -26,7 +26,7 @@ mean_std_dict = get_mean_std_dict("train", 128)
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
 train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
-generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
+generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer, n_harms=200).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 
 optim_g = torch.optim.AdamW(generator.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])

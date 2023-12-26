@@ -12,7 +12,7 @@ import inquirer
 from glob import glob
 
 from utils import cal_loudness
-from components.timbre_transformer.TimberTransformer import DDSP
+from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, mean_std_loudness
 
 
@@ -47,7 +47,7 @@ def valid_model_loudness(
     for val_p, val_s, val_l, val_f in tqdm(valid_loader):
         val_s, val_l, val_f = val_s.to(device), val_l.to(device), val_f.to(device)
         out_add, out_sub, out_rec, out_mu, out_logvar = model(val_s, val_l, val_f)
-        loss = get_loudness_l1_loss(out_rec, val_l, aw, mean_std_dict)
+        loss = get_loudness_l1_loss(out_rec, val_l, aw, mean_std_dict,  norm=True)
     loss_stack.append(loss.item())
     return np.mean(loss_stack)
 
@@ -58,9 +58,10 @@ pt_fonfirm = {
 }
 pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
 
-ddsp = DDSP(is_train=False, mlp_layer=6)
-ddsp.load_state_dict(torch.load(pt_file))
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=3).to(device)
+generator.load_state_dict(torch.load(pt_file))
 
 data_mode = "valid"
-l1_loudness = valid_model_loudness(ddsp, data_mode, 128)
+l1_loudness = valid_model_loudness(generator, data_mode, 32)
 print(f"{data_mode}: {pt_file.split('/')[-1]}: {l1_loudness}", file=open("l1_loudness.txt", "a"))
