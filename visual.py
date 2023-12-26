@@ -27,8 +27,8 @@ if use_mean_std:
     std_loudness = 52.82343779478101552
     l_mod = (l - mean_loudness) / std_loudness
 
-ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
-pt_file = "New_train_5_generator_30.pt"
+ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=200)
+pt_file = "New_train_7_generator_best_12.pt"
 ddsp.load_state_dict(torch.load(f"pt_file/{pt_file}"))
 add, sub, rec, mu, logvar= ddsp(s, l_mod, f0)
 
