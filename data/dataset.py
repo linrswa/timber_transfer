@@ -13,9 +13,8 @@ class NSynthDataset(torch.utils.data.Dataset):
     ):
         super().__init__()
         self.sr = sr
-        self.dir_path = f"{dir_path}/{data_mode}"
-        signal_path = os.path.join(self.dir_path, "signal/*")
-        self.audio_list = glob(signal_path)
+        self.dir_path = dir_path
+        self.set_data_mode(data_mode)
         self.info_type = (
             {
                 "signal": "signal",
@@ -38,13 +37,23 @@ class NSynthDataset(torch.utils.data.Dataset):
         signal_path = self.audio_list[idx]
         file_name = signal_path.split("/")[-1][:-4]
         signal = np.load(
-            os.path.join(self.dir_path, f"{self.info_type['signal']}/{file_name}.npy")
+            os.path.join(self.data_mode_dir_path, f"{self.info_type['signal']}/{file_name}.npy")
         ).astype("float32")
         loudness = np.load(
-            os.path.join(self.dir_path, f"{self.info_type['loudness']}/{file_name}.npy")
+            os.path.join(self.data_mode_dir_path, f"{self.info_type['loudness']}/{file_name}.npy")
         ).astype("float32")[..., :-1]
         frequency = np.load(
-            os.path.join(self.dir_path, f"{self.info_type['frequency']}/{file_name}.npy")
+            os.path.join(self.data_mode_dir_path, f"{self.info_type['frequency']}/{file_name}.npy")
         ).astype("float32")
 
         return (file_name, signal, loudness, frequency)
+
+    def set_data_mode(self, data_mode: str):
+        self.data_mode = data_mode
+        self.data_mode_dir_path = f"{self.dir_path}/{data_mode}"
+        signal_path = os.path.join(self.data_mode_dir_path, "signal/*")
+        self.audio_list = glob(signal_path)
+
+    def getitem_by_fn(self, fn: str):
+        idx = self.audio_list.index(os.path.join(self.data_mode_dir_path, f"{self.info_type['signal']}/{fn}.npy"))
+        return self.__getitem__(idx)
