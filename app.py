@@ -7,8 +7,9 @@ from matplotlib import pyplot as plt
 
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from data.dataset import NSynthDataset
+from utils import cal_loudness_norm
 
-pt_file = "pt_file/New_train_6_generator_best_7.pt"
+pt_file = "pt_file/New_train_8_generator_40.pt"
 model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
 dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
 model.eval()
@@ -22,11 +23,6 @@ def create_fig(data: ndarray) -> plt.Figure:
     plt.plot(data)
     plt.close()
     return fig
-
-def cal_loudness_norm(l: ndarray):
-    mean_loudness = -41.27331367041325
-    std_loudness = 52.82343779478101552
-    return (l - mean_loudness) / std_loudness
 
 def model_gen(s: ndarray, l_norm: ndarray, f:ndarray):
     transfrom = lambda x: np2tensor(x).unsqueeze(0)

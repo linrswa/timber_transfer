@@ -1,6 +1,7 @@
 import torch
 import json
 from librosa.filters import mel as librosa_mel_fn
+from numpy import ndarray
 
 from data.dataset import NSynthDataset
 from components.timbre_transformer.utils import mean_std_loudness
@@ -68,4 +69,10 @@ def get_hyparam():
     h = AttrDict(json_config)
 
     return h
+
+def cal_loudness_norm(l: ndarray):
+    mean_loudness = -41.27331367041325
+    std_loudness = 52.82343779478101552
+    return (l - mean_loudness) / std_loudness
+
     
