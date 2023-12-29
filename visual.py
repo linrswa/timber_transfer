@@ -9,6 +9,7 @@ import os
 
 from components.timbre_transformer.TimberTransformer import TimbreTransformer 
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
+from utils import cal_loudness_norm
 
 use_mean_std = True
 frequency_with_confidence = True
@@ -23,9 +24,7 @@ if frequency_with_confidence:
     f0, f0_confidence = f0_confidence[..., 0][...,: -1], f0_confidence[..., 1][...,: -1]
 
 if use_mean_std:
-    mean_loudness = -41.27331367041325
-    std_loudness = 52.82343779478101552
-    l_mod = (l - mean_loudness) / std_loudness
+    l_mod = cal_loudness_norm(l)
 
 ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=200)
 pt_file = "New_train_7_generator_best_83.pt"
