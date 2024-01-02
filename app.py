@@ -4,12 +4,15 @@ import random
 import torch
 from numpy import ndarray
 from matplotlib import pyplot as plt
+from glob import glob
 
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from data.dataset import NSynthDataset
 from utils import cal_loudness_norm
 
-pt_file = "pt_file/New_train_8_generator_40.pt"
+pt_file = "pt_file/New_train_8_generator_best_13.pt"
+
+pt_file_list = sorted(glob("pt_file/New_train*generator*.pt"))
 model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
 dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
 model.eval()
@@ -37,9 +40,14 @@ def sample_data():
     _, s, l, f = dataset.getitem_by_fn(fn)
     return fn, s, l, f
 
-def chagne_dataset(data_mode):
+def change_dataset(data_mode):
     dataset.set_data_mode(data_mode)
     return dataset.data_mode
+
+def change_pt_file(pt_file):
+    print(pt_file)
+    model.load_state_dict(torch.load(pt_file))
+    print("load model from ", pt_file)
 
 def generate_data():
     fn, s, l, f = sample_data()
@@ -56,8 +64,11 @@ with gr.Blocks() as app:
         with gr.Column():
             data_mode = gr.Radio(["train", "valid", "test"], label="Data Mode")
             data_mode_button = gr.Button("change dataset")
-        data_mode_text = gr.Textbox(label="Data Mode")
-    
+        data_mode_text = gr.Textbox(label="Data Mode", placeholder="train")
+   
+    with gr.Row():
+        pt_file_selector = gr.Dropdown(pt_file_list, label="Model pt file") 
+     
     with gr.Row():
         generate_button = gr.Button("generate data")
         generate_text = gr.Textbox(label="file name")
@@ -70,7 +81,10 @@ with gr.Blocks() as app:
         generate_rec_image = gr.Plot(label="Rec signal")
         generate_rec_audio = gr.Audio(label="Rec signal")
 
-    data_mode_button.click(chagne_dataset, data_mode, data_mode_text)
+    data_mode_button.click(change_dataset, data_mode, data_mode_text)
+
+    pt_file_selector.change(change_pt_file, inputs=[pt_file_selector])
+
     generate_button.click(
         generate_data,
         outputs=[
@@ -81,6 +95,8 @@ with gr.Blocks() as app:
             generate_rec_image
             ]
         )
+
+    
 
 
 app.launch()
