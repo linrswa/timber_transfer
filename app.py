@@ -10,13 +10,17 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from data.dataset import NSynthDataset
 from utils import cal_loudness_norm
 
-pt_file = "pt_file/New_train_8_generator_best_13.pt"
+class GlobalInfo:
+    def __init__(self):
+        self.current_pt_file_name = "New_train_8_generator_best_13.pt"
+        self.pt_file = f"pt_file/{self.current_pt_file_name}"
+        self.pt_file_list = sorted(glob("pt_file/New_train*generator*.pt"))
+        self.model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
+        self.dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
+        self.model.eval()
+        self.model.load_state_dict(torch.load(self.pt_file))
 
-pt_file_list = sorted(glob("pt_file/New_train*generator*.pt"))
-model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
-dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
-model.eval()
-model.load_state_dict(torch.load(pt_file))
+G_info = GlobalInfo()
 
 def create_fig(data: ndarray) -> plt.Figure:
     fig = plt.figure()
@@ -29,23 +33,26 @@ def model_gen(s: ndarray, l_norm: ndarray, f:ndarray):
         return torch.from_numpy(np_array).unsqueeze(0)
     s, l_norm, f = transfrom(s), transfrom(l_norm), transfrom(f)
     f = f[:, :-1, 0]
-    _, _, rec_s, _, _ = model(s, l_norm, f)
+    _, _, rec_s, _, _ = G_info.model(s, l_norm, f)
     return rec_s
 
 def sample_data():
-    fn_with_path = random.choice(dataset.audio_list)
+    fn_with_path = random.choice(G_info.dataset.audio_list)
     fn = fn_with_path.split("/")[-1][:-4]
-    _, s, l, f = dataset.getitem_by_fn(fn)
+    _, s, l, f = G_info.dataset.getitem_by_fn(fn)
     return fn, s, l, f
 
 def change_dataset(data_mode: str) -> str:
-    dataset.set_data_mode(data_mode)
-    return dataset.data_mode
+    G_info.dataset.set_data_mode(data_mode)
+    return G_info.dataset.data_mode
 
-def change_pt_file(pt_file):
-    print(pt_file)
-    model.load_state_dict(torch.load(pt_file))
-    print("load model from ", pt_file)
+def change_pt_file(pt_file: str):
+    G_info.current_pt_file_name = pt_file.split("/")[-1]
+    try:
+        G_info.model.load_state_dict(torch.load(pt_file))
+    except:
+        raise gr.Error("load model failed")
+    return G_info.current_pt_file_name
 
 def generate_data():
     fn, s, l, f = sample_data()
@@ -58,32 +65,32 @@ def generate_data():
 
 
 with gr.Blocks() as app:
-    with gr.Tab("model"):
-        with gr.Row():
-            with gr.Column():
-                data_mode = gr.Radio(["train", "valid", "test"], label="Data Mode")
-                data_mode_button = gr.Button("change dataset")
-            data_mode_text = gr.Textbox(label="Data Mode", placeholder="train")
+    with gr.Row():
+        data_mode = gr.Radio(["train", "valid", "test"], label="Data Mode")
+
+    with gr.Row():
+        pt_file_selector = gr.Dropdown(G_info.pt_file_list, label="Model pt file") 
     
+    with gr.Group():
         with gr.Row():
-            pt_file_selector = gr.Dropdown(pt_file_list, label="Model pt file") 
-       
-    with gr.Tab("generate"): 
-        with gr.Row():
-            generate_button = gr.Button("generate data")
-            generate_text = gr.Textbox(label="file name")
+            signal_name = gr.Textbox(label="Dataset")
+            pt_name = gr.Textbox(label="pt file", value=G_info.current_pt_file_name)
 
-        with gr.Row():
-            generate_image = gr.Plot(label="Ori signal")
-            generate_audio = gr.Audio(label="Ori signal")
+    with gr.Row():
+        generate_button = gr.Button("generate data")
+        generate_text = gr.Textbox(label="file name")
 
-        with gr.Row():
-            generate_rec_image = gr.Plot(label="Rec signal")
-            generate_rec_audio = gr.Audio(label="Rec signal")
+    with gr.Row():
+        generate_image = gr.Plot(label="Ori signal")
+        generate_audio = gr.Audio(label="Ori signal")
 
-    data_mode_button.click(change_dataset, inputs=[data_mode], outputs=[data_mode_text])
+    with gr.Row():
+        generate_rec_image = gr.Plot(label="Rec signal")
+        generate_rec_audio = gr.Audio(label="Rec signal")
 
-    pt_file_selector.change(change_pt_file, inputs=[pt_file_selector])
+    data_mode.select(change_dataset, inputs=[data_mode], outputs=[signal_name])
+
+    pt_file_selector.change(change_pt_file, inputs=[pt_file_selector], outputs=[pt_name])
 
     generate_button.click(
         generate_data,
