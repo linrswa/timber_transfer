@@ -2,11 +2,16 @@
 import os
 import torch
 import torchaudio
+from torch.utils.data import Dataset ,DataLoader
 import numpy as np
 from glob import glob
 from tqdm import tqdm
 
-class DatasetForProcessor(torch.utils.data.Dataset):
+import sys
+sys.path.append(".")
+from components.timbre_transformer.utils import extract_pitch, get_extract_pitch_needs
+
+class DatasetForProcessor(Dataset):
     def __init__(
         self,
         data_mode: str,
@@ -41,23 +46,20 @@ class DataProcessor:
         n_fft: int = 1024,
         source: str = "signal",
     ):
+        self.data_mode = data_mode
         self.dir_path = f"{dataset_dir}/{data_mode}"
         self.sr = sr
         self.n_fft = n_fft
         self.hop_length = int(n_fft / 4)
         self.save_dir_dict = {
             "signal": "signal",
-            "frequency": "frequency_c_old",
+            "frequency_c": "frequency_c",
             "loudness": "loudness",
             "mfcc": "mfcc",
         }
         self.source = self._check_source(source)
         self.source_list = self._get_source_path_list()
         self._check_folders_isexist()
-        # self.dataset = DatasetForProcessor(data_mode, dataset_dir, sr)
-        # self.dataloader = torch.utils.data.DataLoader(
-        #     self.dataset, batch_size=4, shuffle=False
-        # )
 
     def _check_source(self, source: str):
         if source not in ["audio", "signal"]:
@@ -81,10 +83,8 @@ class DataProcessor:
         print("Now save dir is:")
         for k, v in self.save_dir_dict.items():
             print(f"{self.dir_path}/{v}")
-    
 
     def gen_mel_data(self):
-
         extract_mfcc = torchaudio.transforms.MFCC(
             sample_rate=self.sr,
             n_mfcc=80,
@@ -103,8 +103,29 @@ class DataProcessor:
                 os.path.join(self.dir_path, f"{self.save_dir_dict['mfcc']}/{file_name}.npy"),
                 mfcc.numpy(),
             )
+    
+    def extract_frequency_c(self):
+        dl = DataLoader(DatasetForProcessor(self.data_mode), batch_size=32)
+        self._print_save_dir_info()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device, cr, m_sec = get_extract_pitch_needs(device=device)
+        for fn_batch, signal_batch in tqdm(dl):
+            signal_batch = signal_batch.to(device)
+            frequency_c_batch = extract_pitch(
+                signal=signal_batch,
+                device=device,
+                cr=cr,
+                m_sec=m_sec,
+                sampling_rate=self.sr,
+                with_confidence=True,
+            )
+            for fn, frequency_c in zip(fn_batch, frequency_c_batch):
+                np.save(
+                    os.path.join(self.dir_path, f"{self.save_dir_dict['frequency_c']}/{fn}.npy"),
+                    frequency_c.numpy(),
+                )
 
 
 if __name__ == "__main__":
     processor = DataProcessor("valid")
-    processor.gen_mel_data()
+    processor.extract_frequency_c()

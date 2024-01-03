@@ -83,6 +83,8 @@ class CREPE(nn.Module):
         # FIXME: support batch input
         if len(audio.shape) == 2:
             batch = audio.shape[0]
+        else:
+            raise ValueError("audio must be (N,) or (C, N)")
 
         def get_frame(audio, step_size, center):
             if center:
