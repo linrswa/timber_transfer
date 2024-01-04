@@ -13,7 +13,7 @@ def get_mean_std_dict(data_mode: str, batch: int=32):
     mean_std_dict["mean_loudness"], mean_std_dict["std_loudness"]= mean_std_loudness(valid_loader)
     return mean_std_dict
 
-def cal_loudness(loudness, mean_std_dict):
+def cal_mean_std_loudness(loudness, mean_std_dict):
     return (loudness - mean_std_dict["mean_loudness"]) / mean_std_dict["std_loudness"]
 
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):

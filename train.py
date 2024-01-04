@@ -10,7 +10,7 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from components.timbre_transformer.utils import extract_loudness, get_A_weight
-from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_loudness
+from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -90,7 +90,7 @@ for epoch in tqdm(range(num_epochs)):
         l = l.to(device)    
         f = f.to(device)
 
-        l_norm = cal_loudness(l, mean_std_dict)
+        l_norm = cal_mean_std_loudness(l, mean_std_dict)
         
         add, sub, y_g_hat, mu, logvar = generator(s, l_norm, f)
 
@@ -119,7 +119,7 @@ for epoch in tqdm(range(num_epochs)):
        
         # Additional loudness loss
         rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
-        rec_l = cal_loudness(rec_l, mean_std_dict)
+        rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
         loss_gen_loudness = F.l1_loss(rec_l, l_norm) * h.loss_weight["gen_loudness"] 
 
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
