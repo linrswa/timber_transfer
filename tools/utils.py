@@ -76,4 +76,14 @@ def cal_loudness_norm(l: ndarray):
     std_loudness = 52.82343779478101552
     return (l - mean_loudness) / std_loudness
 
+def seperate_f0_confidence(f0_with_confidence: ndarray):
+    f0, f0_confidence = f0_with_confidence[..., 0][...,: -1], f0_with_confidence[..., 1][...,: -1]
+    return f0, f0_confidence
+
+def mask_f0_with_confidence(f0_with_confidence: ndarray, threshold: float=0.85):
+    f0, f0_confidence = f0_with_confidence[..., 0][...,: -1], f0_with_confidence[..., 1][...,: -1]
+    f0[f0_confidence < threshold] = torch.nan
+    return f0
+    
+
     
