@@ -1,9 +1,11 @@
 # %%
 import torch.nn as nn
-from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
+import sys
+sys.path.append(".")
+from data.dataset import NSynthDataset
 from components.discriminators import MultiPeriodDiscriminator, MultiResolutionDiscriminator
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from ddsp_ori.ddsp import DDSP as DDSP_origin

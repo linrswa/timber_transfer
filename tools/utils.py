@@ -3,6 +3,7 @@ import json
 from librosa.filters import mel as librosa_mel_fn
 from numpy import ndarray
 
+
 from data.dataset import NSynthDataset
 from components.timbre_transformer.utils import mean_std_loudness
 

@@ -10,7 +10,7 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from components.timbre_transformer.utils import extract_loudness, get_A_weight
-from utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
+from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")

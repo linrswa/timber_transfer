@@ -8,7 +8,7 @@ from glob import glob
 
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from data.dataset import NSynthDataset
-from utils import cal_loudness_norm
+from tools.utils import cal_loudness_norm
 
 class GlobalInfo:
     def __init__(self):
