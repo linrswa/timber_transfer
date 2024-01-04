@@ -1,18 +1,22 @@
 # %%
 import torch
-from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
 from glob import glob
 import os 
 
+import sys
+sys.path.append("..")
+from data.dataset import NSynthDataset
 from components.timbre_transformer.TimberTransformer import TimbreTransformer 
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
-from utils import cal_loudness_norm
+from tools.utils import cal_loudness_norm
 
 use_mean_std = True
 frequency_with_confidence = True
+output_dir = "../output"
+pt_file_dir = "../pt_file"
 
 train_dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=frequency_with_confidence)
 
@@ -28,7 +32,7 @@ if use_mean_std:
 
 ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=200)
 pt_file = "New_train_7_generator_best_83.pt"
-ddsp.load_state_dict(torch.load(f"pt_file/{pt_file}"))
+ddsp.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar= ddsp(s, l_mod, f0)
 
 f0_mask = f0_confidence < 0.85
@@ -53,8 +57,8 @@ rec_f0 = rec_f0.view(-1).numpy()
 
 def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot
-    wf.write("output/tmp/ori.wav", 16000, s)
-    wf.write("output/tmp/rec.wav", 16000, rec)
+    wf.write(f"{output_dir}/tmp/ori.wav", 16000, s)
+    wf.write(f"{output_dir}/tmp/rec.wav", 16000, rec)
     plt.suptitle(fn[0])
     plt.subplot(331)
     p(s)
@@ -85,7 +89,7 @@ def plot_result(s, rec, fn, rec_l, l):
 plot_result(s, rec, fn, rec_l, l)
 
 #%%
-out_dir = f"output/{pt_file}"
+out_dir = f"{output_dir}/{pt_file}"
 os.makedirs(out_dir, exist_ok=True)
 file_list_in_output_dir = glob(f"{out_dir}/*")
 file_num = len(file_list_in_output_dir)//3

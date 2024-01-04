@@ -4,14 +4,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from data.dataset import NSynthDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 import inquirer
 from glob import glob
 
-from utils import cal_mean_std_loudness
+import sys
+sys.path.append(".")
+from data.dataset import NSynthDataset
+from tools.utils import cal_mean_std_loudness
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, mean_std_loudness
 
