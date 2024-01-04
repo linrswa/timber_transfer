@@ -53,8 +53,8 @@ rec_f0 = rec_f0.view(-1).numpy()
 
 def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot
-    wf.write("ori.wav", 16000, s)
-    wf.write("rec.wav", 16000, rec)
+    wf.write("output/tmp/ori.wav", 16000, s)
+    wf.write("output/tmp/rec.wav", 16000, rec)
     plt.suptitle(fn[0])
     plt.subplot(331)
     p(s)
