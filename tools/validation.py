@@ -101,7 +101,13 @@ generator.load_state_dict(torch.load(pt_file))
 data_mode = "valid"
 l1_loudness, l1_f0 = valid_model(generator, data_mode, 32)
 
+print(f""""
+    finish {pt_file.split('/')[-1]}\n 
+    \t loudness loss: {l1_loudness}\n
+    \t pitch loss: {l1_f0}\n
+    """ )
+
 with open("validation_log.txt", "a") as f:
-    f.write(f"{data_mode}: {pt_file.split('/')[-1]}", file=f)
-    f.write(f"\tloudness loss: {l1_loudness}", file=f)
-    f.write(f"\tpitch loss: {l1_f0}", file=f)
+    f.write(f"{data_mode}: {pt_file.split('/')[-1]}\n")
+    f.write(f"\tloudness loss: {l1_loudness}\n")
+    f.write(f"\tpitch loss: {l1_f0}\n")

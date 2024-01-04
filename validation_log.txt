@@ -18,3 +18,6 @@ valid: New_train_7_generator_best_83.pt: 0.4685766180045472
 valid: New_train_8_generator_140.pt: 0.5325781725028648
 valid: New_train_8_generator_best_13.pt: 0.5325786003414851
 
+valid: New_train_8_generator_best_150.pt	
+    loudness loss: 0.5325796876297633	
+    pitch loss: 0.545508240014089
