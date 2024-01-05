@@ -13,7 +13,7 @@ from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mea
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "New_train_8"
+run_name = "New_train_9"
 notes = "Add more fusion block in generator, let affine block have more fusion component"
 h = get_hyparam()
 
@@ -83,7 +83,7 @@ for epoch in tqdm(range(num_epochs)):
 
         l_norm = cal_mean_std_loudness(l, mean_std_dict)
         
-        add, sub, y_g_hat, mu, logvar = generator(s, l_norm, f)
+        add, sub, y_g_hat, mu, logvar, global_amp = generator(s, l_norm, f)
 
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
