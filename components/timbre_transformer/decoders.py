@@ -29,7 +29,7 @@ class HarmonicHead(nn.Module):
         n_harm_amps_norm = nn.functional.softmax(n_harm_amps, dim=-1)
         harm_amp_distribution = global_amp * n_harm_amps_norm
 
-        return harm_amp_distribution
+        return harm_amp_distribution, global_amp
 
 
 class Decoder(nn.Module):

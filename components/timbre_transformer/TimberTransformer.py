@@ -61,14 +61,14 @@ class TimbreTransformer(nn.Module):
 
         harm_amp_distribution, noise_filter_bank = self.decoder(f0, l, timbre_emb)
 
-        additive_output = self.synthesizer(harm_amp_distribution, f0)
+        additive_output, global_amp = self.synthesizer(harm_amp_distribution, f0)
 
         subtractive_output = self.noise_filter(noise_filter_bank)
 
         reconstruct_signal = additive_output + subtractive_output
         # reconstruct_signal = additive_output
 
-        return additive_output, subtractive_output, reconstruct_signal, mu, logvar
+        return additive_output, subtractive_output, reconstruct_signal, mu, logvar, global_amp
 
     def sample(self, mu, logvar):
         """ paper discription
