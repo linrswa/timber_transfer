@@ -31,13 +31,14 @@ class HarmonicOscillator(nn.Module):
     # FIXME: check smooth_envelop function is placed correctly or not
     def forward(self, harm_amp_dis, f0):
         # harm_amp_dis -> batch, frame, amp_and_n_harm
+        harm_amp_dis, global_amp = harm_amp_dis[0], harm_amp_dis[1]
         harm_amp_dis = self.remove_above_nyquist(harm_amp_dis, f0, self.sr)
         harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length)
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
         if self.is_smooth:
             harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
-        return harmonic
+        return harmonic, global_amp
         
     @staticmethod
     def remove_above_nyquist(amp_harm_dis, pitch, sample_rate):
