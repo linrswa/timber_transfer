@@ -2,6 +2,7 @@ import torch
 import json
 from librosa.filters import mel as librosa_mel_fn
 from numpy import ndarray
+from torch import Tensor
 
 
 from data.dataset import NSynthDataset
@@ -76,12 +77,22 @@ def cal_loudness_norm(l: ndarray):
     std_loudness = 52.82343779478101552
     return (l - mean_loudness) / std_loudness
 
+# write a funcion make frequency transofrom to MIDI
+def get_midi_from_frequency(frequency: Tensor):
+    midi_value = 69 + 12 * torch.log2(frequency / 440) 
+    # fix midi_value, if midi_value < 0, set it to 0
+    if midi_value.min() < 0:
+        midi_value[midi_value < 0] = 0
+    return  midi_value
+
 def seperate_f0_confidence(f0_with_confidence: ndarray):
     f0, f0_confidence = f0_with_confidence[..., 0][...,: -1], f0_with_confidence[..., 1][...,: -1]
     return f0, f0_confidence
 
-def mask_f0_with_confidence(f0_with_confidence: ndarray, threshold: float=0.85):
+def mask_f0_with_confidence(f0_with_confidence: ndarray, threshold: float=0.85, return_midi: bool=True):
     f0, f0_confidence = f0_with_confidence[..., 0][...,: -1], f0_with_confidence[..., 1][...,: -1]
+    if return_midi:
+        f0 = get_midi_from_frequency(f0)
     f0[f0_confidence < threshold] = torch.nan
     return f0
     

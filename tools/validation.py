@@ -19,7 +19,6 @@ from components.timbre_transformer.utils import extract_loudness, get_A_weight, 
 from components.timbre_transformer.utils import extract_pitch, get_extract_pitch_needs
 
 
-
 def get_loudness_l1_loss(
     signal: Tensor,
     target_l: Tensor,
@@ -34,7 +33,7 @@ def get_loudness_l1_loss(
         target_l = cal_mean_std_loudness(target_l, mean_std_dict)
         y_l = cal_mean_std_loudness(y_l, mean_std_dict)
 
-    l_l1_loss = F.l1_loss(y_l, target_l)
+    l_l1_loss = F.l1_loss(y_l[..., :200], target_l[..., :200])
     return l_l1_loss
 
 def get_pitch_l1_loss(
@@ -46,8 +45,8 @@ def get_pitch_l1_loss(
 ):
     signal = signal.view(signal.shape[0], -1)
     y_f0_c = extract_pitch(signal, device, cr, m_sec, with_confidence=True)
-    target_f0 = mask_f0_with_confidence(target_f0_c, threshold=0.85)
-    y_f0 = mask_f0_with_confidence(y_f0_c, threshold=0.85)
+    target_f0 = mask_f0_with_confidence(target_f0_c, threshold=0.85, return_midi=True)
+    y_f0 = mask_f0_with_confidence(y_f0_c, threshold=0.85, return_midi=True)
     y_f0 = y_f0.to(device)
     f_l1_loss = abs(target_f0 - y_f0).nanmean() 
     return f_l1_loss
@@ -72,7 +71,7 @@ def valid_model(
     for val_p, val_s, val_l, val_f0_c in tqdm(valid_loader):
         val_s, val_l, val_f0_c = val_s.to(device), val_l.to(device), val_f0_c.to(device)
         val_f0, val_f0_confidence = seperate_f0_confidence(val_f0_c)
-        out_add, out_sub, out_rec, out_mu, out_logvar = model(val_s, val_l, val_f0)
+        out_add, out_sub, out_rec, out_mu, out_logvar, global_amp = model(val_s, val_l, val_f0)
 
         loss_l = get_loudness_l1_loss(out_rec, val_l, aw, mean_std_dict,  norm=True)
         loss_f = get_pitch_l1_loss(out_rec, val_f0_c, device, cr, m_sec)
