@@ -30,10 +30,10 @@ if frequency_with_confidence:
 if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
-ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=101)
+model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=101)
 pt_file = "New_train_8_generator_best_13.pt"
-ddsp.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
-add, sub, rec, mu, logvar= ddsp(s, l_mod, f0)
+model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
+add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)
@@ -50,8 +50,17 @@ rec = rec.view(-1).detach().numpy()
 rec_l = rec_l.view(-1).detach().numpy()[:-1]
 rec_f0 = rec_f0.view(-1).numpy()
 
-
+add_l = extract_loudness(add.squeeze(dim=-1), A_weight)
+sub_l = extract_loudness(sub.squeeze(dim=-1), A_weight)
+add = add.view(-1).detach().numpy()
+sub = sub.view(-1).detach().numpy()
+add_l = add_l.view(-1).detach().numpy()[:-1]
+sub_l = sub_l.view(-1).detach().numpy()[:-1]
+add_l, sub_l = cal_loudness_norm(add_l), cal_loudness_norm(sub_l)
 l, rec_l = cal_loudness_norm(l), cal_loudness_norm(rec_l)
+
+global_amp = global_amp.view(-1).detach().numpy()
+
 def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot
     wf.write(f"{output_dir}/tmp/ori.wav", 16000, s)
@@ -73,14 +82,14 @@ def plot_result(s, rec, fn, rec_l, l):
     p(abs(l - rec_l), color="red")
     plt.title(f"diff_loudness {abs(l - rec_l).mean(): .3f}")
     plt.subplot(337)
-    p(f0)
-    plt.title("ori_f0")
+    p(add_l)
+    plt.title("add_loudness")
     plt.subplot(338)
-    p(rec_f0)
-    plt.title("rec_f0")
+    p(sub_l)
+    plt.title("sub_loudness")
     plt.subplot(339)
-    p(abs(f0 - rec_f0), color="red")
-    plt.title(f"diff_f0 {abs(f0 - rec_f0).nanmean(): .3f}")
+    p(global_amp)
+    plt.title("global_amp")
     plt.tight_layout()
 
 plot_result(s, rec, fn, rec_l, l)
