@@ -20,4 +20,18 @@ valid: New_train_8_generator_best_13.pt: 0.5325786003414851
 
 valid: New_train_8_generator_best_150.pt	
     loudness loss: 0.5325796876297633	
-    pitch loss: 0.545508240014089
+    pitch loss: 0.545508240014089valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.5327055830098146
+	pitch loss: 0.5439615357265228
+valid: New_train_8_generator_best_150.pt
+	loudness loss: nan
+	pitch loss: 0.5487882497993168
+valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.5327033993629191
+	pitch loss: 0.5439344986674135
+valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.4291030011154243
+	pitch loss: inf
+valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.42910321431486675
+	pitch loss: 0.0331912164201283
