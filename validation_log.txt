@@ -1,0 +1,46 @@
+./pt_file/train12_generator_best_0.pt: 0.2822103881525907
+./pt_file/train12_generator_best_0.pt: 0.2821992149258067
+./pt_file/train12_generator_best_1.pt: 0.2817839070629962
+./pt_file/train 12_generator_10.pt: 0.28176950212647417
+valid: train 12_generator_best_15.pt: 0.27357032540326054
+valid: train 12_generator_best_27.pt: 0.2735390350694222
+valid: train 13_generator_best_13.pt: 0.2611295505167721
+valid: train 15_generator_best_6.pt: 0.4662052943059177
+valid: train 15_generator_40.pt: 0.46622052522255636
+valid: train18_generator_best_16.pt: 0.45914800358700597
+valid: train19_generator_best_18.pt: 0.48750409298927977
+valid: train19_generator_best_18.pt: 0.48756144426916237
+valid: New_train_7_generator_best_50.pt: 35.700526761772196
+valid: New_train_7_generator_best_50.pt: 0.4666186979774474
+valid: New_train_7_generator_best_12.pt: 0.46808044361800377
+valid: New_train_6_generator_best_7.pt: 0.46995553270474083
+valid: New_train_7_generator_best_83.pt: 0.4685766180045472
+valid: New_train_8_generator_140.pt: 0.5325781725028648
+valid: New_train_8_generator_best_13.pt: 0.5325786003414851
+
+valid: New_train_8_generator_best_150.pt	
+    loudness loss: 0.5325796876297633	
+    pitch loss: 0.545508240014089valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.5327055830098146
+	pitch loss: 0.5439615357265228
+valid: New_train_8_generator_best_150.pt
+	loudness loss: nan
+	pitch loss: 0.5487882497993168
+valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.5327033993629191
+	pitch loss: 0.5439344986674135
+valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.4291030011154243
+	pitch loss: inf
+valid: New_train_8_generator_best_150.pt
+	loudness loss: 0.42910321431486675
+	pitch loss: 0.0331912164201283
+valid: New_train_9_generator_best_26.pt
+	loudness loss: 0.4279452206448942
+	pitch loss: 0.02512945405764086
+valid: New_train_9_generator_50.pt
+	loudness loss: 0.4279438823996939
+	pitch loss: 0.025166375382338447
+valid: New_train_9_generator_80.pt
+	loudness loss: 0.4279433681310481
+	pitch loss: 0.025377369669562153
