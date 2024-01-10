@@ -83,28 +83,29 @@ def valid_model(
 
     return mean_l_loss, mean_f_loss
 
-# pt_list_list = glob("./pt_file/*generator*.pt")
-# pt_list_list = sorted(pt_list_list)
-# pt_fonfirm = {
-#     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
-# }
-# pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-pt_file = "./pt_file/New_train_9_generator_80.pt"
+if __name__ == "__main__":
+    # pt_list_list = glob("./pt_file/*generator*.pt")
+    # pt_list_list = sorted(pt_list_list)
+    # pt_fonfirm = {
+    #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
+    # }
+    # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
+    pt_file = "./pt_file/New_train_10_generator_best_0.pt"
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
-generator.load_state_dict(torch.load(pt_file))
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
+    generator.load_state_dict(torch.load(pt_file))
 
-data_mode = "valid"
-l1_loudness, l1_f0 = valid_model(generator, data_mode, 32)
+    data_mode = "valid"
+    l1_loudness, l1_f0 = valid_model(generator, data_mode, 32)
 
-print(f""""
-    finish {pt_file.split('/')[-1]}\n 
-    \t loudness loss: {l1_loudness}\n
-    \t pitch loss: {l1_f0}\n
-    """ )
+    print(f""""
+        finish {pt_file.split('/')[-1]}\n 
+        \t loudness loss: {l1_loudness}\n
+        \t pitch loss: {l1_f0}\n
+        """ )
 
-with open("validation_log.txt", "a") as f:
-    f.write(f"{data_mode}: {pt_file.split('/')[-1]}\n")
-    f.write(f"\tloudness loss: {l1_loudness}\n")
-    f.write(f"\tpitch loss: {l1_f0}\n")
+    with open("validation_log.txt", "a") as f:
+        f.write(f"{data_mode}: {pt_file.split('/')[-1]}\n")
+        f.write(f"\tloudness loss: {l1_loudness}\n")
+        f.write(f"\tpitch loss: {l1_f0}\n")
