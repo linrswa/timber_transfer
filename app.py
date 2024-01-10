@@ -12,7 +12,7 @@ from tools.utils import cal_loudness_norm
 
 class GlobalInfo:
     def __init__(self):
-        self.current_pt_file_name = "New_train_8_generator_best_13.pt"
+        self.current_pt_file_name = "New_train_9_generator_best_26.pt"
         self.pt_file = f"pt_file/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob("pt_file/New_train*generator*.pt"))
         self.model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
@@ -33,7 +33,7 @@ def model_gen(s: ndarray, l_norm: ndarray, f:ndarray):
         return torch.from_numpy(np_array).unsqueeze(0)
     s, l_norm, f = transfrom(s), transfrom(l_norm), transfrom(f)
     f = f[:, :-1, 0]
-    _, _, rec_s, _, _ = G_info.model(s, l_norm, f)
+    _, _, rec_s, _, _, _ = G_info.model(s, l_norm, f)
     return rec_s
 
 def sample_data():
@@ -104,6 +104,3 @@ with gr.Blocks() as app:
         )
 
 app.launch()
-        
-
-    

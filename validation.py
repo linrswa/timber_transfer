@@ -10,8 +10,6 @@ import numpy as np
 import inquirer
 from glob import glob
 
-import sys
-sys.path.append(".")
 from data.dataset import NSynthDataset
 from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
@@ -91,7 +89,7 @@ def valid_model(
 #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
 # }
 # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-pt_file = "./pt_file/New_train_8_generator_best_150.pt"
+pt_file = "./pt_file/New_train_9_generator_80.pt"
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
