@@ -1,33 +1,36 @@
-import math
 import torch
+import math
 import torch.nn as nn
 from .utils_blocks import UpFusionBlock, DFBlock
 
 # force the amplitudes, harmonic distributions, and filtered noise magnitudes 
 # to be non-negative by applying a sigmoid nonlinearity to network outputs.
-def modified_sigmoid(x):
-    return 2 * torch.sigmoid(x)**(math.log(10)) + 1e-7
+def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7): 
+    return max_value * torch.sigmoid(x)**math.log(exponent) + threshold
 
 class HarmonicHead(nn.Module):
     def __init__(self, in_size, timbre_emb_size, n_harms):
         super().__init__()
-        head_dim_size = n_harms + 1
-        self.dense_harm = nn.Linear(in_size, head_dim_size)
-        self.dfblock1 = DFBlock(head_dim_size, timbre_emb_size, affine_dim=head_dim_size, out_layer_mlp=True)
-        self.dfblock2 = DFBlock(head_dim_size, timbre_emb_size, affine_dim=head_dim_size, out_layer_mlp=True)
+        self.dense_harm = nn.Linear(in_size, n_harms+1)
+        self.dfblock1 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
+        self.dfblock2 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
 
     def forward(self, out_mlp_final, timbre_emb):
-        out_dense_harm = self.dense_harm(out_mlp_final)
-        df_out = self.dfblock1(out_dense_harm, timbre_emb)
-        df_out = self.dfblock2(df_out, timbre_emb)
-        out_dense_harm = out_dense_harm + df_out
+        n_harm_amps = self.dense_harm(out_mlp_final)
 
-        # out_dense_harmonic output -> 1(global_amplitude) + n_harmonics 
-        global_amp = modified_sigmoid(out_dense_harm[..., :1])
-        n_harm_amps = out_dense_harm[..., 1:]
+        # out_dense_harmonic output -> global_amplitude(1) + n_harmonics(101) 
+        global_amp, n_harm_dis = n_harm_amps[..., :1], n_harm_amps[..., 1:]
+
+        df_out = self.dfblock1(n_harm_dis, timbre_emb)
+        df_out = self.dfblock2(df_out, timbre_emb)
+        n_harm_dis = n_harm_dis + df_out
+
+        global_amp = modified_sigmoid(global_amp)
+
         # n_harm_amps /= n_harm_amps.sum(-1, keepdim=True) # not every element >= 0
-        n_harm_amps_norm = nn.functional.softmax(n_harm_amps, dim=-1)
-        harm_amp_distribution = global_amp * n_harm_amps_norm
+        n_harm_dis_norm = nn.functional.softmax(n_harm_dis, dim=-1)
+
+        harm_amp_distribution = global_amp * n_harm_dis_norm
 
         return harm_amp_distribution, global_amp
 
