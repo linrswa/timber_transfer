@@ -19,7 +19,7 @@ fn, s, l, f = next(iter(train_loader))
 
 timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=6, n_harms=101)
 
-add, sub, rec, mu, logvar= timbre_transformer(s, l, f)
+add, sub, rec, mu, logvar, global_amp = timbre_transformer(s, l, f)
 
 
 def calculate_model_size(model: nn.Module):
