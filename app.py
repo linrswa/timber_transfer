@@ -1,14 +1,14 @@
 #%%
-import gradio as gr 
-import random
 import torch
+import random
+import gradio as gr 
+from glob import glob
 from numpy import ndarray
 from matplotlib import pyplot as plt
-from glob import glob
 
-from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from data.dataset import NSynthDataset
 from tools.utils import cal_loudness_norm
+from components.timbre_transformer.TimberTransformer import TimbreTransformer
 
 class GlobalInfo:
     def __init__(self):
