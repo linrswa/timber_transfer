@@ -12,7 +12,7 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 
 class GlobalInfo:
     def __init__(self):
-        self.current_pt_file_name = "New_train_9_generator_best_26.pt"
+        self.current_pt_file_name = "New_train_11_generator_best_0.pt"
         self.pt_file = f"pt_file/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob("pt_file/New_train*generator*.pt"))
         self.model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3)
