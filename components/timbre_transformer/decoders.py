@@ -18,7 +18,8 @@ class HarmonicHead(nn.Module):
         self.stack_amp = nn.Sequential(
             nn.LeakyReLU(0.2),
             nn.Linear(1, 1),
-            nn.Tanh(),
+            # nn.Tanh(),
+            nn.LeakyReLU(0.2),
             nn.Linear(1, 1),
             )
 

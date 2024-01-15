@@ -53,3 +53,9 @@ valid: New_train_10_generator_10.pt
 valid: New_train_10_generator_30.pt
 	loudness loss: 0.5436930239571222
 	pitch loss: 0.0245194834236333
+valid: New_train_11_generator_best_0.pt
+	loudness loss: 0.4681375637941522
+	pitch loss: 0.05923541690183314
+valid: New_train_11_generator_best_46.pt
+	loudness loss: 0.46811415430811376
+	pitch loss: 0.06002716178078754
