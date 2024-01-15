@@ -16,11 +16,9 @@ class HarmonicHead(nn.Module):
         self.dfblock2 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
         self.relu = nn.LeakyReLU(0.2)
         self.stack_amp = nn.Sequential(
+            nn.Linear(1, 8),
             nn.LeakyReLU(0.2),
-            nn.Linear(1, 1),
-            # nn.Tanh(),
-            nn.LeakyReLU(0.2),
-            nn.Linear(1, 1),
+            nn.Linear(8, 1),
             )
 
     def forward(self, out_mlp_final, timbre_emb):
@@ -36,8 +34,9 @@ class HarmonicHead(nn.Module):
         n_harm_dis = n_harm_dis + df_out
 
         # global amplitude part
-        global_amp = self.stack_amp(global_amp)
-        global_amp = modified_sigmoid(global_amp)
+        global_amp = self.relu(global_amp)
+        global_amp_att = self.stack_amp(global_amp)
+        global_amp = modified_sigmoid(global_amp+global_amp_att)
 
         # n_harm_amps /= n_harm_amps.sum(-1, keepdim=True) # not every element >= 0
         n_harm_dis_norm = nn.functional.softmax(n_harm_dis, dim=-1)
