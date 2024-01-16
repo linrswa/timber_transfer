@@ -76,7 +76,7 @@ class HarmonicOscillator(nn.Module):
         fold = nn.Fold(output_size=(1, size_with_padding), kernel_size=(1, win_size), stride=(1, hop_size))
         x = fold(x)
         x = x.view(x.size(0), -1, 1).contiguous()
-        x = x[:, hop_size+1: -hop_size+1, :]
+        x = x[:, hop_size+1: -hop_size+1, :] # remove the padding
         return x
 
 

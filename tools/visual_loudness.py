@@ -13,25 +13,26 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
 from tools.utils import cal_loudness_norm, seperate_f0_confidence, mask_f0_with_confidence
 
-use_mean_std = True
-frequency_with_confidence = True
+USE_MEAN_STD = True
+FREQUENCY_WITH_CONFIDENCE = True
+USE_SMOOTH = False
 output_dir = "../output"
 pt_file_dir = "../pt_file"
 
-train_dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=frequency_with_confidence)
+train_dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
 fn, s, l, f0_with_confidence = next(iter(train_loader)) 
 
-if frequency_with_confidence:
+if FREQUENCY_WITH_CONFIDENCE:
     f0, _ = seperate_f0_confidence(f0_with_confidence)
 
-if use_mean_std:
+if USE_MEAN_STD:
     l_mod = cal_loudness_norm(l)
 
-model = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=101)
-pt_file = f"{pt_file_dir}/New_train_12_generator_best_3.pt"
+model = TimbreTransformer(is_train=False, is_smooth=USE_SMOOTH, mlp_layer=3, n_harms=101)
+pt_file = f"{pt_file_dir}/New_train_13_generator_best_3.pt"
 model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
 
