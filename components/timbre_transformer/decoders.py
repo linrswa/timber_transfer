@@ -71,6 +71,11 @@ class Decoder(nn.Module):
     
         self.mlp_final = self.mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
+        self.dense_noise = nn.Sequential(
+            nn.Linear(final_embedding_size, final_embedding_size),
+            nn.LeakyReLU(0,2),
+            nn.Linear(final_embedding_size, noise_filter_bank),
+        )
         self.dense_noise = nn.Linear(final_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, timbre_emb):

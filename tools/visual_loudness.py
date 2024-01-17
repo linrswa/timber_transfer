@@ -15,11 +15,11 @@ from tools.utils import cal_loudness_norm, seperate_f0_confidence, mask_f0_with_
 
 USE_MEAN_STD = True
 FREQUENCY_WITH_CONFIDENCE = True
-USE_SMOOTH = False
+USE_SMOOTH = True
 output_dir = "../output"
 pt_file_dir = "../pt_file"
 
-train_dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE)
+train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
@@ -66,6 +66,8 @@ def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot
     wf.write(f"{output_dir}/tmp/ori.wav", 16000, s)
     wf.write(f"{output_dir}/tmp/rec.wav", 16000, rec)
+    wf.write(f"{output_dir}/tmp/add.wav", 16000, add)
+    wf.write(f"{output_dir}/tmp/sub.wav", 16000, sub)
     plt.suptitle(fn[0])
     plt.subplot(331)
     p(s)
