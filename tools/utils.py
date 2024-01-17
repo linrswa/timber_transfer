@@ -56,6 +56,29 @@ def mel_spectrogram(y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin,
 
     return spec
 
+def safe_log(x):
+    return torch.log(x + 1e-7)
+
+def multiscale_fft(
+    signal: Tensor,
+    scales: list= [4096, 2048, 1024, 512, 256, 128],
+    overlap: float=0.75,
+    ):
+    stfts = []
+    for scale in scales:
+        S = torch.stft(
+            input = signal,
+            n_fft = scale,
+            hop_length = int(scale * (1 - overlap)),
+            win_length = scale,
+            window = torch.hann_window(scale).to(signal),
+            center = True,
+            normalized=True,
+            return_complex=True,
+        ).abs()
+        stfts.append(S)
+    return stfts
+
 
 def get_hyparam():
     """Get hyperparameters from config.json"""
