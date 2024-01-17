@@ -13,8 +13,8 @@ from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mea
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "New_train_13"
-notes = "try new harmonic global_amp"
+run_name = "New_train_14"
+notes = "try add a layer to noise_dense"
 
 h = get_hyparam()
 
