@@ -14,8 +14,8 @@ from tools.utils import multiscale_fft, safe_log
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train2"
-notes = "try to use multi-scale fft loss instead of mel_spectrum loss"
+run_name = "train3"
+notes = "try add a layer to noise_dense"
 
 h = get_hyparam()
 
@@ -46,7 +46,7 @@ config = {
 }
 
 wandb.init(
-    project="TimbreTransformer",
+    project="ddsp_modify",
     name=run_name, 
     notes=notes,
     config=config
@@ -68,6 +68,7 @@ total_mean_disc_loss = {
 total_mean_gen_loss = {
     "gen_r": 0,
     "gen_fm_r": 0,
+    "gen_mel": 0,
     "gen_multiscale_fft": 0,
     "gen_kl": 0,
     "gen_loudness": 0,
@@ -87,6 +88,9 @@ for epoch in tqdm(range(num_epochs)):
         
         add, sub, y_g_hat, mu, logvar, global_amp = generator(s, l_norm, f)
 
+        y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
+        y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
+        
         s = s.unsqueeze(dim=1)
         y_g_hat = y_g_hat.permute(0, 2, 1).contiguous()
         # Train Discriminator
@@ -103,15 +107,15 @@ for epoch in tqdm(range(num_epochs)):
         
         # Train Generator
         optim_g.zero_grad()
-
-        ori_stft = multiscale_fft(s.squeeze(dim=1))
-        rec_stft = multiscale_fft(y_g_hat.squeeze(dim=1))
        
         # Additional loudness loss
         rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
         rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
         loss_gen_loudness = F.l1_loss(rec_l, l_norm) * h.loss_weight["gen_loudness"] 
 
+        # Multiscale FFT loss
+        ori_stft = multiscale_fft(s.squeeze(dim=1))
+        rec_stft = multiscale_fft(y_g_hat.squeeze(dim=1))
         loss_gen_multiscale_fft = 0 
         for s_x, s_y in zip(ori_stft, rec_stft):
             linear_loss = (s_x - s_y).abs().mean()
@@ -120,12 +124,13 @@ for epoch in tqdm(range(num_epochs)):
 
         loss_gen_multiscale_fft *= h.loss_weight["gen_multiscale_fft"]
 
+        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
         loss_gen_kl = kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
 
         y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
         loss_gen_fm_r = feature_loss(fmap_r_r, fmap_r_g)
         loss_gen_r, losses_gen_r = generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_multiscale_fft + loss_gen_kl + loss_gen_loudness
+        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_loudness
         
 
         loss_gen_all.backward()
