@@ -11,9 +11,8 @@ def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7):
 x_values = torch.linspace(-10, 10, 100)
 
 # Calculating the values for both functions
-# sigmoid_values = torch.sigmoid(x_values)
-sigmoid_values = modified_sigmoid(x_values, exponent=10.0, max_value=2.0, threshold=1e-7)
-modified_sigmoid_values = modified_sigmoid(x_values, exponent=20.0, max_value=2.0, threshold=1e-7)
+sigmoid_values = torch.sigmoid(x_values)
+modified_sigmoid_values= modified_sigmoid(x_values, exponent=10.0, max_value=2.0, threshold=1e-7)
 
 # Plotting
 plt.figure(figsize=(10, 6))
