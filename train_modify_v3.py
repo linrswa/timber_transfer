@@ -14,8 +14,8 @@ from tools.utils import multiscale_fft, safe_log
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train3"
-notes = "try add a layer to noise_dense"
+run_name = "train4"
+notes = "Refactor harmonic head and noise head."
 
 h = get_hyparam()
 

@@ -59,14 +59,15 @@ class TimbreTransformer(nn.Module):
         mu, logvar = self.timbre_encoder(signal_or_mfcc)
         timbre_emb = self.sample(mu, logvar)
 
-        harm_amp_distribution, noise_filter_bank = self.decoder(f0, l, timbre_emb)
+        harmonic_head_output, noise_head_output = self.decoder(f0, l, timbre_emb)
 
-        additive_output, global_amp = self.synthesizer(harm_amp_distribution, f0)
+        additive_output = self.synthesizer(harmonic_head_output, f0)
 
-        subtractive_output = self.noise_filter(noise_filter_bank)
+        subtractive_output = self.noise_filter(noise_head_output)
 
         reconstruct_signal = additive_output + subtractive_output
-        # reconstruct_signal = additive_output
+
+        global_amp = harmonic_head_output[1]
 
         return additive_output, subtractive_output, reconstruct_signal, mu, logvar, global_amp
 
