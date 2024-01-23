@@ -8,6 +8,20 @@ from .utils_blocks import UpFusionBlock, DFBlock
 def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7): 
     return max_value * torch.sigmoid(x)**math.log(exponent) + threshold
 
+class AmpStack(nn.Module):
+    def __init__(self, emb_dim=8):
+        super().__init__()
+        self.stack = nn.Sequential(
+            nn.Linear(1, emb_dim),
+            nn.LeakyReLU(0.2),
+            nn.Linear(emb_dim, 1),
+            )
+    
+    def forward(self, amp):
+        amp_att = self.stack(amp)
+        return modified_sigmoid(amp + amp_att)
+
+
 class HarmonicHead(nn.Module):
     def __init__(self, in_size, timbre_emb_size, n_harms):
         super().__init__()
@@ -15,11 +29,7 @@ class HarmonicHead(nn.Module):
         self.dfblock1 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
         self.dfblock2 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
         self.relu = nn.LeakyReLU(0.2)
-        self.stack_amp = nn.Sequential(
-            nn.Linear(1, 8),
-            nn.LeakyReLU(0.2),
-            nn.Linear(8, 1),
-            )
+        self.stack_amp = AmpStack(emb_dim=8)
 
     def forward(self, out_mlp_final, timbre_emb):
         n_harm_amps = self.dense_harm(out_mlp_final)
@@ -35,15 +45,28 @@ class HarmonicHead(nn.Module):
 
         # global amplitude part
         global_amp = self.relu(global_amp)
-        global_amp_att = self.stack_amp(global_amp)
-        global_amp = modified_sigmoid(global_amp+global_amp_att)
+        global_amp = self.stack_amp(global_amp)
 
         # n_harm_amps /= n_harm_amps.sum(-1, keepdim=True) # not every element >= 0
         n_harm_dis_norm = nn.functional.softmax(n_harm_dis, dim=-1)
 
-        harm_amp_distribution = global_amp * n_harm_dis_norm
+        return n_harm_dis_norm, global_amp
 
-        return harm_amp_distribution, global_amp
+
+class NoiseHead(nn.Module):
+    def __init__(self, in_size, noise_filter_bank):
+        super().__init__()
+        self.dense_noise = nn.Linear(in_size, noise_filter_bank + 1)
+        self.relu = nn.LeakyReLU(0.2)
+        self.stack_amp = AmpStack(emb_dim=8)
+    
+    def forward(self, out_mlp_final):
+        out_dense_noise = self.dense_noise(out_mlp_final)
+        global_amp, noise_filter_bank = out_dense_noise[..., :1], out_dense_noise[..., 1:]
+        noise_filter_bank = self.relu(noise_filter_bank)
+        global_amp = self.stack_amp(global_amp)
+
+        return noise_filter_bank, global_amp
 
 
 class Decoder(nn.Module):
@@ -71,12 +94,7 @@ class Decoder(nn.Module):
     
         self.mlp_final = self.mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
-        self.dense_noise = nn.Sequential(
-            nn.Linear(final_embedding_size, final_embedding_size),
-            nn.LeakyReLU(0,2),
-            nn.Linear(final_embedding_size, noise_filter_bank),
-        )
-        self.dense_noise = nn.Linear(final_embedding_size, noise_filter_bank)
+        self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, timbre_emb):
         out_mlp_f0 = self.mlp_f0(f0)
@@ -96,13 +114,12 @@ class Decoder(nn.Module):
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
         
         # harmonic part
-        harm_amp_distribution = self.harmonic_head(out_mlp_final, timbre_emb)
+        harmonic_output = self.harmonic_head(out_mlp_final, timbre_emb)
 
         # noise filter part
-        out_dense_noise = self.dense_noise(out_mlp_final)
-        noise_filter_bank = modified_sigmoid(out_dense_noise)
+        noise_output = self.noise_head(out_mlp_final)
 
-        return harm_amp_distribution, noise_filter_bank
+        return harmonic_output, noise_output
 
 
     @staticmethod
