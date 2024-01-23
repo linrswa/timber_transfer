@@ -46,7 +46,7 @@ config = {
 }
 
 wandb.init(
-    project="ddsp_modify",
+    project="TimbreTransformer",
     name=run_name, 
     notes=notes,
     config=config
