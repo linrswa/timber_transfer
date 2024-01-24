@@ -1,6 +1,7 @@
 # %%
 import torch
 from torch.utils.data import DataLoader
+import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
 from glob import glob
@@ -10,8 +11,11 @@ import sys
 sys.path.append("..")
 from data.dataset import NSynthDataset
 from components.timbre_transformer.TimberTransformer import TimbreTransformer 
+from components.timbre_transformer.TimbreFusionAE import TimbreFusionAE
+from components.timbre_transformer.component import HarmonicOscillator, NoiseFilter
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
 from tools.utils import cal_loudness_norm, seperate_f0_confidence, mask_f0_with_confidence
+from tools.utils import get_loudness_mask
 
 USE_MEAN_STD = True
 FREQUENCY_WITH_CONFIDENCE = True
@@ -31,10 +35,18 @@ if FREQUENCY_WITH_CONFIDENCE:
 if USE_MEAN_STD:
     l_mod = cal_loudness_norm(l)
 
-model = TimbreTransformer(is_train=False, is_smooth=USE_SMOOTH, mlp_layer=3, n_harms=101)
+ae = TimbreFusionAE()
 pt_file = f"{pt_file_dir}/train5_generator_best_1.pt"
-model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}", map_location="cpu"))
-add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
+ae.load_state_dict(torch.load(f"{pt_file}"))
+
+synthsizer = HarmonicOscillator()
+noise_filter = NoiseFilter()
+
+harmonic_head_output, f0, noise_head_output = ae(s, l_mod, f0)
+add = synthsizer(harmonic_head_output, f0)
+sub = noise_filter(noise_head_output)
+rec = add + sub 
+global_amp = harmonic_head_output[1]
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)
@@ -62,6 +74,9 @@ l, rec_l = cal_loudness_norm(l), cal_loudness_norm(rec_l)
 
 global_amp = global_amp.view(-1).detach().numpy()
 
+
+loudness_mask = get_loudness_mask(s)
+
 def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot
     wf.write(f"{output_dir}/tmp/ori.wav", 16000, s)
@@ -78,12 +93,17 @@ def plot_result(s, rec, fn, rec_l, l):
     plt.subplot(334)
     p(l)
     plt.title("ori_loudness")
+    plt.subplot(333)
+    diff_l = abs(l - rec_l)
+    p(diff_l, color="red")
+    plt.title(f"diff_loudness {diff_l.mean(): .3f}")
     plt.subplot(335)
     p(rec_l)
     plt.title("rec_loudness")
     plt.subplot(336)
-    p(abs(l - rec_l), color="red")
-    plt.title(f"diff_loudness {abs(l - rec_l).mean(): .3f}")
+    diff_l = abs(l - rec_l) * loudness_mask
+    p(diff_l, color="red")
+    plt.title(f"diff_fix_loudness {diff_l.mean(): .3f}")
     plt.subplot(337)
     p(add_l)
     plt.title("add_loudness")
@@ -96,14 +116,3 @@ def plot_result(s, rec, fn, rec_l, l):
     plt.tight_layout()
 
 plot_result(s, rec, fn, rec_l, l)
-
-#%%
-out_dir = f"{output_dir}/{pt_file}"
-os.makedirs(out_dir, exist_ok=True)
-file_list_in_output_dir = glob(f"{out_dir}/*")
-file_num = len(file_list_in_output_dir)//3
-file_name_with_dir = f"{out_dir}/{file_num}"
-wf.write(f"{file_name_with_dir}_ori.wav", 16000, s)
-wf.write(f"{file_name_with_dir}_rec.wav", 16000, rec)
-plot_result(s, rec, fn, rec_l, l)
-plt.savefig(f"{file_name_with_dir}.png")
