@@ -3,9 +3,8 @@ import torch.nn as nn
 
 from .encoders import Encoder, TimbreEncoder
 from .decoders import  Decoder
-from .component import HarmonicOscillator, NoiseFilter
 
-class TimbreTransformer(nn.Module):
+class TimbreFusionAE(nn.Module):
     def __init__(
         self,
         sample_rate=16000,
@@ -18,9 +17,7 @@ class TimbreTransformer(nn.Module):
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,
-        is_smooth=False,
-        ):
-
+    ):
         super().__init__()
 
         self.is_train = is_train
@@ -42,34 +39,13 @@ class TimbreTransformer(nn.Module):
             noise_filter_bank=noise_filter_bank,
         )
 
-        self.synthesizer = HarmonicOscillator(
-            sample_rate=sample_rate,
-            hop_length=hop_length,
-            n_harms=n_harms,
-            is_smooth=is_smooth,
-        )
 
-        self.noise_filter = NoiseFilter(
-            hop_length=hop_length
-        )
-    
     def forward(self, signal, loudness, f0):
-        
         f0, l = self.encoder(loudness, f0)
         mu, logvar = self.timbre_encoder(signal)
         timbre_emb = self.sample(mu, logvar)
-
         harmonic_head_output, noise_head_output = self.decoder(f0, l, timbre_emb)
-
-        additive_output = self.synthesizer(harmonic_head_output, f0)
-
-        subtractive_output = self.noise_filter(noise_head_output)
-
-        reconstruct_signal = additive_output + subtractive_output
-
-        global_amp = harmonic_head_output[1]
-
-        return additive_output, subtractive_output, reconstruct_signal, mu, logvar, global_amp
+        return harmonic_head_output, f0, noise_head_output
 
     def sample(self, mu, logvar):
         """ paper discription
