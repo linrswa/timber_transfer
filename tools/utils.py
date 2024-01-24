@@ -1,6 +1,7 @@
 import torch
 import json
 from librosa.filters import mel as librosa_mel_fn
+import numpy as np
 from numpy import ndarray
 from torch import Tensor
 
@@ -118,6 +119,20 @@ def mask_f0_with_confidence(f0_with_confidence: ndarray, threshold: float=0.85, 
         f0 = get_midi_from_frequency(f0)
     f0[f0_confidence < threshold] = torch.nan
     return f0
+
+def replace_zero_with_nan(arr):
+    return np.where(arr == 0, np.nan, arr)
+
+def cal_mean(arr, window_size=1024, hop_size=256):
+    mean = []
+    for i in range(0, len(arr), hop_size):
+        mean.append(arr[i:i+window_size].mean())
+    return np.array(mean)
+
+def get_loudness_mask(signal):
+    mask = ~np.isnan(replace_zero_with_nan(signal))
+    return cal_mean(mask)
+
     
 
     
