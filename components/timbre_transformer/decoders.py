@@ -63,7 +63,7 @@ class NoiseHead(nn.Module):
     def forward(self, out_mlp_final):
         out_dense_noise = self.dense_noise(out_mlp_final)
         global_amp, noise_filter_bank = out_dense_noise[..., :1], out_dense_noise[..., 1:]
-        noise_filter_bank = self.relu(noise_filter_bank)
+        noise_filter_bank = modified_sigmoid(noise_filter_bank)
         global_amp = self.stack_amp(global_amp)
 
         return noise_filter_bank, global_amp

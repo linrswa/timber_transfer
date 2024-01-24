@@ -94,7 +94,6 @@ class NoiseFilter(nn.Module):
     def forward(self, noise_head_output):
 
         filter_bank, global_amp = noise_head_output[0], noise_head_output[1]
-        filter_bank *= global_amp
 
         impulse = self.amp_to_impulse_response(filter_bank, self.hop_length)
         noise = torch.rand(
@@ -102,9 +101,12 @@ class NoiseFilter(nn.Module):
             impulse.shape[1],
             self.hop_length,
         ).to(impulse) * 2 - 1
-        # print(f"noise.shape: {noise.shape}")
         noise = self.fft_convolve(noise, impulse).contiguous()
+
+        noise *= global_amp
+
         noise = noise.reshape(noise.shape[0], -1 , 1)
+
         return noise
 
     @staticmethod
