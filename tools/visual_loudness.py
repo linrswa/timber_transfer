@@ -74,8 +74,7 @@ l, rec_l = cal_loudness_norm(l), cal_loudness_norm(rec_l)
 
 global_amp = global_amp.view(-1).detach().numpy()
 
-
-loudness_mask = get_loudness_mask(s)
+loudness_mask = get_loudness_mask(s).reshape(-1)
 
 def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot

@@ -124,9 +124,11 @@ def replace_zero_with_nan(arr):
     return np.where(arr == 0, np.nan, arr)
 
 def cal_mean(arr, window_size=1024, hop_size=256):
+    if len(arr.shape) == 1:
+        arr = arr.reshape(1, -1)
     mean = []
-    for i in range(0, len(arr), hop_size):
-        mean.append(arr[i:i+window_size].mean())
+    for i in range(0, arr.shape[1], hop_size):
+        mean.append(arr[:, i:i+window_size].mean(axis=1))
     return np.array(mean)
 
 def get_loudness_mask(signal):
