@@ -36,7 +36,7 @@ if USE_MEAN_STD:
     l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE()
-pt_file = f"{pt_file_dir}/train5_generator_best_1.pt"
+pt_file = f"{pt_file_dir}/train6_generator_best_0.pt"
 ae.load_state_dict(torch.load(f"{pt_file}"))
 
 synthsizer = HarmonicOscillator()
