@@ -57,13 +57,13 @@ num_epochs = 300
 # set init value for logging
 best_loss = float("inf")
 step = 0
-
 n_element = 0
 
 total_mean_disc_loss = {
     "disc_r": 0,
     "disc_all": 0,
 }    
+
 
 total_mean_gen_loss = {
     "gen_r": 0,
@@ -73,6 +73,18 @@ total_mean_gen_loss = {
     "gen_kl": 0,
     "gen_loudness": 0,
     "gen_all": 0,
+}
+
+step_loss_50 = {
+    "gen_r": 0,
+    "gen_fm_r": 0,
+    "gen_mel": 0,
+    "gen_multiscale_fft": 0,
+    "gen_kl": 0,
+    "gen_loudness": 0,
+    "gen_all": 0,
+    "disc_r": 0,
+    "disc_all": 0,
 }
 
 
@@ -152,15 +164,11 @@ for epoch in tqdm(range(num_epochs)):
 
         
         # logging
+        log_step_loss_50 = {}
         if step % 50 == 0:
-
-            step_loss_50 = {}
-            for k, v in total_mean_disc_loss.items():
-                step_loss_50[f"50step_loss_{k}"] = v
-            for k, v in total_mean_gen_loss.items():
-                step_loss_50[f"50step_loss_{k}"] = v
-
-            wandb.log(step_loss_50)
+            for k, _ in step_loss_50.items():
+                log_step_loss_50[f"50step_loss_{k}"] = locals()[f"loss_{k}"].item()
+            wandb.log(log_step_loss_50)
 
 
     epoch_loss = {}
