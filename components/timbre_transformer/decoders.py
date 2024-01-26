@@ -56,7 +56,11 @@ class HarmonicHead(nn.Module):
 class NoiseHead(nn.Module):
     def __init__(self, in_size, noise_filter_bank):
         super().__init__()
-        self.dense_noise = nn.Linear(in_size, noise_filter_bank + 1)
+        self.dense_noise = nn.Sequential(
+            nn.Linear(in_size, noise_filter_bank + 1),
+            nn.LeakyReLU(0.2),
+            nn.Linear(noise_filter_bank + 1, noise_filter_bank + 1),
+            )
         self.relu = nn.LeakyReLU(0.2)
         self.stack_amp = AmpStack(emb_dim=8)
     
