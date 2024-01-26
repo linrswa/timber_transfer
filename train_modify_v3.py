@@ -14,8 +14,8 @@ from tools.utils import multiscale_fft, safe_log
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train6"
-notes = "Fix noise head."
+run_name = "train7"
+notes = "Fix noise head,.reduce loudness loss,add multiscale_fft loss."
 
 h = get_hyparam()
 
@@ -130,7 +130,7 @@ for epoch in tqdm(range(num_epochs)):
         y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
         loss_gen_fm_r = feature_loss(fmap_r_r, fmap_r_g)
         loss_gen_r, losses_gen_r = generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_loudness
+        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft + loss_gen_loudness
         
 
         loss_gen_all.backward()
