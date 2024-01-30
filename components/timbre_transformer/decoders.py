@@ -56,11 +56,7 @@ class HarmonicHead(nn.Module):
 class NoiseHead(nn.Module):
     def __init__(self, in_size, noise_filter_bank):
         super().__init__()
-        self.dense_noise = nn.Sequential(
-            nn.Linear(in_size, noise_filter_bank + 1),
-            nn.LeakyReLU(0.2),
-            nn.Linear(noise_filter_bank + 1, noise_filter_bank + 1),
-            )
+        self.dense_noise = nn.Linear(in_size, noise_filter_bank + 1)
         self.relu = nn.LeakyReLU(0.2)
         self.stack_amp = AmpStack(emb_dim=8)
     
@@ -103,7 +99,9 @@ class Decoder(nn.Module):
     def forward(self, f0, loudness, timbre_emb):
         out_mlp_f0 = self.mlp_f0(f0)
         out_mlp_loudness = self.mlp_loudness(loudness)
-        out_cat_mlp = torch.cat([out_mlp_f0, out_mlp_loudness], dim=-1)
+        out_gru_loudness, _ = self.gru_loudness(out_mlp_loudness)
+        out_gru_f0, _ = self.gru_f0(out_mlp_f0)
+        out_cat_mlp = torch.cat([out_gru_f0, out_gru_loudness], dim=-1)
 
         out_before_up = out_cat_mlp.transpose(1, 2).contiguous()
         timbre_emb_1, hidden_state_1 = self.gru_timbre_1(timbre_emb)
@@ -112,8 +110,6 @@ class Decoder(nn.Module):
         out_upfb_2 = self.upfusionblock_2(out_upfb_1, timbre_emb_2)
         out_after_up = out_upfb_2.transpose(1, 2).contiguous()
 
-        out_gru_loudness, _ = self.gru_loudness(out_mlp_loudness)
-        out_gru_f0, _ = self.gru_f0(out_mlp_f0)
         out_cat_f0_loudness = torch.cat([out_after_up, out_gru_f0, out_gru_loudness], dim=-1)
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
         
@@ -135,4 +131,3 @@ class Decoder(nn.Module):
             net.append(nn.LayerNorm(channels[i+1]))
             net.append(nn.LeakyReLU())
         return nn.Sequential(*net)
-

@@ -14,8 +14,8 @@ from tools.utils import multiscale_fft, safe_log
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train8"
-notes = "Reduce loudness loss"
+run_name = "train9"
+notes = "Change gru_fo and gru_loudness place"
 
 h = get_hyparam()
 
