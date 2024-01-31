@@ -1,4 +1,3 @@
-#%%
 import torch
 import math
 import torch.nn as nn
@@ -8,15 +7,6 @@ from .utils_blocks import UpFusionBlock, DFBlock
 # to be non-negative by applying a sigmoid nonlinearity to network outputs.
 def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7): 
     return max_value * torch.sigmoid(x)**math.log(exponent) + threshold
-
-def mlp(in_size, hidden_size, n_layers):
-    channels = [in_size] + (n_layers) * [hidden_size]
-    net = []
-    for i in range(n_layers):
-        net.append(nn.Linear(channels[i], channels[i + 1]))
-        net.append(nn.LayerNorm(channels[i+1]))
-        net.append(nn.LeakyReLU())
-    return nn.Sequential(*net)
 
 class AmpStack(nn.Module):
     def __init__(self, emb_dim=8):
@@ -30,30 +20,6 @@ class AmpStack(nn.Module):
     def forward(self, amp):
         amp_att = self.stack(amp)
         return modified_sigmoid(amp + amp_att)
-
-class InputAttBlock(nn.Module):
-    def __init__(
-        self,
-        in_extract_size=128,
-        mlp_layer=3,
-        ):
-        super().__init__()
-        out_size = in_extract_size // 2
-        self.in_mlp = mlp(1, in_extract_size, mlp_layer)
-        self.norm = nn.LayerNorm(128)
-        self.out_conv = nn.Conv1d(out_size, out_size, 1)
-        self.relu = nn.LeakyReLU(0.2)
-    
-    def forward(self, input):
-        x = self.in_mlp(input)
-        x = self.norm(x)
-        x_fist_half, x_second_half = x.split(x.size(-1) // 2, dim=-1)
-        x = x_fist_half * torch.sigmoid(x_second_half)
-        x = x.permute(0, 2, 1).contiguous()
-        x = self.out_conv(x)
-        x = self.relu(x)
-        x = x.permute(0, 2, 1).contiguous()
-        return x
 
 
 class HarmonicHead(nn.Module):
@@ -106,7 +72,7 @@ class NoiseHead(nn.Module):
 class Decoder(nn.Module):
     def __init__(
         self,
-        in_extract_size=128,
+        in_extract_size=64,
         mlp_layer=3,
         timbre_emb_size=128,
         final_embedding_size=512,
@@ -114,29 +80,28 @@ class Decoder(nn.Module):
         noise_filter_bank = 65
         ):
         super().__init__()
-        self.input_f0 = InputAttBlock(in_extract_size, mlp_layer)
-        self.input_loudness = InputAttBlock(in_extract_size, mlp_layer)
-        gru_in_size = in_extract_size // 2
-        self.gru_f0 = nn.GRU(gru_in_size, gru_in_size, num_layers=3, batch_first=True)
-        self.gru_loudness = nn.GRU(gru_in_size, gru_in_size, num_layers=3, batch_first=True)
-        in_size = gru_in_size * 2 
+        self.mlp_f0 = self.mlp(1, in_extract_size, mlp_layer)
+        self.mlp_loudness = self.mlp(1, in_extract_size, mlp_layer)
+        self.gru_loudness = nn.GRU(in_extract_size, in_extract_size, num_layers=3, batch_first=True)
+        self.gru_f0 = nn.GRU(in_extract_size, in_extract_size, num_layers=3, batch_first=True)
+        in_size = in_extract_size * 2
 
         self.gru_timbre_1 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
         self.gru_timbre_2 = nn.GRU(timbre_emb_size, timbre_emb_size, batch_first=True)
 
-        self.upfusionblock_1 = UpFusionBlock(in_ch=in_size, emb_dim=timbre_emb_size) 
+        self.upfusionblock_1 = UpFusionBlock(in_ch=in_size, emb_dim=timbre_emb_size) # in_size = 128
         self.upfusionblock_2 = UpFusionBlock(in_ch=in_size*2, emb_dim=timbre_emb_size) # in_size = 256
     
-        self.mlp_final = mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
+        self.mlp_final = self.mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, timbre_emb):
-        out_input_f0 = self.input_f0(f0)
-        out_input_loudness = self.input_loudness(loudness)
-        out_gru_f0, _ = self.gru_f0(out_input_f0)
-        out_gru_loudness, _ = self.gru_loudness(out_input_loudness)
-        out_cat_mlp = torch.cat([out_input_f0, out_gru_loudness], dim=-1)
+        out_mlp_f0 = self.mlp_f0(f0)
+        out_mlp_loudness = self.mlp_loudness(loudness)
+        out_gru_loudness, _ = self.gru_loudness(out_mlp_loudness)
+        out_gru_f0, _ = self.gru_f0(out_mlp_f0)
+        out_cat_mlp = torch.cat([out_gru_f0, out_gru_loudness], dim=-1)
 
         out_before_up = out_cat_mlp.transpose(1, 2).contiguous()
         timbre_emb_1, hidden_state_1 = self.gru_timbre_1(timbre_emb)
@@ -157,3 +122,12 @@ class Decoder(nn.Module):
         return harmonic_output, noise_output
 
 
+    @staticmethod
+    def mlp(in_size, hidden_size, n_layers):
+        channels = [in_size] + (n_layers) * [hidden_size]
+        net = []
+        for i in range(n_layers):
+            net.append(nn.Linear(channels[i], channels[i + 1]))
+            net.append(nn.LayerNorm(channels[i+1]))
+            net.append(nn.LeakyReLU())
+        return nn.Sequential(*net)
