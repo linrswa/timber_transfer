@@ -123,7 +123,7 @@ def mask_f0_with_confidence(f0_with_confidence: ndarray, threshold: float=0.85, 
 def replace_zero_with_nan(arr):
     return np.where(arr == 0, np.nan, arr)
 
-def cal_mean(arr, window_size=1024, hop_size=256):
+def cal_mean_for_loudness_after_mask(arr, window_size=1024, hop_size=256):
     if len(arr.shape) == 1:
         arr = arr.reshape(1, -1)
     mean = []
@@ -133,7 +133,7 @@ def cal_mean(arr, window_size=1024, hop_size=256):
 
 def get_loudness_mask(signal):
     mask = ~np.isnan(replace_zero_with_nan(signal))
-    return cal_mean(mask)
+    return cal_mean_for_loudness_after_mask(mask)
 
     
 
