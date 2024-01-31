@@ -6,11 +6,10 @@ from tqdm import tqdm
 import wandb
 
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
-from components.discriminators import MultiResolutionDiscriminator, MultiPeriodDiscriminator
-from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
+from components.discriminators import MultiResolutionDiscriminator
 from components.timbre_transformer.utils import extract_loudness, get_A_weight
 from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
-from tools.utils import multiscale_fft, safe_log
+from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -59,13 +58,7 @@ best_loss = float("inf")
 step = 0
 n_element = 0
 
-total_mean_disc_loss = {
-    "disc_r": 0,
-    "disc_all": 0,
-}    
-
-
-total_mean_gen_loss = {
+total_mean_loss = {
     "gen_r": 0,
     "gen_fm_r": 0,
     "gen_mel": 0,
@@ -73,6 +66,8 @@ total_mean_gen_loss = {
     "gen_kl": 0,
     "gen_loudness": 0,
     "gen_all": 0,
+    "disc_r": 0,
+    "disc_all": 0,
 }
 
 step_loss_50 = {
@@ -105,86 +100,57 @@ for epoch in tqdm(range(num_epochs)):
         
         s = s.unsqueeze(dim=1)
         y_g_hat = y_g_hat.permute(0, 2, 1).contiguous()
+
         # Train Discriminator
         optim_d.zero_grad()
-
-        # MRD
         y_dr_hat_r, y_dr_hat_g, _, _ = mrd(s, y_g_hat.detach())
-        loss_disc_r, losses_disc_r_r, losses_disc_s_g = discriminator_loss(y_dr_hat_r, y_dr_hat_g)
-
+        loss_disc_r = L.discriminator_loss(y_dr_hat_r, y_dr_hat_g)
         loss_disc_all = loss_disc_r 
-        
         loss_disc_all.backward()
         optim_d.step()
         
         # Train Generator
         optim_g.zero_grad()
+        loss_gen_multiscale_fft = L.multiscale_fft_loss(s, y_g_hat) * h.loss_weight["gen_multiscale_fft"]
+        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
+        loss_gen_kl = L.kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
+        _, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
+        loss_gen_fm_r = L.feature_loss(fmap_r_r, fmap_r_g)
+        loss_gen_r= L.generator_loss(y_dr_hat_g)
+        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
+        loss_gen_all.backward()
+        optim_g.step() 
        
-        # Additional loudness loss
+       # update scheduler 
+        scheduler_g.step()
+        scheduler_d.step()
+
+        # calculate mean loss for logging
         rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
         rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
         loss_gen_loudness = F.l1_loss(rec_l, l_norm) * h.loss_weight["gen_loudness"] 
 
-        # Multiscale FFT loss
-        ori_stft = multiscale_fft(s.squeeze(dim=1))
-        rec_stft = multiscale_fft(y_g_hat.squeeze(dim=1))
-        loss_gen_multiscale_fft = 0 
-        for s_x, s_y in zip(ori_stft, rec_stft):
-            linear_loss = (s_x - s_y).abs().mean()
-            log_loss = (safe_log(s_x) - safe_log(s_y)).abs().mean()
-            loss_gen_multiscale_fft += linear_loss + log_loss
-
-        loss_gen_multiscale_fft *= h.loss_weight["gen_multiscale_fft"]
-
-        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
-        loss_gen_kl = kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
-
-        y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
-        loss_gen_fm_r = feature_loss(fmap_r_r, fmap_r_g)
-        loss_gen_r, losses_gen_r = generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
-        
-
-        loss_gen_all.backward()
-        optim_g.step() 
-        
-        scheduler_g.step()
-        scheduler_d.step()
-
-        # calculate mean loss for logging'
         step += 1
         n_element += 1
-        # disc
-        for k, v in total_mean_disc_loss.items():
-            total_mean_disc_loss[k] += cal_mean_loss(v, locals()[f"loss_{k}"], n_element)
         
-        # gen
-        for k, v in total_mean_gen_loss.items():
-            total_mean_gen_loss[k] += cal_mean_loss(v, locals()[f"loss_{k}"], n_element)
+        for k, v in total_mean_loss.items():
+            total_mean_loss[k] += cal_mean_loss(v, locals()[f"loss_{k}"], n_element)
 
-        
-        # logging
         log_step_loss_50 = {}
         if step % 50 == 0:
             for k, _ in step_loss_50.items():
                 log_step_loss_50[f"50step_loss_{k}"] = locals()[f"loss_{k}"].item()
             wandb.log(log_step_loss_50)
 
-
     epoch_loss = {}
-    for k, v in total_mean_disc_loss.items():
-        epoch_loss[f"epoch_loss_{k}"] = v
-    for k, v in total_mean_gen_loss.items():
+    for k, v in total_mean_loss.items():
         epoch_loss[f"epoch_loss_{k}"] = v
     wandb.log(epoch_loss)
 
+    print(total_mean_loss)
 
-    print(total_mean_gen_loss)
-
-    print(f"loss_disc_all: {total_mean_disc_loss['disc_all']}, loss_gen_all: {total_mean_gen_loss['gen_all']}")
-
-    if total_mean_gen_loss["gen_all"] < best_loss:
-        best_loss = total_mean_gen_loss["gen_all"]
+    if total_mean_loss["gen_all"] < best_loss:
+        best_loss = total_mean_loss["gen_all"]
         torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_best_{epoch}.pt")
         torch.save(mrd.state_dict(), f"./pt_file/{run_name}_mrd_best_{epoch}.pt")
         print(f"save best model at epoch {epoch}")
@@ -195,9 +161,6 @@ for epoch in tqdm(range(num_epochs)):
 
     # reset value for logging
     n_element = 0
-    for k, v in total_mean_disc_loss.items():
-        total_mean_disc_loss[k] = 0
-
-    for k, v in total_mean_gen_loss.items():
-        total_mean_gen_loss[k] = 0
+    for k, v in total_mean_loss.items():
+        total_mean_loss[k] = 0
 # %%
