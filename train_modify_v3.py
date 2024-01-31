@@ -10,11 +10,12 @@ from components.discriminators import MultiResolutionDiscriminator, MultiPeriodD
 from components.utils import generator_loss, discriminator_loss, feature_loss, kl_loss
 from components.timbre_transformer.utils import extract_loudness, get_A_weight
 from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
+from tools.utils import multiscale_fft, safe_log
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "New_train_14"
-notes = "try add a layer to noise_dense"
+run_name = "train11"
+notes = "Add InputAttBlock to get more information from f0 and loudness, change out_gru_f0 for only for later concate."
 
 h = get_hyparam()
 
@@ -45,7 +46,7 @@ config = {
 }
 
 wandb.init(
-    project="ddsp_modify",
+    project="TimbreTransformer",
     name=run_name, 
     notes=notes,
     config=config
@@ -56,7 +57,6 @@ num_epochs = 300
 # set init value for logging
 best_loss = float("inf")
 step = 0
-
 n_element = 0
 
 total_mean_disc_loss = {
@@ -64,13 +64,27 @@ total_mean_disc_loss = {
     "disc_all": 0,
 }    
 
+
 total_mean_gen_loss = {
     "gen_r": 0,
     "gen_fm_r": 0,
     "gen_mel": 0,
+    "gen_multiscale_fft": 0,
     "gen_kl": 0,
     "gen_loudness": 0,
     "gen_all": 0,
+}
+
+step_loss_50 = {
+    "gen_r": 0,
+    "gen_fm_r": 0,
+    "gen_mel": 0,
+    "gen_multiscale_fft": 0,
+    "gen_kl": 0,
+    "gen_loudness": 0,
+    "gen_all": 0,
+    "disc_r": 0,
+    "disc_all": 0,
 }
 
 
@@ -111,13 +125,24 @@ for epoch in tqdm(range(num_epochs)):
         rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
         loss_gen_loudness = F.l1_loss(rec_l, l_norm) * h.loss_weight["gen_loudness"] 
 
+        # Multiscale FFT loss
+        ori_stft = multiscale_fft(s.squeeze(dim=1))
+        rec_stft = multiscale_fft(y_g_hat.squeeze(dim=1))
+        loss_gen_multiscale_fft = 0 
+        for s_x, s_y in zip(ori_stft, rec_stft):
+            linear_loss = (s_x - s_y).abs().mean()
+            log_loss = (safe_log(s_x) - safe_log(s_y)).abs().mean()
+            loss_gen_multiscale_fft += linear_loss + log_loss
+
+        loss_gen_multiscale_fft *= h.loss_weight["gen_multiscale_fft"]
+
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
         loss_gen_kl = kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
 
         y_dr_hat_r, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
         loss_gen_fm_r = feature_loss(fmap_r_r, fmap_r_g)
         loss_gen_r, losses_gen_r = generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_loudness
+        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
         
 
         loss_gen_all.backward()
@@ -139,15 +164,11 @@ for epoch in tqdm(range(num_epochs)):
 
         
         # logging
+        log_step_loss_50 = {}
         if step % 50 == 0:
-
-            step_loss_50 = {}
-            for k, v in total_mean_disc_loss.items():
-                step_loss_50[f"50step_loss_{k}"] = v
-            for k, v in total_mean_gen_loss.items():
-                step_loss_50[f"50step_loss_{k}"] = v
-
-            wandb.log(step_loss_50)
+            for k, _ in step_loss_50.items():
+                log_step_loss_50[f"50step_loss_{k}"] = locals()[f"loss_{k}"].item()
+            wandb.log(log_step_loss_50)
 
 
     epoch_loss = {}
@@ -158,12 +179,7 @@ for epoch in tqdm(range(num_epochs)):
     wandb.log(epoch_loss)
 
 
-    print(
-            f"loss_fm_r: {total_mean_gen_loss['gen_fm_r']}, \
-            loss_gen_r: {total_mean_gen_loss['gen_r']}, \
-            loss_mel: {total_mean_gen_loss['gen_mel']}, loss_kl: {total_mean_gen_loss['gen_kl']}, \
-            loss_loudness: {total_mean_gen_loss['gen_loudness']}"
-        )
+    print(total_mean_gen_loss)
 
     print(f"loss_disc_all: {total_mean_disc_loss['disc_all']}, loss_gen_all: {total_mean_gen_loss['gen_all']}")
 

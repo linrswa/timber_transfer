@@ -8,12 +8,12 @@ class Affine(nn.Module):
         self.embedding_dim = emb_dim
         self.fc_alpha = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(emb_dim, emb_dim)),
-            ("relu1", nn.ReLU()),
+            ("relu1", nn.LeakyReLU(0.2)),
             ("linear2", nn.Linear(emb_dim, out_dim)),
         ]))
         self.fc_beta = nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(emb_dim, emb_dim)),
-            ("relu1", nn.ReLU()),
+            ("relu1", nn.LeakyReLU(0.2)),
             ("linear2", nn.Linear(emb_dim, out_dim)),
         ]))
         self.is_transpose = is_transpose

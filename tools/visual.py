@@ -31,9 +31,9 @@ if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
 ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=101)
-pt_file = "New_train_8_generator_best_13.pt"
+pt_file = "train8_generator_best_13.pt"
 ddsp.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
-add, sub, rec, mu, logvar= ddsp(s, l_mod, f0)
+add, sub, rec, mu, logvar, global_amp = ddsp(s, l_mod, f0)
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)

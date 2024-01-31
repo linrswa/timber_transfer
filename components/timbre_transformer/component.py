@@ -29,16 +29,18 @@ class HarmonicOscillator(nn.Module):
         self.is_smooth = is_smooth
             
     # FIXME: check smooth_envelop function is placed correctly or not
-    def forward(self, harm_amp_dis, f0):
-        # harm_amp_dis -> batch, frame, amp_and_n_harm
-        harm_amp_dis, global_amp = harm_amp_dis[0], harm_amp_dis[1]
+    def forward(self, harmonic_head_output, f0):
+        # harmonic_head_output -> batch, frame, harm_head_output
+        n_harm_dis, global_amp = harmonic_head_output[0], harmonic_head_output[1]
+        harm_amp_dis = n_harm_dis * global_amp
+
         harm_amp_dis = self.remove_above_nyquist(harm_amp_dis, f0, self.sr)
         harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length)
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
         if self.is_smooth:
             harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
-        return harmonic, global_amp
+        return harmonic
         
     @staticmethod
     def remove_above_nyquist(amp_harm_dis, pitch, sample_rate):
@@ -76,7 +78,7 @@ class HarmonicOscillator(nn.Module):
         fold = nn.Fold(output_size=(1, size_with_padding), kernel_size=(1, win_size), stride=(1, hop_size))
         x = fold(x)
         x = x.view(x.size(0), -1, 1).contiguous()
-        x = x[:, hop_size+1: -hop_size+1, :]
+        x = x[:, hop_size+1: -hop_size+1, :] # remove the padding
         return x
 
 
@@ -89,16 +91,22 @@ class NoiseFilter(nn.Module):
         self.hop_length = hop_length
         self.fft_convolve = fft_convolve
     
-    def forward(self, filter_bank):
+    def forward(self, noise_head_output):
+
+        filter_bank, global_amp = noise_head_output[0], noise_head_output[1]
+
         impulse = self.amp_to_impulse_response(filter_bank, self.hop_length)
         noise = torch.rand(
             impulse.shape[0],
             impulse.shape[1],
             self.hop_length,
         ).to(impulse) * 2 - 1
-        # print(f"noise.shape: {noise.shape}")
         noise = self.fft_convolve(noise, impulse).contiguous()
+
+        noise *= global_amp
+
         noise = noise.reshape(noise.shape[0], -1 , 1)
+
         return noise
 
     @staticmethod
