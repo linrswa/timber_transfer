@@ -11,28 +11,40 @@ import inquirer
 from glob import glob
 
 from data.dataset import NSynthDataset
-from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence
+from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence, get_loudness_mask
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, mean_std_loudness
 from components.timbre_transformer.utils import extract_pitch, get_extract_pitch_needs
 
 
 def get_loudness_l1_loss(
-    signal: Tensor,
+    rec_signal: Tensor,
+    target_signal: Tensor,
     target_l: Tensor,
     aw: Tensor,
     mean_std_dict: dict,
-    norm: bool = False
+    norm: bool = False,
+    use_fix_loudness: bool = False
 ):
-    signal = signal.view(signal.shape[0], -1)
-    y_l = extract_loudness(signal, aw)[..., :-1]
+    rec_signal = rec_signal.view(rec_signal.shape[0], -1)
+    y_l = extract_loudness(rec_signal, aw)[..., :-1]
 
     if norm:
         target_l = cal_mean_std_loudness(target_l, mean_std_dict)
         y_l = cal_mean_std_loudness(y_l, mean_std_dict)
+        
+    if use_fix_loudness:
+        loudness_mask = get_loudness_mask(target_signal.cpu())
+        loudness_mask = torch.from_numpy(loudness_mask).to(target_signal.device)
+        loudness_mask = loudness_mask.permute(1, 0).contiguous()
+        def modified_mae(y, target):
+            diff_loudness = torch.abs(y - target) * loudness_mask
+            return diff_loudness.mean(dim=-1)
+        return modified_mae(y_l, target_l).mean()
 
-    l_l1_loss = F.l1_loss(y_l[..., :200], target_l[..., :200])
-    return l_l1_loss
+    else:
+        l_l1_loss = F.l1_loss(y_l, target_l)
+        return l_l1_loss
 
 def get_pitch_l1_loss(
     signal: Tensor,
@@ -71,7 +83,7 @@ def valid_model(
         val_f0, val_f0_confidence = seperate_f0_confidence(val_f0_c)
         out_add, out_sub, out_rec, out_mu, out_logvar, global_amp = model(val_s, val_l, val_f0)
 
-        loss_l = get_loudness_l1_loss(out_rec, val_l, aw, mean_std_dict,  norm=True)
+        loss_l = get_loudness_l1_loss(out_rec, val_s, val_l, aw, mean_std_dict, norm=True, use_fix_loudness=True)
         loss_f = get_pitch_l1_loss(out_rec, val_f0_c, device, cr, m_sec)
         loss_l_sum += loss_l.item() * val_s.size(0)
         loss_f_sum += loss_f.item() * val_s.size(0)
@@ -83,28 +95,29 @@ def valid_model(
 
     return mean_l_loss, mean_f_loss
 
-# pt_list_list = glob("./pt_file/*generator*.pt")
-# pt_list_list = sorted(pt_list_list)
-# pt_fonfirm = {
-#     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
-# }
-# pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-pt_file = "./pt_file/New_train_9_generator_80.pt"
+if __name__ == "__main__":
+    # pt_list_list = glob("./pt_file/*generator*.pt")
+    # pt_list_list = sorted(pt_list_list)
+    # pt_fonfirm = {
+    #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
+    # }
+    # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
+    pt_file = "./pt_file/train10_generator_best_13.pt"
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
-generator.load_state_dict(torch.load(pt_file))
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
+    generator.load_state_dict(torch.load(pt_file))
 
-data_mode = "valid"
-l1_loudness, l1_f0 = valid_model(generator, data_mode, 32)
+    data_mode = "valid"
+    l1_loudness, l1_f0 = valid_model(generator, data_mode, 16)
 
-print(f""""
-    finish {pt_file.split('/')[-1]}\n 
-    \t loudness loss: {l1_loudness}\n
-    \t pitch loss: {l1_f0}\n
-    """ )
+    print(f""""
+        finish {pt_file.split('/')[-1]}\n 
+        \t loudness loss: {l1_loudness}\n
+        \t pitch loss: {l1_f0}\n
+        """ )
 
-with open("validation_log.txt", "a") as f:
-    f.write(f"{data_mode}: {pt_file.split('/')[-1]}\n")
-    f.write(f"\tloudness loss: {l1_loudness}\n")
-    f.write(f"\tpitch loss: {l1_f0}\n")
+    with open("validation_log.txt", "a") as f:
+        f.write(f"{data_mode}: {pt_file.split('/')[-1]}\n")
+        f.write(f"\tloudness loss: {l1_loudness}\n")
+        f.write(f"\tpitch loss: {l1_f0}\n")
