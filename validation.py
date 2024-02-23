@@ -102,7 +102,7 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/train11_generator_best_7.pt"
+    pt_file = "./pt_file/train12_generator_best_25.pt"
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
