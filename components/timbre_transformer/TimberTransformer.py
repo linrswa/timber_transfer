@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from .encoders import Encoder, TimbreEncoder
-from .decoders import  Decoder
+from .decoders_v1 import  Decoder
 from .component import HarmonicOscillator, NoiseFilter
 
 class TimbreTransformer(nn.Module):

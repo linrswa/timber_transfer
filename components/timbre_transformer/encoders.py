@@ -60,13 +60,12 @@ class TimbreEncoder(nn.Module):
 class MultiDimEmbHeader(nn.Module):
     def __init__(self):
         super().__init__()
-        self.down_dense1 = nn.Linear(256, 128)
-        self.down_dense2 = nn.Linear(128, 64)
+        self.down_dense1 = nn.Linear(128, 256)
+        self.relu = nn.LeakyReLU(0.2)
 
     def forward(self, timbre_emb):
-        dd1 = self.down_dense1(timbre_emb)
-        dd2 = self.down_dense2(dd1)
-        return dd2, dd1, timbre_emb
+        dd1 = self.relu(self.down_dense1(timbre_emb))
+        return timbre_emb, dd1
         
 
 class Encoder(nn.Module):

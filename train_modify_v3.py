@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train12"
-notes = "Add InputAttBlock to get more information from f0 and loudness, change out_gru_f0 for only for later concate."
+run_name = "train13"
+notes = "Add MultiDimEmbHeader and TCUB to replace UpFusionBlock in Decoder" 
 
 h = get_hyparam()
 
@@ -25,7 +25,7 @@ mean_std_dict = get_mean_std_dict("train", 128)
 
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
-train_loader = DataLoader(train_dataset, batch_size=8 , num_workers=4, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=8, num_workers=4, shuffle=True)
 generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
 mrd = MultiResolutionDiscriminator().to(device)
 
