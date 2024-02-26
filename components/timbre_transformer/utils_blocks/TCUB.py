@@ -2,14 +2,14 @@ import torch
 import torch.nn as nn
 
 class TCUB(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, num_heads=8):
         super().__init__()
-        
+        out_ch = in_ch * 2
         self.conv_1x1_input = nn.Conv1d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)
         self.conv_1x1_condition = nn.Conv1d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)
         
         # Using PyTorch's MultiheadAttention
-        self.attention_block = nn.MultiheadAttention(embed_dim=in_ch, num_heads=8, batch_first=True)
+        self.attention_block = nn.MultiheadAttention(embed_dim=in_ch, num_heads=num_heads, batch_first=True)
         
         self.fc_after_attention = nn.Linear(in_ch, out_ch)  # to transform the output to desired dimension
         self.conv_1x1_output = nn.Conv1d(in_channels=out_ch, out_channels=out_ch, kernel_size=1, stride=1, padding=0)
