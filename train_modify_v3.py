@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train14"
-notes = "modify TCUB make Q(x),K(condition), V(condition)" 
+run_name = "train15"
+notes = "modify TCUB make Q(condition),K(x), V(x)" 
 
 h = get_hyparam()
 
