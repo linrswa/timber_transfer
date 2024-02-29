@@ -19,7 +19,7 @@ class TCUB(nn.Module):
         x_condition = self.conv_1x1_condition(condition.transpose(1, 2))
         
         # Applying attention
-        attn_output, _ = self.attention_block(condition, x, x)
+        attn_output, _ = self.attention_block(x, condition, condition)
         x_attention = self.fc_after_attention(attn_output)
         
         mix = torch.cat([x_input, x_condition], dim=1)
