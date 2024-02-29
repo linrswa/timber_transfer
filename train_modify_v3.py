@@ -6,15 +6,15 @@ from tqdm import tqdm
 import wandb
 
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
-from components.discriminators import MultiResolutionDiscriminator
+from components.discriminators import MultiPeriodDiscriminator
 from components.timbre_transformer.utils import extract_loudness, get_A_weight
 from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
 from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train15"
-notes = "modify TCUB make Q(condition),K(x), V(x)" 
+run_name = "train17"
+notes = "modify TCUB make Q(x),K(condition), V(condition), change mrd to mpd, batch 8 -> 32" 
 
 h = get_hyparam()
 
@@ -25,19 +25,19 @@ mean_std_dict = get_mean_std_dict("train", 128)
 
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
-train_loader = DataLoader(train_dataset, batch_size=8, num_workers=4, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=32, num_workers=8, shuffle=True)
 generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
-mrd = MultiResolutionDiscriminator().to(device)
+mpd = MultiPeriodDiscriminator().to(device)
 
 optim_g = torch.optim.AdamW(generator.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])
-optim_d = torch.optim.AdamW(mrd.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])
+optim_d = torch.optim.AdamW(mpd.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])
 
 last_epoch = -1
 scheduler_g = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=h.lr_decay, last_epoch=last_epoch)
 scheduler_d = torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=h.lr_decay, last_epoch=last_epoch)
 
 generator.train()
-mrd.train()
+mpd.train()
 
 config = {
     "loss_weight": h.loss_weight,
@@ -59,26 +59,26 @@ step = 0
 n_element = 0
 
 total_mean_loss = {
-    "gen_r": 0,
-    "gen_fm_r": 0,
+    "gen_period": 0,
+    "gen_fm_period": 0,
     "gen_mel": 0,
     "gen_multiscale_fft": 0,
     "gen_kl": 0,
     "gen_loudness": 0,
     "gen_all": 0,
-    "disc_r": 0,
+    "disc_period": 0,
     "disc_all": 0,
 }
 
 step_loss_50 = {
-    "gen_r": 0,
-    "gen_fm_r": 0,
+    "gen_period": 0,
+    "gen_fm_period": 0,
     "gen_mel": 0,
     "gen_multiscale_fft": 0,
     "gen_kl": 0,
     "gen_loudness": 0,
     "gen_all": 0,
-    "disc_r": 0,
+    "disc_period": 0,
     "disc_all": 0,
 }
 
@@ -103,9 +103,10 @@ for epoch in tqdm(range(num_epochs)):
 
         # Train Discriminator
         optim_d.zero_grad()
-        y_dr_hat_r, y_dr_hat_g, _, _ = mrd(s, y_g_hat.detach())
-        loss_disc_r = L.discriminator_loss(y_dr_hat_r, y_dr_hat_g)
-        loss_disc_all = loss_disc_r 
+        y_mpd_hat_r, y_mpd_hat_g, _, _ = mpd(s, y_g_hat.detach())
+        loss_disc_period = L.discriminator_loss(y_mpd_hat_r, y_mpd_hat_g)
+
+        loss_disc_all = loss_disc_period
         loss_disc_all.backward()
         optim_d.step()
         
@@ -114,10 +115,10 @@ for epoch in tqdm(range(num_epochs)):
         loss_gen_multiscale_fft = L.multiscale_fft_loss(s, y_g_hat) * h.loss_weight["gen_multiscale_fft"]
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
         loss_gen_kl = L.kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
-        _, y_dr_hat_g, fmap_r_r, fmap_r_g = mrd(s, y_g_hat)
-        loss_gen_fm_r = L.feature_loss(fmap_r_r, fmap_r_g)
-        loss_gen_r= L.generator_loss(y_dr_hat_g)
-        loss_gen_all = loss_gen_r + loss_gen_fm_r + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
+        _, y_mpd_hat_g, fmap_mpd_r, fmap_mpd_g = mpd(s, y_g_hat)
+        loss_gen_fm_period = L.feature_loss(fmap_mpd_r, fmap_mpd_g)
+        loss_gen_period= L.generator_loss(y_mpd_hat_g)
+        loss_gen_all = loss_gen_period + loss_gen_fm_period + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
         loss_gen_all.backward()
         optim_g.step() 
        
@@ -152,11 +153,11 @@ for epoch in tqdm(range(num_epochs)):
     if total_mean_loss["gen_all"] < best_loss:
         best_loss = total_mean_loss["gen_all"]
         torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_best_{epoch}.pt")
-        torch.save(mrd.state_dict(), f"./pt_file/{run_name}_mrd_best_{epoch}.pt")
+        torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_best_{epoch}.pt")
         print(f"save best model at epoch {epoch}")
     elif epoch % 10 == 0:
         torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_{epoch}.pt")
-        torch.save(mrd.state_dict(), f"./pt_file/{run_name}_mrd_{epoch}.pt")   
+        torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_{epoch}.pt")   
         print(f"save model at epoch {epoch}")
 
     # reset value for logging

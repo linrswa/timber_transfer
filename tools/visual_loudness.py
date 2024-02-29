@@ -35,12 +35,12 @@ if FREQUENCY_WITH_CONFIDENCE:
 if USE_MEAN_STD:
     l_mod = cal_loudness_norm(l)
 
-ae = TimbreFusionAE()
-pt_file = f"{pt_file_dir}/train13_generator_best_9.pt"
-ae.load_state_dict(torch.load(f"{pt_file}"))
+ae = TimbreFusionAE().to("cpu")
+pt_file = f"{pt_file_dir}/train16_generator_best_1.pt"
+ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
-synthsizer = HarmonicOscillator()
-noise_filter = NoiseFilter()
+synthsizer = HarmonicOscillator().to("cpu")
+noise_filter = NoiseFilter().to("cpu")
 
 harmonic_head_output, f0, noise_head_output = ae(s, l_mod, f0)
 add = synthsizer(harmonic_head_output, f0)
