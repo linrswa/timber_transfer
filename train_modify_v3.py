@@ -13,8 +13,9 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train17"
-notes = "modify TCUB make Q(x),K(condition), V(condition), change mrd to mpd, batch 8 -> 32" 
+run_name = "train19"
+notes = "modify TCUB make Q(x),K(condition), V(condition), change mrd to mpd, batch 8 -> 16" 
+batch_size = 16
 
 h = get_hyparam()
 
@@ -25,7 +26,7 @@ mean_std_dict = get_mean_std_dict("train", 128)
 
 train_dataset = NSynthDataset(data_mode="train", sr=16000)
 
-train_loader = DataLoader(train_dataset, batch_size=32, num_workers=8, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=8, shuffle=True)
 generator = TimbreTransformer(is_train=True, is_smooth=True, mlp_layer=h.mlp_layer).to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 

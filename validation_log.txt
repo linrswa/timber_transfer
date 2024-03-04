@@ -137,3 +137,9 @@ valid: train15_generator_best_32.pt
 valid: train16_generator_best_0.pt
 	loudness loss: 0.38679342623357865
 	pitch loss: 0.036922424391924086
+valid: train18_generator_best_58.pt
+	loudness loss: 0.3926500897201113
+	pitch loss: 0.047926440190074734
+valid: train19_generator_best_4.pt
+	loudness loss: 0.4327928432396265
+	pitch loss: 0.04560604503877504
