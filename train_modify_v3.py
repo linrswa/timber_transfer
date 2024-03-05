@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train19"
-notes = "modify TCUB make Q(x),K(condition), V(condition), change mrd to mpd, batch 8 -> 16" 
+run_name = "train20"
+notes = "new input block build with multihead attention block" 
 batch_size = 16
 
 h = get_hyparam()
