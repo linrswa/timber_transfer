@@ -24,15 +24,18 @@ class MultiHeadAttBlock(nn.Module):
         super().__init__()
         self.attention = nn.MultiheadAttention(embed_dim=in_size, num_heads=num_heads, batch_first=True)
         self.att_norm = nn.LayerNorm(in_size)
-        self.linear = nn.Linear(in_size, in_size)
-        self.relu = nn.LeakyReLU(0.2)
+        self.mlp = nn.Sequential(
+            nn.Linear(in_size, in_size * 2),
+            nn.LeakyReLU(0.2),
+            nn.Linear(in_size * 2, in_size),
+            nn.LeakyReLU(0.2)
+            )
         self.linear_norm = nn.LayerNorm(in_size)
     
     def forward(self, x):
         att, _ = self.attention(x, x, x)
         att_out = self.att_norm(x + att)
-        linear_out = self.linear(att_out)
-        linear_out = self.relu(linear_out)
+        linear_out = self.mlp(att_out)
         out = self.linear_norm(att_out + linear_out)
         return out
 
