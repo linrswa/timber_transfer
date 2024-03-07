@@ -30,3 +30,39 @@ class TCUB(nn.Module):
         
         output = nn.LeakyReLU(0.2)(x_attention + mix_output.transpose(1, 2))
         return output 
+
+class AttSubBlock(nn.Module):
+    def __init__(self, in_ch, num_heads=8):
+        super().__init__()
+        self.self_att = nn.MultiheadAttention(embed_dim=in_ch, num_heads=num_heads, batch_first=True)
+        self.self_att_norm = nn.LayerNorm(in_ch)
+        self.mlp = nn.Sequential(
+            nn.Linear(in_ch, in_ch * 2),
+            nn.LeakyReLU(0.2),
+            nn.Linear(in_ch * 2, in_ch),
+            nn.LeakyReLU(0.2)
+        )
+        self.mlp_norm = nn.LayerNorm(in_ch)
+    
+    def forward(self, x, condition):
+        att_out, _ = self.self_att(x, condition, condition)
+        att_out = self.self_att_norm(x + att_out)
+        fc_out = self.mlp(att_out)
+        out = self.mlp_norm(att_out + fc_out)
+        return out
+    
+class TimbreAttFusionBlock(nn.Module):
+    def __init__(self, in_emb, timbre_emb, num_heads=8) -> None:
+        super().__init__()
+        out_emb = in_emb * 2
+        self.input_fc = nn.Linear(in_emb, out_emb)
+        self.input_self_att = AttSubBlock(out_emb, num_heads)
+        self.timbre_fc = nn.Linear(timbre_emb, out_emb)
+        self.timbre_fusion_att = AttSubBlock(out_emb, num_heads)
+    
+    def forward(self, x, timbre_emb):
+        x = self.input_fc(x)
+        x = self.input_self_att(x, x)
+        timbre_emb = self.timbre_fc(timbre_emb)
+        timbre_fusion_emb = self.timbre_fusion_att(x, timbre_emb)
+        return timbre_fusion_emb
