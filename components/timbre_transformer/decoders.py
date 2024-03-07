@@ -3,6 +3,7 @@ import torch
 import math
 import torch.nn as nn
 from .utils_blocks import UpFusionBlock, DFBlock, TCUB
+from .utils_blocks.TCUB import TimbreAttFusionBlock
 from .encoders import MultiDimEmbHeader
 
 # force the amplitudes, harmonic distributions, and filtered noise magnitudes 
@@ -22,7 +23,7 @@ def mlp(in_size, hidden_size, n_layers):
 class MultiHeadAttBlock(nn.Module):
     def __init__(self, in_size, num_heads=8):
         super().__init__()
-        self.attention = nn.MultiheadAttention(embed_dim=in_size, num_heads=num_heads, batch_first=True)
+        self.att = nn.MultiheadAttention(embed_dim=in_size, num_heads=num_heads, batch_first=True)
         self.att_norm = nn.LayerNorm(in_size)
         self.mlp = nn.Sequential(
             nn.Linear(in_size, in_size * 2),
@@ -30,13 +31,13 @@ class MultiHeadAttBlock(nn.Module):
             nn.Linear(in_size * 2, in_size),
             nn.LeakyReLU(0.2)
             )
-        self.linear_norm = nn.LayerNorm(in_size)
+        self.mlp_norm = nn.LayerNorm(in_size)
     
     def forward(self, x):
-        att, _ = self.attention(x, x, x)
+        att, _ = self.att(x, x, x)
         att_out = self.att_norm(x + att)
         linear_out = self.mlp(att_out)
-        out = self.linear_norm(att_out + linear_out)
+        out = self.mlp_norm(att_out + linear_out)
         return out
 
 class InputAttBlock(nn.Module):
@@ -136,12 +137,11 @@ class Decoder(nn.Module):
         gru_in_size = in_extract_size 
         self.gru_f0 = nn.GRU(gru_in_size, gru_in_size, num_layers=3, batch_first=True)
         self.gru_loudness = nn.GRU(gru_in_size, gru_in_size, num_layers=3, batch_first=True)
-        in_size = gru_in_size * 2 
 
-        self.multi_dim_emb_header = MultiDimEmbHeader()
-        self.tcub_1 = TCUB(in_size, num_heads=32)
-        self.tcub_2 = TCUB(in_size * 2, num_heads=32)
-    
+        in_size = in_extract_size * 2
+        self.timbre_fusion_block_1 = TimbreAttFusionBlock(in_size, timbre_emb_size)
+        self.timbre_fusion_block_2 = TimbreAttFusionBlock(in_size * 2, timbre_emb_size)
+
         self.mlp_final = mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
@@ -154,11 +154,10 @@ class Decoder(nn.Module):
         out_gru_loudness, _ = self.gru_loudness(out_input_loudness)
         out_cat_mlp = torch.cat([out_input_f0, out_gru_loudness], dim=-1)
 
-        timbre_emb_1, timbre_emb_2 = self.multi_dim_emb_header(timbre_emb)
-        out_up_1 = self.tcub_1(out_cat_mlp, timbre_emb_1.expand(out_cat_mlp.shape))
-        out_after_up = self.tcub_2(out_up_1, timbre_emb_2.expand(out_up_1.shape))
+        out_timbre_fusion_1 = self.timbre_fusion_block_1(out_cat_mlp, timbre_emb)
+        out_timbre_fusion_2 = self.timbre_fusion_block_2(out_timbre_fusion_1, timbre_emb)
 
-        out_cat_f0_loudness = torch.cat([out_after_up, out_gru_f0, out_gru_loudness], dim=-1)
+        out_cat_f0_loudness = torch.cat([out_timbre_fusion_2, out_gru_f0, out_gru_loudness], dim=-1)
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
         
         # harmonic part
