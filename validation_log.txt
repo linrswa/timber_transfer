@@ -155,3 +155,11 @@ valid: train22_generator_best_22.pt
 valid: train22_generator_best_33.pt
 	loudness loss: 0.37957972446296057
 	pitch loss: 0.03284674931742524
+
+TimbreTransformer_new start
+valid: train1_generator_best_2.pt
+	loudness loss: 0.32472448420019095
+	pitch loss: 0.04983267461637265
+valid: train1_generator_best_21.pt
+	loudness loss: 0.32471703126271306
+	pitch loss: 0.04982115614171381
