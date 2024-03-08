@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train3"
-notes = "change TCUB to TimbreAttFusionBlock, add a self attention to timbre."
+run_name = "train4"
+notes = "Add more weight to multiscale_fft_loss"
 batch_size = 16
 
 h = get_hyparam()
@@ -127,10 +127,11 @@ for epoch in tqdm(range(num_epochs)):
         scheduler_g.step()
         scheduler_d.step()
 
-        # calculate mean loss for logging
-        rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
-        rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
-        loss_gen_loudness = F.l1_loss(rec_l, l_norm) * h.loss_weight["gen_loudness"] 
+        # calculate mean loss for logging not in tranning
+        with torch.no_grad():
+            rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
+            rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
+            loss_gen_loudness = F.l1_loss(rec_l, l_norm) 
 
         step += 1
         n_element += 1
