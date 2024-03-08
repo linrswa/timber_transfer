@@ -58,11 +58,13 @@ class TimbreAttFusionBlock(nn.Module):
         self.input_fc = nn.Linear(in_emb, out_emb)
         self.input_self_att = AttSubBlock(out_emb, num_heads)
         self.timbre_fc = nn.Linear(timbre_emb, out_emb)
+        self.timbre_self_att = AttSubBlock(out_emb, num_heads)
         self.timbre_fusion_att = AttSubBlock(out_emb, num_heads)
     
     def forward(self, x, timbre_emb):
         x = self.input_fc(x)
         x = self.input_self_att(x, x)
         timbre_emb = self.timbre_fc(timbre_emb)
+        timbre_emb = self.timbre_self_att(timbre_emb, timbre_emb)
         timbre_fusion_emb = self.timbre_fusion_att(x, timbre_emb)
         return timbre_fusion_emb
