@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train2"
-notes = "change TCUB to TimbreAttFusionBlock."
+run_name = "train3"
+notes = "change TCUB to TimbreAttFusionBlock, add a self attention to timbre."
 batch_size = 16
 
 h = get_hyparam()
