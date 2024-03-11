@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train4"
-notes = "Add more weight to multiscale_fft_loss"
+run_name = "train5"
+notes = "Fix gru f0"
 batch_size = 16
 
 h = get_hyparam()

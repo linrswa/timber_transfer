@@ -152,7 +152,7 @@ class Decoder(nn.Module):
         out_input_loudness = self.input_loudness(loudness)
         out_gru_f0, _ = self.gru_f0(out_input_f0)
         out_gru_loudness, _ = self.gru_loudness(out_input_loudness)
-        out_cat_mlp = torch.cat([out_input_f0, out_gru_loudness], dim=-1)
+        out_cat_mlp = torch.cat([out_gru_f0, out_gru_loudness], dim=-1)
 
         out_timbre_fusion_1 = self.timbre_fusion_block_1(out_cat_mlp, timbre_emb)
         out_timbre_fusion_2 = self.timbre_fusion_block_2(out_timbre_fusion_1, timbre_emb)
