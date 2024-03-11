@@ -10,8 +10,14 @@ class TCUB(nn.Module):
         
         # Using PyTorch's MultiheadAttention
         self.attention_block = nn.MultiheadAttention(embed_dim=in_ch, num_heads=num_heads, batch_first=True)
+        self.att_norm = nn.LayerNorm(in_ch)
+        self.linear_after_att = nn.Linear(in_ch, out_ch)  # to transform the output to desired dimension
+        self.linear_after_att = nn.Sequential(
+            nn.Linear(in_ch, out_ch),
+            nn.LeakyReLU(0.2),
+            nn.Linear(out_ch, out_ch),
+            )  # to transform the output to desired dimension
         
-        self.fc_after_attention = nn.Linear(in_ch, out_ch)  # to transform the output to desired dimension
         self.conv_1x1_output = nn.Conv1d(in_channels=out_ch, out_channels=out_ch, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x, condition):
@@ -20,9 +26,10 @@ class TCUB(nn.Module):
         
         # Applying attention
         attn_output, _ = self.attention_block(x, condition, condition)
-        x_attention = self.fc_after_attention(attn_output)
+        attn_output = self.att_norm(x + attn_output)
+        x_attention = self.linear_after_att(attn_output)
         
-        mix = torch.cat([x_input, x_condition], dim=1)
+        mix = torch.cat([x_input, x_condition.expand_as(x_input)], dim=1)
         mix_tanh = torch.tanh(mix)
         mix_sigmoid = torch.sigmoid(mix)
         mix_output = mix_tanh * mix_sigmoid
