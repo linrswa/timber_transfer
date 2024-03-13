@@ -138,12 +138,15 @@ class Decoder(nn.Module):
 
         in_size = in_extract_size * 2
         self.condition_proj_1 = nn.Linear(timbre_emb_size, in_size)
-        self.tcub_1 = TCUB(in_size)
         self.condition_proj_2 = nn.Linear(timbre_emb_size, in_size * 2)
+        self.condition_proj_3 = nn.Linear(timbre_emb_size, in_size * 4)
+        self.tcub_1 = TCUB(in_size)
         self.tcub_2 = TCUB(in_size * 2)
         self.self_att_1 = AttSubBlock(in_size)
         self.self_att_2 = AttSubBlock(in_size * 2)
         self.self_att_3 = AttSubBlock(in_size * 4)
+        self.cross_att_1 = AttSubBlock(in_size * 2)
+        self.cross_att_2 = AttSubBlock(in_size * 4)
 
         self.mlp_final = mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
@@ -160,10 +163,13 @@ class Decoder(nn.Module):
 
         timbre_emb_1 = self.condition_proj_1(timbre_emb)
         timbre_emb_2 = self.condition_proj_2(timbre_emb)
+        timbre_emb_3 = self.condition_proj_3(timbre_emb)
         out_timbre_fusion_1 = self.tcub_1(out_cat_mlp, timbre_emb_1)
         out_timbre_fusion_1 = self.self_att_2(out_timbre_fusion_1, out_timbre_fusion_1)
+        out_timbre_fusion_1 = self.cross_att_1(out_timbre_fusion_1, timbre_emb_2)
         out_timbre_fusion_2 = self.tcub_2(out_timbre_fusion_1, timbre_emb_2)
         out_timbre_fusion_2 = self.self_att_3(out_timbre_fusion_2, out_timbre_fusion_2)
+        out_timbre_fusion_2 = self.cross_att_2(out_timbre_fusion_2, timbre_emb_3)
 
         out_cat_f0_loudness = torch.cat([out_timbre_fusion_2, out_gru_f0, out_gru_loudness], dim=-1)
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
