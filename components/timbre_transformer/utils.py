@@ -74,7 +74,7 @@ def get_A_weight(
         ndarray or Tensor: Depends on output_torch.
     """
     f = li.fft_frequencies(sr=sampling_rate, n_fft=n_fft)
-    a_weight = li.A_weighting(f + 1e-20) 
+    a_weight = li.A_weighting(f) 
     
     if output_torch:
         return torch.from_numpy(a_weight.reshape(-1, 1))
@@ -83,6 +83,56 @@ def get_A_weight(
 
 @torch.no_grad()
 def extract_loudness(
+    signal: torch.Tensor,
+    a_weight: torch.Tensor,
+    hop_length: int = 256,
+    n_fft: int = 1024,
+    ) -> torch.Tensor:
+    """From a Tensor signal to a Tensor after loudness extraction.
+
+    Args:
+        signal (torch.Tensor): input shape should be (batch, frame)
+        a_weight (torch.Tensor): input a_weight from get_a_weight() 
+        hop_length (int, optional): n_fft/4 . Defaults to 256.
+        n_fft (int, optional): number of fft. Defaults to 1024.
+
+    Returns:
+        torch.Tensor: return shape (batch, (frame/hop_length) + 1).
+    """
+
+    def power_to_db(power, ref_db=0.0, range_db=80.0):
+        # Convert to decibels.
+        pmin = 10**-(range_db / 10.0)
+        power = torch.max(power, torch.tensor(pmin))
+        db = 10.0 * torch.log10(power)
+
+        # Set dynamic range.
+        db -= ref_db
+        db = torch.max(db, torch.tensor(-range_db))
+        return db
+
+    s = torch.stft(
+        signal,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=n_fft,
+        center=True,
+        return_complex=True,
+    )
+
+    amplitude = torch.abs(s)
+    power = amplitude ** 2
+
+    weighting = 10 ** (a_weight / 10)
+    power = power * weighting
+    
+    avg_power = torch.mean(power, dim=1)
+    loudness = power_to_db(avg_power)
+
+    return loudness
+
+@torch.no_grad()
+def extract_loudness_old(
     signal: torch.Tensor,
     a_weight: torch.Tensor,
     hop_length: int = 256,
@@ -119,7 +169,6 @@ def extract_loudness(
     loudness = 10.0 * torch.log10(torch.clamp(loudness, min=amin))
     
     return loudness 
-
     
 def get_extract_pitch_needs(
     device: str = "cuda",

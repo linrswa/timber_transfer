@@ -13,7 +13,7 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train8"
+run_name = "train9"
 notes = "Mix AttsubBlock(self and cross) and TCUB(fix)"
 batch_size = 16
 
