@@ -74,7 +74,7 @@ def get_A_weight(
         ndarray or Tensor: Depends on output_torch.
     """
     f = li.fft_frequencies(sr=sampling_rate, n_fft=n_fft)
-    a_weight = li.A_weighting(f) 
+    a_weight = li.A_weighting(f + 1e-12) 
     
     if output_torch:
         return torch.from_numpy(a_weight.reshape(-1, 1))
