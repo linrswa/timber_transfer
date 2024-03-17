@@ -8,8 +8,9 @@ from glob import glob
 from tqdm import tqdm
 
 import sys
-sys.path.append(".")
+sys.path.append("..")
 from components.timbre_transformer.utils import extract_pitch, get_extract_pitch_needs
+from components.timbre_transformer.utils import extract_loudness, get_A_weight
 
 class DatasetForProcessor(Dataset):
     def __init__(
@@ -46,7 +47,6 @@ class DataProcessor:
         n_fft: int = 1024,
         source: str = "signal",
     ):
-        self.data_mode = data_mode
         self.dir_path = f"{dataset_dir}/{data_mode}"
         self.sr = sr
         self.n_fft = n_fft
@@ -54,12 +54,14 @@ class DataProcessor:
         self.save_dir_dict = {
             "signal": "signal",
             "frequency_c": "frequency_c",
-            "loudness": "loudness",
+            "loudness": "loudness_new",
             "mfcc": "mfcc",
         }
         self.source = self._check_source(source)
         self.source_list = self._get_source_path_list()
         self._check_folders_isexist()
+        self.dl = DataLoader(DatasetForProcessor(data_mode), batch_size=32)
+        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     def _check_source(self, source: str):
         if source not in ["audio", "signal"]:
@@ -104,12 +106,10 @@ class DataProcessor:
                 mfcc.numpy(),
             )
     
-    def extract_frequency_c(self):
-        dl = DataLoader(DatasetForProcessor(self.data_mode), batch_size=32)
+    def make_frequency_c_data(self):
         self._print_save_dir_info()
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        device, cr, m_sec = get_extract_pitch_needs(device=device)
-        for fn_batch, signal_batch in tqdm(dl):
+        device, cr, m_sec = get_extract_pitch_needs(device=self.device)
+        for fn_batch, signal_batch in tqdm(self.dl):
             signal_batch = signal_batch.to(device)
             frequency_c_batch = extract_pitch(
                 signal=signal_batch,
@@ -124,8 +124,19 @@ class DataProcessor:
                     os.path.join(self.dir_path, f"{self.save_dir_dict['frequency_c']}/{fn}.npy"),
                     frequency_c.numpy(),
                 )
+    
+    def make_loudness_data(self):
+        a_weighting = get_A_weight().to(self.device)
+        for fn_batch, signal_batch in tqdm(self.dl):
+            signal_batch = signal_batch.to(self.device)
+            loudness_batch = extract_loudness(signal_batch, a_weighting)
+            for fn, loudness in zip(fn_batch, loudness_batch):
+                np.save(
+                    os.path.join(self.dir_path, f"{self.save_dir_dict['loudness']}/{fn}.npy"),
+                    loudness.cpu().numpy(),
+                )
 
 
 if __name__ == "__main__":
-    processor = DataProcessor("valid")
-    processor.extract_frequency_c()
+    processor = DataProcessor("test")
+    processor.make_loudness_data()

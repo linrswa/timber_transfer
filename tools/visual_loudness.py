@@ -36,7 +36,7 @@ if USE_MEAN_STD:
     l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE().to("cpu")
-pt_file = f"{pt_file_dir}/train8_generator_best_1.pt"
+pt_file = f"{pt_file_dir}/train10_generator_best_40.pt"
 ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
 synthsizer = HarmonicOscillator().to("cpu")
@@ -67,14 +67,12 @@ add_l = extract_loudness(add.squeeze(dim=-1), A_weight)
 sub_l = extract_loudness(sub.squeeze(dim=-1), A_weight)
 add = add.view(-1).detach().numpy()
 sub = sub.view(-1).detach().numpy()
-add_l = add_l.view(-1).detach().numpy()[:-1]
-sub_l = sub_l.view(-1).detach().numpy()[:-1]
+add_l = add_l.view(-1).detach().numpy()
+sub_l = sub_l.view(-1).detach().numpy()
 add_l, sub_l = cal_loudness_norm(add_l), cal_loudness_norm(sub_l)
 l, rec_l = cal_loudness_norm(l), cal_loudness_norm(rec_l)
 
 global_amp = global_amp.view(-1).detach().numpy()
-
-loudness_mask = get_loudness_mask(s).reshape(-1)
 
 def plot_result(s, rec, fn, rec_l, l):
     p = plt.plot
@@ -100,7 +98,7 @@ def plot_result(s, rec, fn, rec_l, l):
     p(rec_l)
     plt.title("rec_loudness")
     plt.subplot(336)
-    diff_l = abs(l - rec_l) * loudness_mask
+    diff_l = abs(l - rec_l)
     p(diff_l, color="red")
     plt.title(f"diff_fix_loudness {diff_l.mean(): .3f}")
     plt.subplot(337)
