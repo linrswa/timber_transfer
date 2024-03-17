@@ -83,7 +83,7 @@ def valid_model(
         val_f0, val_f0_confidence = seperate_f0_confidence(val_f0_c)
         out_add, out_sub, out_rec, out_mu, out_logvar, global_amp = model(val_s, val_l, val_f0)
 
-        loss_l = get_loudness_l1_loss(out_rec, val_s, val_l, aw, mean_std_dict, norm=True, use_fix_loudness=True)
+        loss_l = get_loudness_l1_loss(out_rec, val_s, val_l, aw, mean_std_dict, norm=True)
         loss_f = get_pitch_l1_loss(out_rec, val_f0_c, device, cr, m_sec)
         loss_l_sum += loss_l.item() * val_s.size(0)
         loss_f_sum += loss_f.item() * val_s.size(0)
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/train7_generator_best_2.pt"
+    pt_file = "./pt_file/train10_generator_best_40.pt"
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
