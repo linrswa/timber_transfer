@@ -14,7 +14,6 @@ class TimbreTransformer(nn.Module):
         n_mfcc=80,
         n_mels=128,
         timbre_emb_dim=128,
-        mlp_layer=3,
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,
@@ -37,7 +36,6 @@ class TimbreTransformer(nn.Module):
         self.encoder = Encoder()
 
         self.decoder = Decoder(
-            mlp_layer=mlp_layer,
             n_harms=n_harms,
             noise_filter_bank=noise_filter_bank,
         )

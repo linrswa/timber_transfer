@@ -9,35 +9,6 @@ from .utils_blocks import DFBlock, TCUB, AttSubBlock
 def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7): 
     return max_value * torch.sigmoid(x)**math.log(exponent) + threshold
 
-def mlp(in_size, hidden_size, n_layers):
-    channels = [in_size] + (n_layers) * [hidden_size]
-    net = []
-    for i in range(n_layers):
-        net.append(nn.Linear(channels[i], channels[i + 1]))
-        net.append(nn.LayerNorm(channels[i+1]))
-        net.append(nn.LeakyReLU())
-    return nn.Sequential(*net)
-
-class MultiHeadAttBlock(nn.Module):
-    def __init__(self, in_size, num_heads=8):
-        super().__init__()
-        self.att = nn.MultiheadAttention(embed_dim=in_size, num_heads=num_heads, batch_first=True)
-        self.att_norm = nn.LayerNorm(in_size)
-        self.mlp = nn.Sequential(
-            nn.Linear(in_size, in_size * 2),
-            nn.LeakyReLU(0.2),
-            nn.Linear(in_size * 2, in_size),
-            nn.LeakyReLU(0.2)
-            )
-        self.mlp_norm = nn.LayerNorm(in_size)
-    
-    def forward(self, x):
-        att, _ = self.att(x, x, x)
-        att_out = self.att_norm(x + att)
-        linear_out = self.mlp(att_out)
-        out = self.mlp_norm(att_out + linear_out)
-        return out
-
 class InputAttBlock(nn.Module):
     def __init__(self, in_size=1, hidden_size=32, out_size=64):
         super().__init__()
@@ -46,15 +17,15 @@ class InputAttBlock(nn.Module):
         else:
             num_heads = 1
         self.input_linear = nn.Linear(in_size, hidden_size)
-        self.first_att_block = MultiHeadAttBlock(hidden_size, num_heads)
+        self.first_att_block = AttSubBlock(hidden_size, num_heads)
         self.out_linear = nn.Linear(hidden_size, out_size)
-        self.out_att_block = MultiHeadAttBlock(out_size, num_heads)
+        self.out_att_block = AttSubBlock(out_size, num_heads)
     
     def forward(self, x):
         x = self.input_linear(x)
-        x = self.first_att_block(x)
+        x = self.first_att_block(x, x)
         x = self.out_linear(x)
-        x = self.out_att_block(x)
+        x = self.out_att_block(x, x)
         return x
 
 class AmpStack(nn.Module):
@@ -123,7 +94,6 @@ class Decoder(nn.Module):
     def __init__(
         self,
         in_extract_size=64,
-        mlp_layer=3,
         timbre_emb_size=128,
         final_embedding_size=512,
         n_harms = 101,
@@ -149,7 +119,8 @@ class Decoder(nn.Module):
         self.cross_att_1 = AttSubBlock(in_size * 2)
         self.cross_att_2 = AttSubBlock(in_size * 4)
 
-        self.mlp_final = mlp(in_size * 4 + in_size, final_embedding_size, mlp_layer) 
+        self.final_self_att = AttSubBlock(in_size * 4 + in_size) 
+        self.final_self_att_proj = nn.Linear(in_size * 4 + in_size, final_embedding_size)
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
         
@@ -173,13 +144,14 @@ class Decoder(nn.Module):
         out_timbre_fusion_2 = self.cross_att_2(out_timbre_fusion_2, timbre_emb_3)
 
         out_cat_f0_loudness = torch.cat([out_timbre_fusion_2, out_gru_f0, out_gru_loudness], dim=-1)
-        out_mlp_final = self.mlp_final(out_cat_f0_loudness)
+        out_final_self_att = self.final_self_att(out_cat_f0_loudness, out_cat_f0_loudness)
+        out_final_self_att = self.final_self_att_proj(out_final_self_att)
         
         # harmonic part
-        harmonic_output = self.harmonic_head(out_mlp_final, timbre_emb, loudness)
+        harmonic_output = self.harmonic_head(out_final_self_att, timbre_emb, loudness)
 
         # noise filter part
-        noise_output = self.noise_head(out_mlp_final, loudness)
+        noise_output = self.noise_head(out_final_self_att, loudness)
 
         return harmonic_output, noise_output
 
