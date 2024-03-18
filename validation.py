@@ -18,12 +18,10 @@ from components.timbre_transformer.utils import extract_pitch, get_extract_pitch
 
 def get_loudness_l1_loss(
     rec_signal: Tensor,
-    target_signal: Tensor,
     target_l: Tensor,
     aw: Tensor,
     mean_std_dict: dict,
     norm: bool = False,
-    use_fix_loudness: bool = False
 ):
     rec_signal = rec_signal.view(rec_signal.shape[0], -1)
     y_l = extract_loudness(rec_signal, aw)[..., :-1]
@@ -32,18 +30,8 @@ def get_loudness_l1_loss(
         target_l = cal_mean_std_loudness(target_l, mean_std_dict)
         y_l = cal_mean_std_loudness(y_l, mean_std_dict)
         
-    if use_fix_loudness:
-        loudness_mask = get_loudness_mask(target_signal.cpu())
-        loudness_mask = torch.from_numpy(loudness_mask).to(target_signal.device)
-        loudness_mask = loudness_mask.permute(1, 0).contiguous()
-        def modified_mae(y, target):
-            diff_loudness = torch.abs(y - target) * loudness_mask
-            return diff_loudness.mean(dim=-1)
-        return modified_mae(y_l, target_l).mean()
-
-    else:
-        l_l1_loss = F.l1_loss(y_l, target_l)
-        return l_l1_loss
+    l_l1_loss = F.l1_loss(y_l, target_l)
+    return l_l1_loss
 
 def get_pitch_l1_loss(
     signal: Tensor,
@@ -83,7 +71,7 @@ def valid_model(
         norm_l = cal_mean_std_loudness(val_l, mean_std_dict)
         out_add, out_sub, out_rec, out_mu, out_logvar, global_amp = model(val_s, norm_l, val_f0)
 
-        loss_l = get_loudness_l1_loss(out_rec, val_s, val_l, aw, mean_std_dict, norm=True)
+        loss_l = get_loudness_l1_loss(out_rec, val_l, aw, mean_std_dict, norm=True)
         loss_f = get_pitch_l1_loss(out_rec, val_f0_c, device, cr, m_sec)
         loss_l_sum += loss_l.item() * val_s.size(0)
         loss_f_sum += loss_f.item() * val_s.size(0)
@@ -102,10 +90,10 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/train12_generator_best_2.pt"
+    pt_file = "./pt_file/train13_generator_best_0.pt"
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    generator = TimbreTransformer(is_smooth=True, mlp_layer=3, n_harms=101).to(device)
+    generator = TimbreTransformer(is_smooth=True, n_harms=101).to(device)
     generator.load_state_dict(torch.load(pt_file))
 
     data_mode = "valid"

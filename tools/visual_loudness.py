@@ -17,26 +17,21 @@ from components.timbre_transformer.utils import extract_loudness, get_A_weight, 
 from tools.utils import cal_loudness_norm, seperate_f0_confidence, mask_f0_with_confidence
 from tools.utils import get_loudness_mask
 
-USE_MEAN_STD = True
-FREQUENCY_WITH_CONFIDENCE = True
-USE_SMOOTH = True
 output_dir = "../output"
 pt_file_dir = "../pt_file"
 
-train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE)
+train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=True)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
 fn, s, l, f0_with_confidence = next(iter(train_loader)) 
 
-if FREQUENCY_WITH_CONFIDENCE:
-    f0, _ = seperate_f0_confidence(f0_with_confidence)
+f0, _ = seperate_f0_confidence(f0_with_confidence)
 
-if USE_MEAN_STD:
-    l_mod = cal_loudness_norm(l)
+l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE().to("cpu")
-pt_file = f"{pt_file_dir}/train12_generator_best_0.pt"
+pt_file = f"{pt_file_dir}/train13_generator_best_1.pt"
 ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
 synthsizer = HarmonicOscillator().to("cpu")
