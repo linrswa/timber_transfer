@@ -13,8 +13,8 @@
     "fmax": 8000,
     "fmax_for_loss": null,
     "loss_weight": {
-        "gen_multiscale_fft": 5,
-        "gen_mel": 45.0,
+        "gen_multiscale_fft": 1,
+        "gen_mel": 10,
         "gen_kl": 0.01
     },
     "mlp_layer": 3
