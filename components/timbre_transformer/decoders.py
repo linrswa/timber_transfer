@@ -61,13 +61,14 @@ class AmpStack(nn.Module):
     def __init__(self, emb_dim=8):
         super().__init__()
         self.stack = nn.Sequential(
-            nn.Linear(1, emb_dim),
+            nn.Linear(2, emb_dim),
             nn.LeakyReLU(0.2),
             nn.Linear(emb_dim, 1),
             )
     
-    def forward(self, amp):
-        amp_att = self.stack(amp)
+    def forward(self, amp, loudness):
+        amp_mix = torch.cat([amp, loudness], dim=-1)
+        amp_att = self.stack(amp_mix)
         return modified_sigmoid(amp + amp_att)
 
 
@@ -80,7 +81,7 @@ class HarmonicHead(nn.Module):
         self.relu = nn.LeakyReLU(0.2)
         self.stack_amp = AmpStack(emb_dim=8)
 
-    def forward(self, out_mlp_final, timbre_emb):
+    def forward(self, out_mlp_final, timbre_emb, loudness):
         n_harm_amps = self.dense_harm(out_mlp_final)
 
         # out_dense_harmonic output -> global_amplitude(1) + n_harmonics(101) 
@@ -94,7 +95,7 @@ class HarmonicHead(nn.Module):
 
         # global amplitude part
         global_amp = self.relu(global_amp)
-        global_amp = self.stack_amp(global_amp)
+        global_amp = self.stack_amp(global_amp, loudness)
 
         # n_harm_amps /= n_harm_amps.sum(-1, keepdim=True) # not every element >= 0
         n_harm_dis_norm = nn.functional.softmax(n_harm_dis, dim=-1)
@@ -109,11 +110,11 @@ class NoiseHead(nn.Module):
         self.relu = nn.LeakyReLU(0.2)
         self.stack_amp = AmpStack(emb_dim=8)
     
-    def forward(self, out_mlp_final):
+    def forward(self, out_mlp_final, loudness):
         out_dense_noise = self.dense_noise(out_mlp_final)
         global_amp, noise_filter_bank = out_dense_noise[..., :1], out_dense_noise[..., 1:]
         noise_filter_bank = modified_sigmoid(noise_filter_bank)
-        global_amp = self.stack_amp(global_amp)
+        global_amp = self.stack_amp(global_amp, loudness)
 
         return noise_filter_bank, global_amp
 
@@ -175,11 +176,10 @@ class Decoder(nn.Module):
         out_mlp_final = self.mlp_final(out_cat_f0_loudness)
         
         # harmonic part
-        harmonic_output = self.harmonic_head(out_mlp_final, timbre_emb)
+        harmonic_output = self.harmonic_head(out_mlp_final, timbre_emb, loudness)
 
         # noise filter part
-        noise_output = self.noise_head(out_mlp_final)
+        noise_output = self.noise_head(out_mlp_final, loudness)
 
         return harmonic_output, noise_output
-
 
