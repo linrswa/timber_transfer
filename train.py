@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "train15"
-notes = ""
+run_name = "train1"
+notes = "remove amp_stack"
 batch_size = 16
 
 h = get_hyparam()
@@ -46,7 +46,7 @@ config = {
 }
 
 wandb.init(
-    project="TimbreTransformer_new",
+    project="TimbreTransformer_v2",
     name=run_name, 
     notes=notes,
     config=config
