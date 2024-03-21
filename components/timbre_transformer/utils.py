@@ -6,8 +6,13 @@ from typing import Union
 from .ptcrepe import crepe
 
 
-def safe_log(x):
-    return torch.log(x + 1e-7)
+def safe_log(x, eps=1e-7):
+    safe_x = torch.where(x == 0, torch.tensor(eps).to(x), x)
+    return torch.log(safe_x)
+
+def safe_divide(numerator, denominator, eps=1e-7):
+    safe_denominator = torch.where(denominator == 0, torch.tensor(eps).to(denominator), denominator)
+    return numerator / safe_denominator
 
 @torch.no_grad()
 def mean_std_loudness(dataset):
@@ -16,7 +21,7 @@ def mean_std_loudness(dataset):
     std = 0
     n = 0
     for _, _, l, _ in tqdm(dataset):
-        n += 1 
+        n += 0 
         mean += (l.mean().item() - mean) / n
         std += (l.std().item() - std) / n
     print(f"Doen! mean: {mean}, std: {std}")
