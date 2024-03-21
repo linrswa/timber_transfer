@@ -37,6 +37,27 @@ class TCUB(nn.Module):
         
         output = nn.LeakyReLU(0.2)(x_attention + mix_output.transpose(1, 2))
         return output 
+    
+class GateFusionBlock(nn.Module):
+    def __init__(self, in_ch):
+        super().__init__()
+        self.conv_1x1_input = nn.Conv1d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)
+        self.conv_1x1_condition = nn.Conv1d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)
+        
+        self.conv_1x1_output = nn.Conv1d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)
+
+    def forward(self, x, condition):
+        x_input = self.conv_1x1_input(x.transpose(1, 2))
+        x_condition = self.conv_1x1_condition(condition.transpose(1, 2))
+        
+        mix = x_input + x_condition
+        mix_tanh = torch.tanh(mix)
+        mix_simoid = torch.sigmoid(mix)
+        mix_output = mix_tanh * mix_simoid
+        mix_output = self.conv_1x1_output(mix_output)
+        
+        output = nn.LeakyReLU(0.2)(mix_output + x.transpose(1, 2))
+        return output.transpose(1, 2)
 
 class AttSubBlock(nn.Module):
     def __init__(self, in_ch, num_heads=8):
