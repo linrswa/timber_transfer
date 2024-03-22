@@ -13,7 +13,7 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_new_6"
+run_name = "decoder_new_7"
 notes = "new decoder with new achitecture"
 batch_size = 16
 
