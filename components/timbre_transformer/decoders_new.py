@@ -108,19 +108,14 @@ class Decoder(nn.Module):
         super().__init__()
         self.input_f0 = MLP(1, in_extract_size)
         self.input_loudness =  MLP(1, in_extract_size)
-        self.input_mixer = nn.GRU(in_extract_size * 2, mix_hidden_size)
+        self.input_timbre = MLP(timbre_emb_size, in_extract_size)
+        self.input_mixer = nn.GRU(in_extract_size * 3, mix_hidden_size)
     
         stage_1_size = mix_hidden_size
         self.gfb_stage_1_1 = GateFusionBlock(stage_1_size)
         self.gfb_stage_1_2 = GateFusionBlock(stage_1_size)
         self.mlp_1 = MLP(stage_1_size, stage_1_size * 2) 
         self.stage_1_gru = nn.GRU(stage_1_size * 2, gru_units, batch_first=True)
-
-        stage_2_size = stage_1_size
-        self.gfb_stage_2_1 = GateFusionBlock(stage_2_size)
-        self.gfb_stage_2_2 = GateFusionBlock(stage_2_size)
-        self.mlp_2 = MLP(stage_2_size, stage_2_size) 
-        self.stage_2_gru = nn.GRU(stage_1_size, gru_units, batch_first=True)
 
         final_size = final_embedding_size + in_extract_size * 2
         self.final_mlp = MLP(final_size, final_embedding_size)
@@ -131,21 +126,17 @@ class Decoder(nn.Module):
         
         out_input_f0 = self.input_f0(f0)
         out_input_loudness = self.input_loudness(loudness)
+        out_input_timbre = self.input_timbre(timbre_emb)
     
-        out_cat_mlp = torch.cat([out_input_f0, out_input_loudness], dim=-1)
+        out_cat_mlp = torch.cat([out_input_f0, out_input_loudness, out_input_timbre.expand_as(out_input_f0)], dim=-1)
         out_mlp_mixer, _ = self.input_mixer(out_cat_mlp)
 
-        out_stage_1 = self.gfb_stage_1_1(out_mlp_mixer, timbre_emb)
-        out_stage_1 = self.gfb_stage_1_2(out_stage_1, timbre_emb)
+        out_stage_1 = self.gfb_stage_1_1(out_mlp_mixer, out_input_timbre)
+        out_stage_1 = self.gfb_stage_1_2(out_stage_1, out_input_timbre)
         out_stage_1 = self.mlp_1(out_stage_1)
         out_stage_1, _ = self.stage_1_gru(out_stage_1)
 
-        out_stage_2 = self.gfb_stage_2_1(out_stage_1, timbre_emb)
-        out_stage_2 = self.gfb_stage_2_2(out_stage_1, timbre_emb)
-        out_stage_2 = self.mlp_2(out_stage_1)
-        out_stage_2, _ = self.stage_2_gru(out_stage_1)
-
-        out_cat_f0_loudness = torch.cat([out_stage_2, out_input_f0, out_input_loudness], dim=-1)
+        out_cat_f0_loudness = torch.cat([out_stage_1, out_input_f0, out_input_loudness], dim=-1)
         out_final_mlp = self.final_mlp(out_cat_f0_loudness)
         
         # harmonic part
