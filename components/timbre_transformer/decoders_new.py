@@ -2,7 +2,9 @@
 import torch
 import math
 import torch.nn as nn
+
 from .utils_blocks import DFBlock, TCUB, AttSubBlock, GateFusionBlock
+from .utils import safe_divide
 
 # force the amplitudes, harmonic distributions, and filtered noise magnitudes 
 # to be non-negative by applying a sigmoid nonlinearity to network outputs.
@@ -74,8 +76,8 @@ class HarmonicHead(nn.Module):
         # global amplitude part
         global_amp = modified_sigmoid(global_amp)
 
-        # n_harm_amps /= n_harm_amps.sum(-1, keepdim=True) # not every element >= 0
-        n_harm_dis_norm = nn.functional.softmax(n_harm_dis, dim=-1)
+        n_harm_dis = modified_sigmoid(n_harm_dis)
+        n_harm_dis_norm =  safe_divide(n_harm_dis, n_harm_dis.sum(dim=-1, keepdim=True)) 
 
         return n_harm_dis_norm, global_amp
 
