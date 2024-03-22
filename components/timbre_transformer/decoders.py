@@ -2,12 +2,34 @@
 import torch
 import math
 import torch.nn as nn
-from .utils_blocks import DFBlock, TCUB, AttSubBlock
+from .utils_blocks import DFBlock, TCUB, AttSubBlock, GateFusionBlock
+
+from .utils import safe_divide
 
 # force the amplitudes, harmonic distributions, and filtered noise magnitudes 
 # to be non-negative by applying a sigmoid nonlinearity to network outputs.
 def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7): 
     return max_value * torch.sigmoid(x)**math.log(exponent) + threshold
+
+class MLP(nn.Module):
+    def __init__(self, in_size, hidden_size):
+        super().__init__()
+        self.net = nn.Sequential(
+            self.linear_stack(in_size, hidden_size),
+            self.linear_stack(hidden_size, hidden_size),
+            self.linear_stack(hidden_size, hidden_size),
+        )
+    
+    def forward(self, x):
+        return self.net(x)
+
+    def linear_stack(self, in_size, hidden_size):
+        block = nn.Sequential(
+            nn.Linear(in_size, hidden_size),
+            nn.LayerNorm(hidden_size),
+            nn.LeakyReLU()
+            )
+        return block
 
 class InputAttBlock(nn.Module):
     def __init__(self, in_size=1, hidden_size=32, out_size=64):
@@ -50,9 +72,8 @@ class HarmonicHead(nn.Module):
         self.dfblock1 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
         self.dfblock2 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
         self.relu = nn.LeakyReLU(0.2)
-        self.stack_amp = AmpStack(emb_dim=8)
 
-    def forward(self, out_mlp_final, timbre_emb, loudness):
+    def forward(self, out_mlp_final, timbre_emb):
         n_harm_amps = self.dense_harm(out_mlp_final)
 
         # out_dense_harmonic output -> global_amplitude(1) + n_harmonics(101) 
@@ -65,11 +86,10 @@ class HarmonicHead(nn.Module):
         n_harm_dis = n_harm_dis + df_out
 
         # global amplitude part
-        global_amp = self.relu(global_amp)
-        global_amp = self.stack_amp(global_amp, loudness)
+        global_amp = modified_sigmoid(global_amp)
 
-        # n_harm_amps /= n_harm_amps.sum(-1, keepdim=True) # not every element >= 0
-        n_harm_dis_norm = nn.functional.softmax(n_harm_dis, dim=-1)
+        n_harm_dis = modified_sigmoid(n_harm_dis)
+        n_harm_dis_norm =  safe_divide(n_harm_dis, n_harm_dis.sum(dim=-1, keepdim=True)) 
 
         return n_harm_dis_norm, global_amp
 
@@ -77,23 +97,19 @@ class HarmonicHead(nn.Module):
 class NoiseHead(nn.Module):
     def __init__(self, in_size, noise_filter_bank):
         super().__init__()
-        self.dense_noise = nn.Linear(in_size, noise_filter_bank + 1)
-        self.relu = nn.LeakyReLU(0.2)
-        self.stack_amp = AmpStack(emb_dim=8)
+        self.dense_noise = nn.Linear(in_size, noise_filter_bank)
     
-    def forward(self, out_mlp_final, loudness):
+    def forward(self, out_mlp_final):
         out_dense_noise = self.dense_noise(out_mlp_final)
-        global_amp, noise_filter_bank = out_dense_noise[..., :1], out_dense_noise[..., 1:]
-        noise_filter_bank = modified_sigmoid(noise_filter_bank)
-        global_amp = self.stack_amp(global_amp, loudness)
+        noise_filter_bank = modified_sigmoid(out_dense_noise)
 
-        return noise_filter_bank, global_amp
+        return noise_filter_bank
 
 
 class Decoder(nn.Module):
     def __init__(
         self,
-        in_extract_size=64,
+        in_extract_size=256,
         timbre_emb_size=128,
         final_embedding_size=512,
         n_harms = 101,
@@ -148,10 +164,10 @@ class Decoder(nn.Module):
         out_final_self_att = self.final_self_att_proj(out_final_self_att)
         
         # harmonic part
-        harmonic_output = self.harmonic_head(out_final_self_att, timbre_emb, loudness)
+        harmonic_output = self.harmonic_head(out_final_self_att, timbre_emb)
 
         # noise filter part
-        noise_output = self.noise_head(out_final_self_att, loudness)
+        noise_output = self.noise_head(out_final_self_att)
 
         return harmonic_output, noise_output
 
