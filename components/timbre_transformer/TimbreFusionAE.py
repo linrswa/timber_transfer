@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from .encoders import Encoder, TimbreEncoder
-from .decoders_new import  Decoder
+from .decoders import  Decoder
 
 class TimbreFusionAE(nn.Module):
     def __init__(
@@ -12,7 +12,7 @@ class TimbreFusionAE(nn.Module):
         hop_length=256,
         n_mfcc=80,
         n_mels=128,
-        timbre_emb_dim=128,
+        timbre_emb_dim=256,
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,

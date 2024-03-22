@@ -15,7 +15,6 @@ from components.timbre_transformer.TimbreFusionAE import TimbreFusionAE
 from components.timbre_transformer.component import HarmonicOscillator, NoiseFilter
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
 from tools.utils import cal_loudness_norm, seperate_f0_confidence, mask_f0_with_confidence
-from tools.utils import get_loudness_mask
 
 output_dir = "../output"
 pt_file_dir = "../pt_file"
@@ -31,7 +30,7 @@ f0, _ = seperate_f0_confidence(f0_with_confidence)
 l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE().to("cpu")
-pt_file = f"{pt_file_dir}/decoder_new_4_generator_best_25.pt"
+pt_file = f"{pt_file_dir}/decoder_new_6_generator_best_2.pt"
 ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
 synthsizer = HarmonicOscillator().to("cpu")
