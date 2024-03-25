@@ -32,17 +32,15 @@ class MLP(nn.Module):
         return block
 
 class InputAttBlock(nn.Module):
-    def __init__(self, in_size=1, mlp_hidden_size=512, out_size=256, num_heads=8):
+    def __init__(self, in_size=1, mlp_hidden_size=256, out_size=256, num_heads=8):
         super().__init__()
         self.input_mlp = MLP(in_size, mlp_hidden_size)
-        self.gru = nn.GRU(mlp_hidden_size, out_size, num_layers=3, batch_first=True)
         self.cross_att_block = AttSubBlock(out_size, num_heads)
     
     def forward(self, x, condition):
         x = self.input_mlp(x)
-        x, _ = self.gru(x)
-        x = self.cross_att_block(x, condition)
-        return x
+        out = self.cross_att_block(x, condition)
+        return x, out
 
 class AmpStack(nn.Module):
     def __init__(self, emb_dim=8):
@@ -119,9 +117,9 @@ class Decoder(nn.Module):
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, timbre_emb):
-        out_f0_input = self.f0_input_block(f0, timbre_emb)
-        out_loudness_input = self.loudness_input_block(loudness, timbre_emb)
-        mix = torch.cat([out_f0_input, out_loudness_input, timbre_emb.expand_as(out_f0_input)], dim=-1)
+        out_f0_input, out_f0_att = self.f0_input_block(f0, timbre_emb)
+        out_loudness_input, out_loudness_att = self.loudness_input_block(loudness, timbre_emb)
+        mix = torch.cat([out_f0_att, out_loudness_att, timbre_emb.expand_as(out_f0_input)], dim=-1)
         out_mix_gru = self.mix_gru(mix)[0]
         out_self_att = self.self_att(out_mix_gru, out_mix_gru)
         

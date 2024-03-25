@@ -109,7 +109,7 @@ class NoiseHead(nn.Module):
 class Decoder(nn.Module):
     def __init__(
         self,
-        in_extract_size=256,
+        in_extract_size=64,
         timbre_emb_size=128,
         final_embedding_size=512,
         n_harms = 101,
