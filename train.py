@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_new_7"
-notes = "new decoder with new achitecture"
+run_name = "base_5"
+notes = "retrain base"
 batch_size = 16
 
 h = get_hyparam()
@@ -113,8 +113,8 @@ for epoch in tqdm(range(num_epochs)):
         
         # Train Generator
         optim_g.zero_grad()
-        loss_gen_multiscale_fft = L.multiscale_fft_loss(s, y_g_hat) * h.loss_weight["gen_multiscale_fft"]
-        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel) * h.loss_weight["gen_mel"]
+        loss_gen_multiscale_fft = L.multiscale_fft_loss(s, y_g_hat, reduction='mean') * h.loss_weight["gen_multiscale_fft"]
+        loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel, reduction='mean') * h.loss_weight["gen_mel"]
         loss_gen_kl = L.kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
         _, y_mpd_hat_g, fmap_mpd_r, fmap_mpd_g = mpd(s, y_g_hat)
         loss_gen_fm_period = L.feature_loss(fmap_mpd_r, fmap_mpd_g)
