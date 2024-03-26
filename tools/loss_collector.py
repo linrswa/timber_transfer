@@ -5,13 +5,14 @@ from .utils import multiscale_fft, safe_log
 class LossCollector:
     
     @staticmethod
-    def multiscale_fft_loss(s, y_g_hat):
+    def multiscale_fft_loss(s, y_g_hat, reduction='mean'):
         ori_stft = multiscale_fft(s.squeeze(dim=1))
         rec_stft = multiscale_fft(y_g_hat.squeeze(dim=1))
         loss_gen_multiscale_fft = 0 
+        reduction_fn = torch.sum if reduction == 'sum' else torch.mean
         for s_x, s_y in zip(ori_stft, rec_stft):
-            linear_loss = (s_x - s_y).abs().mean()
-            log_loss = (safe_log(s_x) - safe_log(s_y)).abs().mean()
+            linear_loss = reduction_fn((s_x - s_y).abs())
+            log_loss = reduction_fn((safe_log(s_x) - safe_log(s_y)).abs())
             loss_gen_multiscale_fft += linear_loss + log_loss
         return loss_gen_multiscale_fft
 
