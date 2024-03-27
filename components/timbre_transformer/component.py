@@ -35,7 +35,7 @@ class HarmonicOscillator(nn.Module):
         harm_amp_dis = n_harm_dis * global_amp
 
         harm_amp_dis = self.remove_above_nyquist(harm_amp_dis, f0, self.sr)
-        harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length)
+        harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length, 'hann')
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
         if self.is_smooth:
@@ -46,16 +46,45 @@ class HarmonicOscillator(nn.Module):
     def remove_above_nyquist(amp_harm_dis, pitch, sample_rate):
         n_harm = amp_harm_dis.shape[-1]
         pitches = pitch * torch.arange(1, n_harm + 1).to(pitch)
-        aa = (pitches < sample_rate / 2).float() + 1e-4
-        return amp_harm_dis * aa
+        amp_harm_dis = torch.where(
+            torch.ge(pitches, sample_rate / 2.0),
+            torch.zeros_like(pitches), amp_harm_dis
+            )
+        return amp_harm_dis
     
+    def upsample(self, x, factor, mode="linear"):
+        if mode == "linear":
+            return self.upsample_linear(x, factor)
+        elif mode == "hann":
+            return self.upsample_with_hann_window(x, factor)
+
     # paper says bilinear ?
     @staticmethod
-    def upsample(signal, factor):
-        # signal -> batch, frame, channel (maybe)
+    def upsample_linear(signal, factor):
+        # signal -> batch, frame, channel 
         signal = signal.permute(0, 2, 1)
-        signal = nn.functional.interpolate(signal, size=signal.shape[-1] * factor)
+        signal = nn.functional.interpolate(signal, size=signal.shape[-1] * factor, mode="linear")
         return signal.permute(0, 2, 1)
+
+    @staticmethod
+    def upsample_with_hann_window(x, factor: int):
+        batch, frame, channel = x.shape
+        x = x.permute(0, 2, 1).reshape(batch * channel, 1, frame)
+        
+        window = torch.hann_window(
+            factor * 2,
+            dtype=x.dtype,
+            device=x.device,
+        ).reshape(1, 1, -1)
+        y = torch.zeros(x.shape[0], x.shape[1], factor * x.shape[2]).to(x)
+        y[..., ::factor] = x
+        y[..., -1:] = x[..., -1:]
+        y = torch.nn.functional.pad(y, [factor, factor])
+        y = torch.nn.functional.conv1d(y, window)[..., :-1]
+
+        y = y.reshape(batch, channel, factor * frame).permute(0, 2, 1)
+        return y
+
         
     @staticmethod
     def harmonic_synth(pitch, amplitudes, sampling_rate):
