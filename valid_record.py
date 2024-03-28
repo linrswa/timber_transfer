@@ -5,9 +5,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import numpy as np
-import inquirer
-from glob import glob
+import json
 
 from data.dataset import NSynthDataset
 from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence, get_loudness_mask
@@ -51,7 +49,7 @@ def get_pitch_l1_loss(
 
 @torch.no_grad()
 def valid_model(
-    model: nn.Module, data_mode: str, batch: int
+    model: nn.Module, data_mode: str, batch: int, record_path: str = "record.json"
 ):
     mean_std_dict = {}
     dataset = NSynthDataset(data_mode=data_mode, sr=16000, frequency_with_confidence=True)
@@ -65,6 +63,8 @@ def valid_model(
 
     aw = get_A_weight().to(device)
     device, cr, m_sec = get_extract_pitch_needs(device)
+    
+    record_list = []
     for val_p, val_s, val_l, val_f0_c in tqdm(valid_loader):
         val_s, val_l, val_f0_c = val_s.to(device), val_l.to(device), val_f0_c.to(device)
         val_f0, val_f0_confidence = seperate_f0_confidence(val_f0_c)
@@ -75,9 +75,15 @@ def valid_model(
         loss_f = get_pitch_l1_loss(out_rec, val_f0_c, device, cr, m_sec)
         loss_l_sum += loss_l.item() * val_s.size(0)
         loss_f_sum += loss_f.item() * val_s.size(0)
-
         num_samples += val_s.size(0)
-
+        record_data = {
+            "file_name": val_p,
+            "loss_l": loss_l.item(),
+            "loss_f": loss_f.item(),
+        }
+        record_list.append(record_data)
+    with open(record_path, "w") as file:
+        json.dump(record_list, file)
     mean_l_loss = loss_l_sum / num_samples
     mean_f_loss = loss_f_sum / num_samples
 
@@ -90,22 +96,24 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/base_9_generator_best_2.pt"
+    file_name = "base_9_generator_best_2"
+    pt_file_path = f"./pt_file/{file_name}.pt"
+    record_file_path = f"./record/{file_name}.json"
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     generator = TimbreTransformer(is_smooth=True, n_harms=101).to(device)
-    generator.load_state_dict(torch.load(pt_file))
+    generator.load_state_dict(torch.load(pt_file_path))
 
     data_mode = "valid"
-    l1_loudness, l1_f0 = valid_model(generator, data_mode, 16)
+    l1_loudness, l1_f0 = valid_model(generator, data_mode, 16, record_file_path)
 
     print(f""""
-        finish {pt_file.split('/')[-1]}\n 
+        finish {pt_file_path.split('/')[-1]}\n 
         \t loudness loss: {l1_loudness}\n
         \t pitch loss: {l1_f0}\n
         """ )
 
     with open("validation_log.txt", "a") as f:
-        f.write(f"{data_mode}: {pt_file.split('/')[-1]}\n")
+        f.write(f"{data_mode}: {pt_file_path.split('/')[-1]}\n")
         f.write(f"\tloudness loss: {l1_loudness}\n")
         f.write(f"\tpitch loss: {l1_f0}\n")

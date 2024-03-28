@@ -18,7 +18,7 @@ frequency_with_confidence = True
 output_dir = "../output"
 pt_file_dir = "../pt_file"
 
-train_dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=frequency_with_confidence)
+train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=frequency_with_confidence)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
@@ -31,7 +31,7 @@ if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
 ddsp = TimbreTransformer(is_train=False)
-pt_file = "base_7_generator_best_2.pt"
+pt_file = "base_9_generator_best_2.pt"
 ddsp.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = ddsp(s, l_mod, f0)
 
