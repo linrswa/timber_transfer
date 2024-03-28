@@ -32,25 +32,26 @@ class HarmonicOscillator(nn.Module):
     def forward(self, harmonic_head_output, f0):
         # harmonic_head_output -> batch, frame, harm_head_output
         n_harm_dis, global_amp = harmonic_head_output[0], harmonic_head_output[1]
-        harm_amp_dis = n_harm_dis * global_amp
 
-        harm_amp_dis = self.remove_above_nyquist(harm_amp_dis, f0, self.sr)
-        harm_amp_dis = self.upsample(harm_amp_dis, self.hop_length, 'hann')
+        n_harm_dis = self.remove_above_nyquist(n_harm_dis, f0, self.sr)
+        n_harm_dis = self.upsample(n_harm_dis, self.hop_length)
+        global_amp = self.upsample(global_amp, self.hop_length)
+        if self.is_smooth:
+            global_amp = self.smooth_envelop(global_amp, self.hop_length, self.hop_length * 2)
+        harm_amp_dis = n_harm_dis * global_amp
         f = self.upsample(f0, self.hop_length)
         harmonic = self.harmonic_synth(f, harm_amp_dis, self.sr)
-        if self.is_smooth:
-            harmonic = self.smooth_envelop(harmonic, self.hop_length, self.hop_length * 2)
         return harmonic
         
     @staticmethod
-    def remove_above_nyquist(amp_harm_dis, pitch, sample_rate):
-        n_harm = amp_harm_dis.shape[-1]
+    def remove_above_nyquist(n_harm_dis, pitch, sample_rate):
+        n_harm = n_harm_dis.shape[-1]
         pitches = pitch * torch.arange(1, n_harm + 1).to(pitch)
-        amp_harm_dis = torch.where(
+        n_harm_dis = torch.where(
             torch.ge(pitches, sample_rate / 2.0),
-            torch.zeros_like(pitches), amp_harm_dis
+            torch.zeros_like(pitches), n_harm_dis
             )
-        return amp_harm_dis
+        return n_harm_dis
     
     def upsample(self, x, factor, mode="linear"):
         if mode == "linear":
