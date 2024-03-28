@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "base_9"
-notes = "modify upsample, and remove smooth"
+run_name = "decoder_new_1"
+notes = "new_decoder"
 batch_size = 16
 
 h = get_hyparam()
