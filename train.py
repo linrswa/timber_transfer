@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_new_2"
-notes = "new_decoder"
+run_name = "decoder_new_3"
+notes = "new_decoder, fix harmonichead"
 batch_size = 16
 
 h = get_hyparam()

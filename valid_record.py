@@ -96,7 +96,7 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    file_name = "decoder_new_2_generator_best_2"
+    file_name = "decoder_new_3_generator_best_4"
     pt_file_path = f"./pt_file/{file_name}.pt"
     record_file_path = f"./record/{file_name}.json"
 
