@@ -5,9 +5,6 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import numpy as np
-import inquirer
-from glob import glob
 
 from data.dataset import NSynthDataset
 from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence, get_loudness_mask
