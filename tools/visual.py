@@ -30,10 +30,10 @@ if frequency_with_confidence:
 if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
-ddsp = TimbreTransformer(is_train=False)
-pt_file = "base_9_generator_best_2.pt"
-ddsp.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
-add, sub, rec, mu, logvar, global_amp = ddsp(s, l_mod, f0)
+model = TimbreTransformer(is_train=False, is_smooth=True)
+pt_file = "decoder_new_1_generator_best_1.pt"
+model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
+add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)

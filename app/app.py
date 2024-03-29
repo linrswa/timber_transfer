@@ -15,7 +15,7 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        self.current_pt_file_name = "train13_generator_best_1.pt"
+        self.current_pt_file_name = "decoder_new_1_generator_best_1.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/train*generator*.pt"))
         self.model = TimbreTransformer(is_train=False, is_smooth=True)
