@@ -13,8 +13,8 @@ from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_new_3"
-notes = "new_decoder, fix harmonichead"
+run_name = "base_10"
+notes = "fix harmonichead, remove DF block"
 batch_size = 16
 
 h = get_hyparam()
@@ -59,7 +59,7 @@ best_loss = float("inf")
 step = 0
 n_element = 0
 
-total_mean_loss = {
+init_loss = {
     "gen_period": 0,
     "gen_fm_period": 0,
     "gen_mel": 0,
@@ -71,18 +71,9 @@ total_mean_loss = {
     "disc_all": 0,
 }
 
-step_loss_50 = {
-    "gen_period": 0,
-    "gen_fm_period": 0,
-    "gen_mel": 0,
-    "gen_multiscale_fft": 0,
-    "gen_kl": 0,
-    "gen_loudness": 0,
-    "gen_all": 0,
-    "disc_period": 0,
-    "disc_all": 0,
-}
+total_mean_loss = init_loss
 
+step_loss_50 = init_loss
 
 A_weight = get_A_weight().to(device)
 for epoch in tqdm(range(num_epochs)):
