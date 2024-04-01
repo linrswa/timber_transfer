@@ -53,25 +53,14 @@ class HarmonicHead(nn.Module):
     def __init__(self, in_size, timbre_emb_size, n_harms):
         super().__init__()
         self.dense_harm = nn.Linear(in_size, n_harms+1)
-        self.dfblock1 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
-        self.dfblock2 = DFBlock(n_harms, timbre_emb_size, affine_dim=n_harms, out_layer_mlp=True)
 
     def forward(self, out_mlp_final, timbre_emb):
         n_harm_amps = self.dense_harm(out_mlp_final)
 
         # out_dense_harmonic output -> global_amplitude(1) + n_harmonics(101) 
+        n_harm_amps = modified_sigmoid(n_harm_amps)
         global_amp, n_harm_dis = n_harm_amps[..., :1], n_harm_amps[..., 1:]
 
-        # harmonic distribution part
-        n_harm_dis = modified_sigmoid(n_harm_dis)
-        df_out = self.dfblock1(n_harm_dis, timbre_emb)
-        df_out = self.dfblock2(df_out, timbre_emb)
-        n_harm_dis = n_harm_dis + df_out
-
-        # global amplitude part
-        global_amp = modified_sigmoid(global_amp)
-
-        n_harm_dis = modified_sigmoid(n_harm_dis)
         n_harm_dis_norm =  safe_divide(n_harm_dis, n_harm_dis.sum(dim=-1, keepdim=True)) 
 
         return n_harm_dis_norm, global_amp
