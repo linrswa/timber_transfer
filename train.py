@@ -12,9 +12,10 @@ from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mea
 from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
+#MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "base_10"
-notes = "fix harmonichead, remove DF block"
+run_name = "base_13"
+notes = "fix harmonichead, add DF block but use * instead of +"
 batch_size = 16
 
 h = get_hyparam()
@@ -53,8 +54,8 @@ wandb.init(
     )
 
 
+#MAKR: Set init value for logging
 num_epochs = 300
-# set init value for logging
 best_loss = float("inf")
 step = 0
 n_element = 0
@@ -76,6 +77,7 @@ total_mean_loss = init_loss
 step_loss_50 = init_loss
 
 A_weight = get_A_weight().to(device)
+#MARK: Train loop
 for epoch in tqdm(range(num_epochs)):
     for fn, s, l ,f in tqdm(train_loader):
         
@@ -93,7 +95,7 @@ for epoch in tqdm(range(num_epochs)):
         s = s.unsqueeze(dim=1)
         y_g_hat = y_g_hat.permute(0, 2, 1).contiguous()
 
-        # Train Discriminator
+        #MARK: Train Discriminator
         optim_d.zero_grad()
         y_mpd_hat_r, y_mpd_hat_g, _, _ = mpd(s, y_g_hat.detach())
         loss_disc_period = L.discriminator_loss(y_mpd_hat_r, y_mpd_hat_g)
@@ -102,7 +104,7 @@ for epoch in tqdm(range(num_epochs)):
         loss_disc_all.backward()
         optim_d.step()
         
-        # Train Generator
+        #MARK: Train Generator
         optim_g.zero_grad()
         loss_gen_multiscale_fft = L.multiscale_fft_loss(s, y_g_hat, reduction='mean') * h.loss_weight["gen_multiscale_fft"]
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel, reduction='mean') * h.loss_weight["gen_mel"]
@@ -114,11 +116,11 @@ for epoch in tqdm(range(num_epochs)):
         loss_gen_all.backward()
         optim_g.step() 
        
-       # update scheduler 
+       #MARK: update scheduler 
         scheduler_g.step()
         scheduler_d.step()
 
-        # calculate mean loss for logging not in tranning
+        #MARK: calculate mean loss for logging not in tranning
         with torch.no_grad():
             rec_l = extract_loudness(y_g_hat.squeeze(dim=1), A_weight)[:, :-1]
             rec_l = cal_mean_std_loudness(rec_l, mean_std_dict)
@@ -153,8 +155,7 @@ for epoch in tqdm(range(num_epochs)):
         torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_{epoch}.pt")   
         print(f"save model at epoch {epoch}")
 
-    # reset value for logging
+    #MARK: reset value for logging
     n_element = 0
     for k, v in total_mean_loss.items():
         total_mean_loss[k] = 0
-# %%
