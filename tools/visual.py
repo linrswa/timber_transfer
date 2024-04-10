@@ -27,13 +27,15 @@ fn, s, l, f0_with_confidence = next(iter(train_loader))
 if frequency_with_confidence:
     f0, _ = seperate_f0_confidence(f0_with_confidence)
 
+
 if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
 model = TimbreTransformer(is_train=False, is_smooth=True)
-pt_file = "decoder_new_1_generator_best_1.pt"
+pt_file = "base_13_generator_best_3.pt"
 model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
+
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)

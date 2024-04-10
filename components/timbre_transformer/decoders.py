@@ -81,6 +81,12 @@ class HarmonicHead(nn.Module):
 
         global_amp, n_harm_dis = n_harm_amps[..., :1], n_harm_amps[..., 1:]
 
+        # harmonic distribution part
+        df_out = self.dfblock1(n_harm_dis, timbre_emb)
+        df_out = self.dfblock2(df_out, timbre_emb)
+        df_out = modified_sigmoid(df_out)
+        n_harm_dis = n_harm_dis * df_out
+
         # global amplitude part
         n_harm_dis_norm =  safe_divide(n_harm_dis, n_harm_dis.sum(dim=-1, keepdim=True)) 
 
