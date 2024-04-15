@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "base_13"
-notes = "fix harmonichead, add DF block but use * instead of +"
+run_name = "base_15"
+notes = "feature matching loss weight set to 2"
 batch_size = 16
 
 h = get_hyparam()
@@ -110,7 +110,7 @@ for epoch in tqdm(range(num_epochs)):
         loss_gen_mel = F.l1_loss(y_mel, y_g_hat_mel, reduction='mean') * h.loss_weight["gen_mel"]
         loss_gen_kl = L.kl_loss(mu, logvar) * h.loss_weight["gen_kl"]
         _, y_mpd_hat_g, fmap_mpd_r, fmap_mpd_g = mpd(s, y_g_hat)
-        loss_gen_fm_period = L.feature_loss(fmap_mpd_r, fmap_mpd_g)
+        loss_gen_fm_period = L.feature_loss(fmap_mpd_r, fmap_mpd_g) * h.loss_weight["gen_fm_period"]
         loss_gen_period= L.generator_loss(y_mpd_hat_g)
         loss_gen_all = loss_gen_period + loss_gen_fm_period + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
         loss_gen_all.backward()
