@@ -42,7 +42,7 @@ def model_gen(s: ndarray, l_norm: ndarray, f:ndarray):
 def sample_data():
     fn_with_path = random.choice(G_info.dataset.audio_list)
     fn = fn_with_path.split("/")[-1][:-4]
-    _, s, l, f = G_info.dataset.getitem_by_fn(fn)
+    _, s, l, f = G_info.dataset.getitem_by_filename(fn)
     return fn, s, l, f
 
 def change_dataset(data_mode: str) -> str:
