@@ -14,9 +14,9 @@
     "fmax_for_loss": null,
     "loss_weight": {
         "gen_multiscale_fft": 1,
-        "gen_mel": 10,
+        "gen_mel": 45,
         "gen_kl": 0.01,
-        "gen_fm_period": 1
+        "gen_fm_period": 2
     },
     "mlp_layer": 3
 }

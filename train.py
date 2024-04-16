@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "base_17"
-notes = "feature matching loss weight change back to 1"
+run_name = "base_18"
+notes = "feature matching loss weight set 2, and mel loss weight 45"
 batch_size = 16
 
 h = get_hyparam()

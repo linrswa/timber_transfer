@@ -54,6 +54,6 @@ class NSynthDataset(torch.utils.data.Dataset):
         signal_path = os.path.join(self.data_mode_dir_path, "signal/*")
         self.audio_list = glob(signal_path)
 
-    def getitem_by_fn(self, fn: str):
+    def getitem_by_filename(self, fn: str):
         idx = self.audio_list.index(os.path.join(self.data_mode_dir_path, f"{self.info_type['signal']}/{fn}.npy"))
         return self.__getitem__(idx)
