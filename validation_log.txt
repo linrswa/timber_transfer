@@ -256,3 +256,24 @@ valid: decoder_new_3_generator_best_4.pt
 valid: decoder_new_4_generator_150.pt
 	loudness loss: 0.09236000284547898
 	pitch loss: 0.02881627191818096
+valid: base_15_generator_best_211.pt
+	loudness loss: 0.09651385883657326
+	pitch loss: 0.045149258374540736
+valid: base_15_generator_best_177.pt
+	loudness loss: 0.09651309615508098
+	pitch loss: 0.04539354938336205
+valid: base_15_generator_best_17.pt
+	loudness loss: 0.09651349412046306
+	pitch loss: 0.04529931974643849
+valid: base_15_generator_best_1.pt
+	loudness loss: 0.0967125970407466
+	pitch loss: 0.04489020663792829
+valid: base_16_generator_best_31.pt
+	loudness loss: 0.10222324357705453
+	pitch loss: 0.023016465556825325
+valid: base_16_generator_best_7.pt
+	loudness loss: 0.10222782945096669
+	pitch loss: 0.023181447850949433
+valid: base_17_generator_best_2.pt
+	loudness loss: 0.09391331519043095
+	pitch loss: 0.02539111908707749

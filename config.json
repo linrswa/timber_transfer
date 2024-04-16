@@ -16,7 +16,7 @@
         "gen_multiscale_fft": 1,
         "gen_mel": 10,
         "gen_kl": 0.01,
-        "gen_fm_period": 2
+        "gen_fm_period": 1
     },
     "mlp_layer": 3
 }
