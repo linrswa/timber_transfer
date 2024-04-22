@@ -22,7 +22,7 @@ def create_fig(data: ndarray) -> plt.Figure:
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        self.current_pt_file_name = "base_19_generator_best_1.pt"
+        self.current_pt_file_name = "base_with_f0_distanglement_enhance3_generator_best_1.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/*18*generator*.pt"))
         self.model = TimbreTransformer(is_train=False, is_smooth=True)
