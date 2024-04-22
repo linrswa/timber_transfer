@@ -1,8 +1,14 @@
-#%%
-import torch
+# %%
 import os
+import torch
+from torch.utils.data import DataLoader
 import numpy as np
+import matplotlib.pyplot as plt
 from glob import glob
+
+import sys
+sys.path.append("..")
+from tools.utils import seperate_f0_confidence
 
 class NSynthDataset(torch.utils.data.Dataset):
     def __init__(
@@ -47,9 +53,9 @@ class NSynthDataset(torch.utils.data.Dataset):
             os.path.join(self.data_mode_dir_path, f"{self.info_type['frequency']}/{file_name}.npy")
         ).astype("float32")
 
-        frequency = self.f0_distanglement_enhance(frequency)
+        frequency_after = self.f0_distanglement_enhance(frequency)
 
-        return (file_name, signal, loudness, frequency)
+        return (file_name, signal, loudness, frequency, frequency_after)
 
     def set_data_mode(self, data_mode: str):
         self.data_mode = data_mode
@@ -61,9 +67,11 @@ class NSynthDataset(torch.utils.data.Dataset):
         idx = self.audio_list.index(os.path.join(self.data_mode_dir_path, f"{self.info_type['signal']}/{fn}.npy"))
         return self.__getitem__(idx)
         
-    def f0_distanglement_enhance(self, f0: np.ndarray):
-        tmp_f0 = f0.copy()
-        non_zero_f0 = tmp_f0[tmp_f0 != 0]
+    def f0_distanglement_enhance(self, f0_with_confidence: np.ndarray):
+        # only single file is supported
+        f_w_c = f0_with_confidence.copy()
+        f0, _ = f_w_c[..., 0][...,: -1], f_w_c[..., 1][...,: -1]
+        non_zero_f0 = f0[f0 != 0]
         f0_mean = np.mean(non_zero_f0)
         f0_std = np.std(non_zero_f0)
         scale_mean = np.random.uniform(0.6, 1.5)
@@ -75,12 +83,46 @@ class NSynthDataset(torch.utils.data.Dataset):
         adjusted_std = f0_std * scale_std
     
         adjusted_f0 = ((adjusted_f0 - f0_mean) / f0_std) * adjusted_std + f0_mean
-        tmp_f0[tmp_f0 != 0] = adjusted_f0
-        return tmp_f0
+        f0[f0 != 0] = adjusted_f0
+        f_w_c[..., 0][...,: -1] = f0
+        return f_w_c
 
-if __name__ == "__main__":
-    from torch.utils.data import DataLoader
-    train_dataset = NSynthDataset(data_mode="train", sr=16000)
-    train_loader = DataLoader(train_dataset, batch_size=4, num_workers=1, shuffle=True)
-    for fn, s, l ,f in train_loader:
-        print(fn)
+USE_MEAN_STD = True
+FREQUENCY_WITH_CONFIDENCE = True
+USE_SMOOTH = True
+output_dir = "../output"
+pt_file_dir = "../pt_file"
+
+train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE)
+
+train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
+       
+fn, s, l, f0_with_confidence, f0_after_with_confidence = next(iter(train_loader)) 
+
+if FREQUENCY_WITH_CONFIDENCE:
+    f0, _ = seperate_f0_confidence(f0_with_confidence)
+    f0_after, _ = seperate_f0_confidence(f0_after_with_confidence)
+
+s = s.view(-1).numpy()
+f0 = f0.view(-1).numpy()
+f0_after = f0_after.view(-1).numpy()
+
+def plot_result():
+    p = plt.plot
+    plt.suptitle(fn[0])
+    plt.subplot(411)
+    p(s)
+    plt.title("audio")
+    plt.subplot(412)
+    p(f0)
+    plt.title("f0")
+    plt.subplot(413)
+    p(f0_after)
+    plt.title("f0_fix")
+    plt.tight_layout()
+    plt.subplot(414)
+    p(f0_after - f0)
+    plt.title(f"{np.mean(np.abs(f0_after - f0))}")
+    plt.tight_layout()
+
+plot_result()
