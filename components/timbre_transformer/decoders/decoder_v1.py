@@ -2,9 +2,9 @@
 import torch
 import math
 import torch.nn as nn
-from .utils_blocks import DFBlock, TCUB, AttSubBlock, GateFusionBlock
+from ..utils_blocks import DFBlock, TCUB, AttSubBlock, GateFusionBlock
 
-from .utils import safe_divide
+from ..utils import safe_divide
 
 # force the amplitudes, harmonic distributions, and filtered noise magnitudes 
 # to be non-negative by applying a sigmoid nonlinearity to network outputs.
@@ -81,60 +81,45 @@ class NoiseHead(nn.Module):
 class Decoder(nn.Module):
     def __init__(
         self,
-        in_extract_size=128,
+        in_extract_size=512,
         timbre_emb_size=128,
         final_embedding_size=512,
         n_harms = 101,
         noise_filter_bank = 65
         ):
         super().__init__()
-        self.input_f0 = InputAttBlock(in_size=1, out_size=in_extract_size)
-        self.input_loudness = InputAttBlock(in_size=1, out_size=in_extract_size)
-        gru_in_size = in_extract_size * 2
-        gru_out_size = in_extract_size
-        self.mix_gru = nn.GRU(gru_in_size, gru_out_size, num_layers=1, batch_first=True)
-        self.self_att_1 = AttSubBlock(gru_out_size)
+        self.f0_mlp = MLP(1, in_extract_size)
+        self.l_mlp = MLP(1, in_extract_size)
+        self.timbre_mlp = MLP(timbre_emb_size, in_extract_size)
 
-        in_size = in_extract_size
-        self.condition_proj_1 = nn.Linear(timbre_emb_size, in_size * 2)
-        self.condition_proj_2 = nn.Linear(timbre_emb_size, in_size * 4)
-        self.tcub_1 = TCUB(in_size)
-        self.tcub_2 = TCUB(in_size * 2)
-        self.self_att_2 = AttSubBlock(in_size * 2)
-        self.cross_att_1 = AttSubBlock(in_size * 2)
-        self.cross_att_2 = AttSubBlock(in_size * 4)
-
-        final_size = in_size * 4 + in_size * 2 
-        self.final_self_att = AttSubBlock(final_size) 
-        self.final_self_att_proj = nn.Linear(final_size, final_embedding_size)
+        size_after_gru = in_extract_size // 2
+        self.mix_gru = nn.GRU(in_extract_size * 3, size_after_gru, batch_first=True)
+        self.self_att = AttSubBlock(size_after_gru, 8)
+        self.cross_att = AttSubBlock(size_after_gru, 8)
+        self.timbre_gru = nn.GRU(in_extract_size, size_after_gru, batch_first=True)
+        
+        final_size = size_after_gru + in_extract_size * 2
+        self.final_mlp = MLP(final_size, final_embedding_size)
         self.harmonic_head = HarmonicHead(final_embedding_size, timbre_emb_size, n_harms)
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, timbre_emb):
-        
-        out_input_f0 = self.input_f0(f0)
-        out_input_loudness = self.input_loudness(loudness)
-        out_cat_mlp = torch.cat([out_input_f0, out_input_loudness], dim=-1)
-        out_mix_gru = self.mix_gru(out_cat_mlp)[0]
-        out_cat_mlp = self.self_att_1(out_mix_gru, out_mix_gru)
+        out_f0_mlp = self.f0_mlp(f0)
+        out_l_mlp = self.l_mlp(loudness)
+        out_timbre_mlp = self.timbre_mlp(timbre_emb)
+        cat_input = torch.cat([out_f0_mlp, out_l_mlp, out_timbre_mlp.expand_as(out_f0_mlp)], dim=-1)
+        out_mix_gru, _ = self.mix_gru(cat_input)
+        out_timbre_gru, _ = self.timbre_gru(out_timbre_mlp)
+        out_self_att = self.self_att(out_mix_gru, out_mix_gru)
+        out_cross_att = self.cross_att(out_self_att, out_timbre_gru)
 
-        timbre_emb_1 = self.condition_proj_1(timbre_emb)
-        timbre_emb_2 = self.condition_proj_2(timbre_emb)
-        out_timbre_fusion_1 = self.tcub_1(out_cat_mlp, timbre_emb)
-        out_timbre_fusion_1 = self.self_att_2(out_timbre_fusion_1, out_timbre_fusion_1)
-        out_timbre_fusion_1 = self.cross_att_1(out_timbre_fusion_1, timbre_emb_1)
-        out_timbre_fusion_2 = self.tcub_2(out_timbre_fusion_1, timbre_emb_1)
-        out_timbre_fusion_2 = self.cross_att_2(out_timbre_fusion_2, timbre_emb_2)
+        cat_final = torch.cat([out_f0_mlp, out_l_mlp, out_cross_att], dim=-1)
 
-        out_cat_f0_loudness = torch.cat([out_timbre_fusion_2, out_input_f0, out_input_loudness], dim=-1)
-        out_final_self_att = self.final_self_att(out_cat_f0_loudness, out_cat_f0_loudness)
-        out_final_self_att = self.final_self_att_proj(out_final_self_att)
-        
+        out_final_mlp = self.final_mlp(cat_final)
         # harmonic part
-        harmonic_output = self.harmonic_head(out_final_self_att, timbre_emb)
+        harmonic_output = self.harmonic_head(out_final_mlp, timbre_emb)
 
         # noise filter part
-        noise_output = self.noise_head(out_final_self_att)
+        noise_output = self.noise_head(out_final_mlp)
 
         return harmonic_output, noise_output
-
