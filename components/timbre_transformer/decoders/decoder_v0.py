@@ -2,9 +2,9 @@
 import torch
 import math
 import torch.nn as nn
-from .utils_blocks import DFBlock, TCUB, AttSubBlock, GateFusionBlock
+from ..utils_blocks import DFBlock, TCUB, AttSubBlock, GateFusionBlock
 
-from .utils import safe_divide
+from ..utils import safe_divide
 
 # force the amplitudes, harmonic distributions, and filtered noise magnitudes 
 # to be non-negative by applying a sigmoid nonlinearity to network outputs.

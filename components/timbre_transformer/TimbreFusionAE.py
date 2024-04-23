@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .encoders import Encoder, TimbreEncoder
+from .encoder import Encoder, TimbreEncoder
 from .decoders import  Decoder
 
 class TimbreFusionAE(nn.Module):
