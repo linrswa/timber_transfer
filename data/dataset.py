@@ -17,7 +17,7 @@ class NSynthDataset(torch.utils.data.Dataset):
         self.sr = sr
         self.dir_path = dir_path
         self.set_data_mode(data_mode)
-        self.is_train = is_train
+        self.with_f0_distanglement = with_f0_distanglement
         self.info_type = (
             {
                 "signal": "signal",
@@ -49,7 +49,7 @@ class NSynthDataset(torch.utils.data.Dataset):
             os.path.join(self.data_mode_dir_path, f"{self.info_type['frequency']}/{file_name}.npy")
         ).astype("float32")
 
-        if self.is_train:
+        if self.with_f0_distanglement:
             frequency = self.f0_distanglement_enhance(frequency)
 
         return (file_name, signal, loudness, frequency)
