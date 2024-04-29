@@ -277,3 +277,9 @@ valid: base_16_generator_best_7.pt
 valid: base_17_generator_best_2.pt
 	loudness loss: 0.09391331519043095
 	pitch loss: 0.02539111908707749
+valid: decoder_v0_with_f0_distanglement_1_generator_best_0.pt
+	loudness loss: 0.326927845890605
+	pitch loss: 0.09524021366357385
+valid: decoder_v0_with_f0_distanglement_1_generator_best_31.pt
+	loudness loss: 0.3412755059939071
+	pitch loss: 0.06415582665693247

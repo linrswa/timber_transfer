@@ -14,7 +14,7 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "new_decoder_with_f0_distanglement_enhance1"
+run_name = "decoder_v1_with_f0_distanglement_2"
 notes = "feature matching loss weight set 2, and mel loss weight 45, train with new decoder"
 batch_size = 16
 
@@ -25,7 +25,7 @@ def cal_mean_loss(total_mean_loss, batch_mean_loss, n_element):
 
 mean_std_dict = get_mean_std_dict("train", 128)
 
-train_dataset = NSynthDataset(data_mode="train", sr=16000)
+train_dataset = NSynthDataset(data_mode="train", sr=16000, with_f0_distanglement=True)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=8, shuffle=True)
 generator = TimbreTransformer(is_train=True, is_smooth=True).to(device)
@@ -148,11 +148,11 @@ for epoch in tqdm(range(num_epochs)):
     if total_mean_loss["gen_all"] < best_loss:
         best_loss = total_mean_loss["gen_all"]
         torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_best_{epoch}.pt")
-        torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_best_{epoch}.pt")
+        # torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_best_{epoch}.pt")
         print(f"save best model at epoch {epoch}")
     elif epoch % 10 == 0:
         torch.save(generator.state_dict(), f"./pt_file/{run_name}_generator_{epoch}.pt")
-        torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_{epoch}.pt")   
+        # torch.save(mpd.state_dict(), f"./pt_file/{run_name}_mrd_{epoch}.pt")   
         print(f"save model at epoch {epoch}")
 
     #MARK: reset value for logging
