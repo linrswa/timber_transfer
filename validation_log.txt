@@ -283,3 +283,12 @@ valid: decoder_v0_with_f0_distanglement_1_generator_best_0.pt
 valid: decoder_v0_with_f0_distanglement_1_generator_best_31.pt
 	loudness loss: 0.3412755059939071
 	pitch loss: 0.06415582665693247
+valid: decoder_v1_with_f0_distanglement_2_generator_best_0.pt
+	loudness loss: 0.41492449138223675
+	pitch loss: 0.03394320495133519
+valid: decoder_v1_with_f0_distanglement_2_generator_best_2.pt
+	loudness loss: 0.3894148308733673
+	pitch loss: 0.04193744076392787
+valid: decoder_v1_with_f0_distanglement_2_generator_best_6.pt
+	loudness loss: 0.3893578936652886
+	pitch loss: 0.041698749287103536

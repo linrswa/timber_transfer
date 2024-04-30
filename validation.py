@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from data.dataset import NSynthDataset
-from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence, get_loudness_mask
+from tools.utils import cal_mean_std_loudness, mask_f0_with_confidence, seperate_f0_confidence
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, mean_std_loudness
 from components.timbre_transformer.utils import extract_pitch, get_extract_pitch_needs
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/decoder_v0_with_f0_distanglement_1_generator_best_31.pt"
+    pt_file = "./pt_file/decoder_v1_with_f0_distanglement_2_generator_best_6.pt"
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     generator = TimbreTransformer(is_smooth=True, n_harms=101).to(device)
