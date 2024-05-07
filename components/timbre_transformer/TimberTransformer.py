@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from .encoder import Encoder, TimbreEncoder
-from .decoders.decoder_v0 import  Decoder
+from .decoders import  Decoder
 from .component import HarmonicOscillator, NoiseFilter
 
 class TimbreTransformer(nn.Module):
@@ -58,7 +58,7 @@ class TimbreTransformer(nn.Module):
         mu, logvar = self.timbre_encoder(signal)
         timbre_emb = self.sample(mu, logvar)
 
-        harmonic_head_output, noise_head_output = self.decoder(f0, l, timbre_emb)
+        harmonic_head_output, noise_head_output, f0 = self.decoder(f0, l, timbre_emb)
 
         additive_output = self.synthesizer(harmonic_head_output, f0)
 
