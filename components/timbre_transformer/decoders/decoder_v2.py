@@ -48,17 +48,6 @@ class InputAttBlock(nn.Module):
         x = self.self_att(x, x)
         return x
 
-class F0Fixer(nn.Module):
-    def __init__(self, emb_dim=128):
-        super().__init__()
-        self.fixer_1 = DFBlock(in_ch=1, emb_dim=emb_dim, affine_dim=1, out_layer_mlp=True)
-        self.fixer_2 = DFBlock(in_ch=1, emb_dim=emb_dim, affine_dim=1, out_layer_mlp=True)
-    
-    def forward(self, f0, timbre_emb):
-        f0_fixed = self.fixer_1(f0, timbre_emb)
-        f0_fixed = self.fixer_2(f0, timbre_emb)
-        return f0 + f0_fixed
-
 
 class HarmonicHead(nn.Module):
     def __init__(self, in_size, timbre_emb_size, n_harms):
@@ -99,7 +88,6 @@ class Decoder(nn.Module):
         noise_filter_bank = 65
         ):
         super().__init__()
-        self.f0_fixer = F0Fixer(emb_dim=timbre_emb_size)
         self.f0_mlp = MLP(1, in_extract_size)
         self.l_mlp = MLP(1, in_extract_size)
         self.timbre_mlp = MLP(timbre_emb_size, in_extract_size)
@@ -116,13 +104,12 @@ class Decoder(nn.Module):
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
         
     def forward(self, f0, loudness, timbre_emb):
-        f0_fixed = self.f0_fixer(f0, timbre_emb)
-        out_f0_mlp = self.f0_mlp(f0_fixed)
+        out_f0_mlp = self.f0_mlp(f0)
         out_l_mlp = self.l_mlp(loudness)
         out_timbre_mlp = self.timbre_mlp(timbre_emb)
         cat_input = torch.cat([out_f0_mlp, out_l_mlp, out_timbre_mlp.expand_as(out_f0_mlp)], dim=-1)
-        out_mix_gru, _ = self.mix_gru(cat_input)
         out_timbre_gru, _ = self.timbre_gru(out_timbre_mlp)
+        out_mix_gru, _ = self.mix_gru(cat_input, out_timbre_gru.permute(1, 0, 2).contiguous())
         out_self_att = self.self_att(out_mix_gru, out_mix_gru)
         out_cross_att = self.cross_att(out_self_att, out_timbre_gru)
 
@@ -135,4 +122,4 @@ class Decoder(nn.Module):
         # noise filter part
         noise_output = self.noise_head(out_final_mlp)
 
-        return harmonic_output, noise_output, f0_fixed
+        return harmonic_output, noise_output, f0

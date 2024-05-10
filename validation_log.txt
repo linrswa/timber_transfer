@@ -1,161 +1,3 @@
-./pt_file/train12_generator_best_0.pt: 0.2822103881525907
-./pt_file/train12_generator_best_0.pt: 0.2821992149258067
-./pt_file/train12_generator_best_1.pt: 0.2817839070629962
-./pt_file/train 12_generator_10.pt: 0.28176950212647417
-valid: train 12_generator_best_15.pt: 0.27357032540326054
-valid: train 12_generator_best_27.pt: 0.2735390350694222
-valid: train 13_generator_best_13.pt: 0.2611295505167721
-valid: train 15_generator_best_6.pt: 0.4662052943059177
-valid: train 15_generator_40.pt: 0.46622052522255636
-valid: train18_generator_best_16.pt: 0.45914800358700597
-valid: train19_generator_best_18.pt: 0.48750409298927977
-valid: train19_generator_best_18.pt: 0.48756144426916237
-valid: New_train_7_generator_best_50.pt: 35.700526761772196
-valid: New_train_7_generator_best_50.pt: 0.4666186979774474
-valid: New_train_7_generator_best_12.pt: 0.46808044361800377
-valid: New_train_6_generator_best_7.pt: 0.46995553270474083
-valid: New_train_7_generator_best_83.pt: 0.4685766180045472
-valid: New_train_8_generator_140.pt: 0.5325781725028648
-valid: New_train_8_generator_best_13.pt: 0.5325786003414851
-
-valid: New_train_8_generator_best_150.pt	
-    loudness loss: 0.5325796876297633	
-    pitch loss: 0.545508240014089valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.5327055830098146
-	pitch loss: 0.5439615357265228
-valid: New_train_8_generator_best_150.pt
-	loudness loss: nan
-	pitch loss: 0.5487882497993168
-valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.5327033993629191
-	pitch loss: 0.5439344986674135
-valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.4291030011154243
-	pitch loss: inf
-valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.42910321431486675
-	pitch loss: 0.0331912164201283
-valid: New_train_9_generator_best_26.pt
-	loudness loss: 0.4279452206448942
-	pitch loss: 0.02512945405764086
-valid: New_train_9_generator_50.pt
-	loudness loss: 0.4279438823996939
-	pitch loss: 0.025166375382338447
-valid: New_train_9_generator_80.pt
-	loudness loss: 0.4279433681310481
-	pitch loss: 0.025377369669562153
-valid: New_train_10_generator_10.pt
-	loudness loss: 0.4264158074054281
-	pitch loss: 0.02459814443577464
-valid: New_train_10_generator_10.pt
-	loudness loss: 0.5436962834184748
-	pitch loss: 0.025052957515511582
-valid: New_train_10_generator_30.pt
-	loudness loss: 0.5436930239571222
-	pitch loss: 0.0245194834236333
-valid: New_train_11_generator_best_0.pt
-	loudness loss: 0.4681375637941522
-	pitch loss: 0.05923541690183314
-valid: New_train_11_generator_best_46.pt
-	loudness loss: 0.46811415430811376
-	pitch loss: 0.06002716178078754
-valid: New_train_12_generator_best_0.pt
-	loudness loss: 0.4812050902072296
-	pitch loss: 0.024696675716249283
-valid: New_train_12_generator_best_3.pt
-	loudness loss: 0.48104494680307297
-	pitch loss: 0.024557855554530026
-valid: New_train_13_generator_best_3.pt
-	loudness loss: 0.537605888138645
-	pitch loss: 0.025147628276213824
-valid: New_train_13_generator_best_22.pt
-	loudness loss: 0.5376068948240957
-	pitch loss: 0.025040653144597625
-valid: train1_generator_best_22.pt
-	loudness loss: 0.6096788377404401
-	pitch loss: 0.02160621682965924
-valid: train5_generator_best_1.pt
-	loudness loss: 0.3029804934180444
-	pitch loss: 0.02789820166774865
-valid: train5_generator_best_7.pt
-	loudness loss: 0.3029823147767841
-	pitch loss: 0.02777782599722967
-valid: train6_generator_best_2.pt
-	loudness loss: 0.2903095741927137
-	pitch loss: 0.026080760532604823
-valid: train6_generator_best_4.pt
-	loudness loss: 0.2903090531194262
-	pitch loss: 0.025741389549877168
-valid: train6_generator_best_18.pt
-	loudness loss: 0.29030869704927176
-	pitch loss: 0.02567111616036679
-valid: train6_generator_20.pt
-	loudness loss: 0.29030769677082474
-	pitch loss: 0.0257392702964414
-valid: train7_generator_best_0.pt
-	loudness loss: 0.3613075446154137
-	pitch loss: 0.05001371550654225
-valid: train8_generator_best_13.pt
-	loudness loss: 0.3675548182447269
-	pitch loss: 0.038590929490060516
-valid: train8_generator_best_18.pt
-	loudness loss: 0.36755470452119754
-	pitch loss: 0.03830424253347604
-valid: train9_generator_best_2.pt
-	loudness loss: 0.31616985951394205
-	pitch loss: 0.0669894928288849
-valid: train9_generator_best_1.pt
-	loudness loss: 0.3161700706476061
-	pitch loss: 0.06687618401346529
-valid: train10_generator_best_13.pt
-	loudness loss: 0.3486895417335885
-	pitch loss: 0.05135258949463519
-valid: train11_generator_best_7.pt
-	loudness loss: 0.31178332850317064
-	pitch loss: 0.06024616055878672
-valid: train12_generator_best_1.pt
-	loudness loss: 0.3196189566800429
-	pitch loss: 0.08876199013235657
-valid: train12_generator_best_25.pt
-	loudness loss: 0.3196193069708911
-	pitch loss: 0.08914688001640493
-valid: train13_generator_best_9.pt
-	loudness loss: 0.33494789088954435
-	pitch loss: 0.030108242512314747
-valid: train14_generator_best_10.pt
-	loudness loss: 0.3795386762622668
-	pitch loss: 0.039296132893199213
-valid: train14_generator_best_13.pt
-	loudness loss: 0.3795391929229814
-	pitch loss: 0.03978668333399199
-valid: train15_generator_best_0.pt
-	loudness loss: 0.34931547937270235
-	pitch loss: 0.028196324988666668
-valid: train15_generator_best_32.pt
-	loudness loss: 0.34961543722279054
-	pitch loss: 0.02810026819838258
-valid: train16_generator_best_0.pt
-	loudness loss: 0.38679342623357865
-	pitch loss: 0.036922424391924086
-valid: train18_generator_best_58.pt
-	loudness loss: 0.3926500897201113
-	pitch loss: 0.047926440190074734
-valid: train19_generator_best_4.pt
-	loudness loss: 0.4327928432396265
-	pitch loss: 0.04560604503877504
-valid: train20_generator_best_12.pt
-	loudness loss: 0.33815330497064705
-	pitch loss: 0.035665578437918975
-valid: train20_generator_40.pt
-	loudness loss: 0.33815327010727164
-	pitch loss: 0.03576970476689309
-valid: train22_generator_best_22.pt
-	loudness loss: 0.3795796254814476
-	pitch loss: 0.03281634531820711
-valid: train22_generator_best_33.pt
-	loudness loss: 0.37957972446296057
-	pitch loss: 0.03284674931742524
-
 TimbreTransformer_new start
 valid: train1_generator_best_2.pt
 	loudness loss: 0.32472448420019095
@@ -313,3 +155,18 @@ valid: decoder_v2_with_f0_distanglement_2_generator_best_1.pt
 valid: decoder_v2_1_generator_best_19.pt
 	loudness loss: 0.10883441790010634
 	pitch loss: 0.040037435038805406
+valid: decoder_v1_4_generator_best_1.pt
+	loudness loss: 0.09743735859658988
+	pitch loss: 0.03852655495850989
+valid: decoder_v1_4_generator_best_2.pt
+	loudness loss: 0.09736943533262672
+	pitch loss: 0.038079752593239063
+valid: decoder_v2.2_1_generator_best_15.pt
+	loudness loss: 0.18936846411455618
+	pitch loss: 0.19679326449288767
+valid: decoder_v2.2_1_with_f0_distanglement_generator_best_1.pt
+	loudness loss: 0.7468204117012325
+	pitch loss: nan
+valid: decoder_v2_2_generator_best_12.pt
+	loudness loss: 0.10143519063892929
+	pitch loss: 0.037533821207271625
