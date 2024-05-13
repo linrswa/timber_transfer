@@ -12,7 +12,6 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, mean_std_loudness
 from components.timbre_transformer.utils import extract_pitch, get_extract_pitch_needs
 
-
 def get_loudness_l1_loss(
     rec_signal: Tensor,
     target_l: Tensor,
@@ -87,7 +86,7 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/decoder_v2_2_generator_best_12.pt"
+    pt_file = "./pt_file/decoder_v3_2_generator_best_1.pt"
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     generator = TimbreTransformer(is_smooth=True, n_harms=101).to(device)
