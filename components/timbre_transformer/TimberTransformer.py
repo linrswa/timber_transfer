@@ -21,6 +21,7 @@ class TimbreTransformer(nn.Module):
         ):
 
         super().__init__()
+        print(f"{timbre_emb_dim=}")
 
         self.is_train = is_train
 

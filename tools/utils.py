@@ -64,7 +64,7 @@ def multiscale_fft(
     signal: Tensor,
     scales: list= [4096, 2048, 1024, 512, 256, 128],
     overlap: float=0.75,
-    ):
+    ) -> Tensor:
     stfts = []
     for scale in scales:
         S = torch.stft(
