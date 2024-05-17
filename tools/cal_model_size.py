@@ -21,7 +21,6 @@ timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, n_harms=1
 
 add, sub, rec, mu, logvar, global_amp = timbre_transformer(s, l, f)
 
-
 def calculate_model_size(model: nn.Module):
     param_size = 0
     for param in model.parameters():

@@ -15,10 +15,11 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        self.current_pt_file_name = "base_18_generator_best_1.pt"
+        run_name = "decoder_v4_3_fix"
+        self.current_pt_file_name = f"{run_name}_generator_best_2.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
-        self.pt_file_list = sorted(glob(f"{pt_dir}/*18*generator*.pt"))
-        self.model = TimbreTransformer(is_train=False, is_smooth=True)
+        self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
+        self.model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
         self.dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
         self.model.eval()
         self.model.load_state_dict(torch.load(self.pt_file))
@@ -106,3 +107,4 @@ with gr.Blocks() as app:
         )
 
 app.launch(share=True)
+# %%
