@@ -7,7 +7,7 @@ from glob import glob
 import os 
 
 import sys
-sys.path.append("..")
+sys.path.append(".")
 from data.dataset import NSynthDataset
 from components.timbre_transformer.TimberTransformer import TimbreTransformer 
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch

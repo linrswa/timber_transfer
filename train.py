@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v4_4_fix"
-notes = "new decoder v4 "
+run_name = "decoder_v3_test_fix"
+notes = "change G adamW to adam, and use Hperparameter in DDSP paper"
 batch_size = 16
 
 h = get_hyparam()
@@ -31,6 +31,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=8, s
 generator = TimbreTransformer(is_train=True, is_smooth=True, timbre_emb_dim=256).to(device)
 mpd = MultiPeriodDiscriminator().to(device)
 
+# optim_g = torch.optim.Adam(generator.parameters(), 0.001)
 optim_g = torch.optim.AdamW(generator.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])
 optim_d = torch.optim.AdamW(mpd.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])
 
@@ -115,10 +116,6 @@ for epoch in tqdm(range(num_epochs)):
         loss_gen_all = loss_gen_period + loss_gen_fm_period + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
         loss_gen_all.backward()
         optim_g.step() 
-       
-       #MARK: update scheduler 
-        scheduler_g.step()
-        scheduler_d.step()
 
         #MARK: calculate mean loss for logging not in tranning
         with torch.no_grad():
@@ -128,7 +125,15 @@ for epoch in tqdm(range(num_epochs)):
 
         step += 1
         n_element += 1
-        
+
+       #MARK: update scheduler 
+        scheduler_g.step()
+        scheduler_d.step()
+        #lr update from ddsp
+        # if step % 10000 == 0:
+        #     optim_g.param_groups[0]["lr"] *= 0.98
+        #     print(f"update lr to {optim_g.param_groups[0]['lr']}")
+            
         for k, v in total_mean_loss.items():
             total_mean_loss[k] += cal_mean_loss(v, locals()[f"loss_{k}"], n_element)
 
