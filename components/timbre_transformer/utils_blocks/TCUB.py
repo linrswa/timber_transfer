@@ -72,9 +72,9 @@ class AttSubBlock(nn.Module):
         )
         self.mlp_norm = nn.LayerNorm(in_ch)
     
-    def forward(self, x, condition):
-        att_out, _ = self.self_att(x, condition, condition)
-        att_out = self.self_att_norm(x + att_out)
+    def forward(self, q, kv):
+        att_out, _ = self.self_att(q, kv, kv)
+        att_out = self.self_att_norm(q + att_out)
         fc_out = self.mlp(att_out)
         out = self.mlp_norm(att_out + fc_out)
         return out
