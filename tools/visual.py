@@ -7,7 +7,7 @@ from glob import glob
 import os 
 
 import sys
-sys.path.append(".")
+sys.path.append("..")
 from data.dataset import NSynthDataset
 from components.timbre_transformer.TimberTransformer import TimbreTransformer 
 from components.timbre_transformer.utils import extract_loudness, get_A_weight, get_extract_pitch_needs, extract_pitch
@@ -31,8 +31,8 @@ if frequency_with_confidence:
 if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
-model = TimbreTransformer(is_train=False, is_smooth=True)
-pt_file = "base_16_generator_best_31.pt"
+model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
+pt_file = "decoder_v5_generator_best_23.pt"
 model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
 
