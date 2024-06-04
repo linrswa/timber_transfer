@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torchaudio
 
@@ -56,23 +57,44 @@ class TimbreEncoder(nn.Module):
 
         return mu, logvar
     
-
-class MultiDimEmbHeader(nn.Module):
-    def __init__(self):
+class ZEncoder(nn.Module):
+    def __init__(self, nfft=1024, hop_lenght=256, z_units=16, hidden_size=256):
         super().__init__()
-        self.down_dense1 = nn.Linear(128, 256)
-        self.relu = nn.LeakyReLU(0.2)
-
-    def forward(self, timbre_emb):
-        dd1 = self.relu(self.down_dense1(timbre_emb))
-        return timbre_emb, dd1
-        
+        self.nfft = nfft
+        self.hop_lenght = hop_lenght
+        input_size = nfft // 2 + 1
+        self.norm = nn.InstanceNorm1d(input_size, affine=True)
+        self.gru = nn.GRU(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            batch_first=True,
+        )
+        self.dense = nn.Linear(hidden_size, z_units)
+    
+    def forward(self, x):
+        x = torch.stft(
+            x,
+            n_fft=self.nfft,
+            hop_length=self.hop_lenght,
+            win_length=self.nfft,
+            center=True,
+            return_complex=True,
+        )
+        x = x[..., :-1]
+        x = torch.abs(x)
+        x = self.norm(x)
+        x = x.permute(0, 2, 1).contiguous() # (batch, nfft, frame) -> (batch, frame, nfft)
+        x = self.gru(x)[0]
+        x = self.dense(x)
+        return x
 
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
+        self.zencoder = ZEncoder()
             
-    def forward(self, loundness, f0):
+    def forward(self, signal, loundness, f0):
         f0 = f0.unsqueeze(dim=-1)
         l = loundness.unsqueeze(dim=-1)
-        return  f0, l
+        z = self.zencoder(signal)
+        return  f0, l, z
