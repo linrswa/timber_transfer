@@ -32,7 +32,7 @@ if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
 model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
-pt_file = "decoder_v5_generator_best_23.pt"
+pt_file = "decoder_v7_1_generator_best_32.pt"
 model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0)
 
