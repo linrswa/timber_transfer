@@ -1,4 +1,4 @@
-from .decoder_v8 import Decoder
+from .decoder_v10 import Decoder
 
 current_decoder_module = Decoder.__module__
 module_name = current_decoder_module.split(".")[-1]
