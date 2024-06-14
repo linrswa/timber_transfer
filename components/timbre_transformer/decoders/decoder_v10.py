@@ -136,6 +136,7 @@ class Decoder(nn.Module):
         self.timbre_mlp = MLP(timbre_emb_size, timbre_emb_size)
         self.f0_self_att = AttSubBlock(in_extract_size, 8)
         self.l_self_att = AttSubBlock(in_extract_size, 8)
+        self.timbre_self_att = AttSubBlock(in_extract_size, 8)
         cat_size = in_extract_size * 2 + z_units + timbre_emb_size
         self.mix_gru = nn.GRU(cat_size, timbre_emb_size, batch_first=True)
         self.timbre_transformer = TimbreTransformer(timbre_emb_size)
@@ -152,6 +153,7 @@ class Decoder(nn.Module):
         out_timbre_mlp = self.timbre_mlp(timbre_emb)
         out_f0_mlp = self.f0_self_att(out_f0_mlp, out_f0_mlp)
         out_l_mlp = self.l_self_att(out_l_mlp, out_l_mlp)
+        out_timbre_mlp = self.timbre_self_att(out_timbre_mlp, out_timbre_mlp)
         timbre_P = out_timbre_mlp.permute(1, 0, 2).contiguous()
         cat_input = torch.cat(
             [
