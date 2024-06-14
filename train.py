@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v8_3"
-notes = "change extract size to 256"
+run_name = "decoder_v10_1"
+notes = "new decoder with CondMLP, add mlp to z and timbre_emb"
 batch_size = 16
 
 h = get_hyparam()
