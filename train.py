@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v12_1"
-notes = "new deocder v12"
+run_name = "decoder_v12_1(mfcc)"
+notes = "new deocder v12, change zencoder to zmfccencoder"
 batch_size = 16
 
 h = get_hyparam()

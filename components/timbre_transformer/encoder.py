@@ -88,10 +88,48 @@ class ZEncoder(nn.Module):
         x = self.dense(x)
         return x
 
+
+class ZMFCCEncoder(nn.Module):
+    def __init__(
+        self,
+        nfft=1024,
+        hop_lenght=256,
+        z_units=16,
+        gru_units=512,
+        n_mfcc=30,
+        n_mels=128,
+        ):
+        super().__init__()
+        self.extract_mfcc = torchaudio.transforms.MFCC(
+            sample_rate=16000,
+            n_mfcc=n_mfcc,
+            log_mels=True,
+            melkwargs=dict(
+                n_fft=nfft, hop_length=hop_lenght, n_mels=n_mels, f_min=20.0, f_max=8000.0
+            )
+        )
+            
+        self.norm = nn.InstanceNorm1d(n_mfcc, affine=True)
+        self.gru = nn.GRU(
+            input_size=n_mfcc,
+            hidden_size=gru_units,
+            batch_first=True,
+        )
+        self.dense = nn.Linear(gru_units, z_units)
+    
+    def forward(self, x):
+        x = x.squeeze(dim=1)
+        x = self.extract_mfcc(x)
+        x = self.norm(x)
+        x = x.permute(0, 2, 1).contiguous() # (batch, nfft, frame) -> (batch, frame, nfft)
+        x, _ = self.gru(x)
+        x = self.dense(x)
+        return x[..., :-1, :]
+
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.zencoder = ZEncoder()
+        self.zencoder = ZMFCCEncoder()
             
     def forward(self, signal, loundness, f0):
         f0 = f0.unsqueeze(dim=-1)
