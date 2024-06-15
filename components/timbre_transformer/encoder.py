@@ -95,7 +95,7 @@ class ZMFCCEncoder(nn.Module):
         nfft=1024,
         hop_lenght=256,
         z_units=16,
-        gru_units=512,
+        gru_units=256,
         n_mfcc=30,
         n_mels=128,
         ):
@@ -129,7 +129,7 @@ class ZMFCCEncoder(nn.Module):
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.zencoder = ZEncoder()
+        self.zencoder = ZMFCCEncoder()
             
     def forward(self, signal, loundness, f0):
         f0 = f0.unsqueeze(dim=-1)
