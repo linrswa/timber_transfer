@@ -269,3 +269,9 @@ valid: decoder_v13_1(mfcc)_generator_best_33.pt
 valid: decoder_v13_1(mfcc)_generator_90.pt
 	loudness loss: 0.08874784378131785
 	pitch loss: 0.021795461675041435
+valid: decoder_v14_1(mfcc)_generator_best_19.pt
+	loudness loss: 0.10433545799554325
+	pitch loss: 0.03832977010578144
+valid: decoder_v14_1(mfcc)_test_generator_best_0.pt
+	loudness loss: 0.10231260210286254
+	pitch loss: 0.033925356962407005
