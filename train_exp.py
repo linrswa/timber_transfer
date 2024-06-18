@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v14_1(mfcc)_test"
-notes = "remove multscale fft loss"
+run_name = "decoder_v15_1(mfcc)"
+notes = "replace timbre_transformer with trimbre_residual_mixer"
 batch_size = 16
 
 h = get_hyparam()
@@ -48,7 +48,7 @@ config = {
 }
 
 wandb.init(
-    project="TimbreTransformer_v3",
+    project="TimbreTransformer_v4",
     name=run_name, 
     notes=notes,
     config=config
