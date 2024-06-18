@@ -43,7 +43,7 @@ class TimbreFusionAE(nn.Module):
         f0, l, z = self.encoder(signal, loudness, f0)
         mu, logvar = self.timbre_encoder(target_timbre_signal)
         timbre_emb = self.sample(mu, logvar)
-        harmonic_head_output, noise_head_output = self.decoder(f0, l, z, timbre_emb)
+        harmonic_head_output, noise_head_output, f0 = self.decoder(f0, l, z, timbre_emb)
         return harmonic_head_output, f0, noise_head_output
 
     def sample(self, mu, logvar):
