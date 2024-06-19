@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torchaudio
+from functools import partial
 
 
 # from nvc-net paper
@@ -126,13 +127,40 @@ class ZMFCCEncoder(nn.Module):
         x = self.dense(x)
         return x[..., :-1, :]
 
+class EngryEncoder(nn.Module):
+    def __init__(self, n_fft=1024, hop_length=256):
+        super().__init__()
+        self.n_fft = n_fft
+        self.extract_fn = partial(self.extract_frames, n_fft=n_fft, hop_length=hop_length)
+
+    def forward(self, signal):
+        frames = self.extract_fn(signal)
+        if frames.dim() == 2:
+            frames = frames.unsqueeze(dim=0)
+        frames = frames[:, :-1, :].contiguous()
+        energy = torch.sqrt((frames**2).mean(dim=-1, keepdim=True))
+        return energy
+
+    @staticmethod
+    def extract_frames(signal, n_fft, hop_length, center=True):
+        if center:
+            signal = torch.nn.functional.pad(signal, (n_fft // 2, n_fft // 2), mode='reflect')
+        
+        num_frames = (signal.shape[-1] - n_fft) // hop_length + 1
+        indices = torch.arange(0, num_frames * hop_length, hop_length).unsqueeze(1) + torch.arange(n_fft).unsqueeze(0)
+        frames = signal[:, indices].squeeze(0)
+        return frames
+
+
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.zencoder = ZMFCCEncoder()
+        # self.zencoder = ZMFCCEncoder()
+        self.engry_encoder = EngryEncoder()
             
     def forward(self, signal, loundness, f0):
         f0 = f0.unsqueeze(dim=-1)
         l = loundness.unsqueeze(dim=-1)
-        z = self.zencoder(signal)
-        return  f0, l, z
+        engry = self.engry_encoder(signal)
+        # z = self.zencoder(signal)
+        return  f0, l, engry

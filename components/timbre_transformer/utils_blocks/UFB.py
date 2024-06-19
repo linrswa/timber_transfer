@@ -36,7 +36,7 @@ class Affine(nn.Module):
 
 
 class DFBlock(nn.Module):
-    def __init__(self, in_ch, emb_dim, affine_dim=1, out_layer_mlp=False, is_transpose=False):
+    def __init__(self, in_ch, emb_dim, affine_dim=1, out_layer_mlp=True, is_transpose=False):
         super().__init__()
         self.affine1 = Affine(emb_dim, affine_dim, is_transpose)
         self.affine2 = Affine(emb_dim, affine_dim, is_transpose)
