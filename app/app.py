@@ -15,7 +15,7 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        run_name = "decoder_v15_1(mfcc)"
+        run_name = "decoder_v15_7(mfcc)"
         self.current_pt_file_name = f"{run_name}_generator_best_0.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
@@ -107,4 +107,3 @@ with gr.Blocks() as app:
         )
 
 app.launch(share=True)
-# %%

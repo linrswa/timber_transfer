@@ -54,12 +54,11 @@ class TimbreTransformer(nn.Module):
         )
     
     def forward(self, signal, loudness, f0):
-        
-        f0, l, z = self.encoder(signal, loudness, f0)
+        f0, l, engry = self.encoder(signal, loudness, f0)
         mu, logvar = self.timbre_encoder(signal)
         timbre_emb = self.sample(mu, logvar)
 
-        harmonic_head_output, noise_head_output, f0 = self.decoder(f0, l, z, timbre_emb)
+        harmonic_head_output, noise_head_output, f0 = self.decoder(f0, l, engry, timbre_emb)
 
         additive_output = self.synthesizer(harmonic_head_output, f0)
 
