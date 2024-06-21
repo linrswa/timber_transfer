@@ -19,10 +19,24 @@ def create_fig(data: ndarray) -> plt.Figure:
     plt.close()
     return fig
 
+def transform_frequency(frequency, semitone_shift):
+    """
+    Transform a frequency by a given number of semitones.
+    
+    Parameters:
+    frequency (float): The original frequency in Hz
+    semitone_shift (int): Number of semitones to shift (positive for higher pitch, negative for lower pitch)
+    
+    Returns:
+    float: The transformed frequency in Hz
+    """
+    transformed_frequency = frequency * (2 ** (semitone_shift / 12))
+    return transformed_frequency
+
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        run_name = "decoder_v15_7(mfcc)"
+        run_name = "decoder_v15_9(mfcc)"
         self.current_pt_file_name = f"{run_name}_generator_best_0.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
@@ -63,8 +77,14 @@ class GlobalInfo:
         return s, l, f
         
     def generate_output(self):
+        get_midi = lambda x: int(x.split("_")[-1].split(".")[0].split("-")[1])
         s, l, f = self.generate_model_input()
-        rec_s = self.model_gen(s, cal_loudness_norm(l), f).squeeze().detach().numpy()
+        source_midi = get_midi(self.source_audio_file_name) 
+        traget_midi = get_midi(self.target_audio_file_name) 
+        semitone_shift = traget_midi - source_midi
+        print(f"{source_midi} -> {traget_midi} = {semitone_shift}")
+        new_f = transform_frequency(f, semitone_shift)
+        rec_s = self.model_gen(s, cal_loudness_norm(l), new_f).squeeze().detach().numpy()
         fig_rec_s = create_fig(rec_s)
         return (16000, rec_s), fig_rec_s
 
