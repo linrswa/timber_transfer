@@ -14,7 +14,7 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v15_9(mfcc)"
+run_name = "decoder_v15_fix_2(mfcc)"
 notes = "remove layer norm form energy encoder, and add one more linear layer for f and energy lr"
 batch_size = 16
 
