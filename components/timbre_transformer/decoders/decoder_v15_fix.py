@@ -139,15 +139,19 @@ class TimbreAffineBlcok(nn.Module):
 class TimbreZGenerator(nn.Module):
     def __init__(self, timbre_emb_dim, fl_emb):
         super().__init__()
+        self.t_affine_LR = linear_stack(timbre_emb_dim, timbre_emb_dim)
+        self.t_fusion_LR = linear_stack(timbre_emb_dim, timbre_emb_dim)
         self.fusion_block = TimbreFusionBlock(timbre_emb_dim, fl_emb)
         self.fusion_block_2 = TimbreFusionBlock(timbre_emb_dim, fl_emb)
         self.affine_block = TimbreAffineBlcok(timbre_emb_dim, fl_emb)
         self.out_mixer = nn.Linear(timbre_emb_dim * 3, timbre_emb_dim)
     
     def forward(self, timbre_emb, f_emb, l_emb):
-        fusion = self.fusion_block(timbre_emb, f_emb, l_emb)
+        t_fusion = self.t_fusion_LR(timbre_emb)
+        t_affine = self.t_affine_LR(timbre_emb)
+        fusion = self.fusion_block(t_fusion, f_emb, l_emb)
         fusion = self.fusion_block_2(fusion, f_emb, l_emb)
-        affine = self.affine_block(timbre_emb, f_emb, l_emb)
+        affine = self.affine_block(t_affine, f_emb, l_emb)
         mix = torch.cat([fusion, affine, timbre_emb.expand_as(fusion)], dim=-1)
         out = self.out_mixer(mix)
         return out
