@@ -90,12 +90,10 @@ class TimbreFusionBlock(nn.Module):
             linear_stack(fl_emb_dim, timbre_emb_dim),
             linear_stack(timbre_emb_dim, timbre_emb_dim),
         )
-        self.f_LR_out = linear_stack(timbre_emb_dim, timbre_emb_dim)
         self.l_LR = nn.Sequential(
             linear_stack(fl_emb_dim, timbre_emb_dim),
             linear_stack(timbre_emb_dim, timbre_emb_dim),
         ) 
-        self.l_LR_out = linear_stack(timbre_emb_dim, timbre_emb_dim)
         self.fl_LR = linear_stack(timbre_emb_dim * 2, timbre_emb_dim)
         self.mix_LR = linear_stack(timbre_emb_dim * 3, timbre_emb_dim)
         self.tanh_l = nn.Sequential(
@@ -109,10 +107,8 @@ class TimbreFusionBlock(nn.Module):
         self.output_LR = linear_out(timbre_emb_dim, timbre_emb_dim)
     
     def forward(self, timbre_emb, f_emb, l_emb): 
-        f_h = self.f_LR(f_emb)
-        f = self.f_LR_out(f_h) + f_h
-        l_h = self.l_LR(l_emb)
-        l = self.l_LR_out(l_h) + l_h
+        f = self.f_LR(f_emb)
+        l = self.l_LR(l_emb)
         fl_cat = torch.cat([f, l], dim=-1)  
         mix_cat = torch.cat([fl_cat, timbre_emb.expand_as(f)], dim=-1)
         fl = self.fl_LR(fl_cat)
@@ -130,21 +126,17 @@ class TimbreAffineBlcok(nn.Module):
             linear_stack(fl_emb, timbre_emb),
             linear_stack(timbre_emb, timbre_emb),
         )
-        self.f_LR_out = linear_stack(timbre_emb, timbre_emb)
         self.l_LR = nn.Sequential(
             linear_stack(fl_emb, timbre_emb),
             linear_stack(timbre_emb, timbre_emb),
         )
-        self.l_LR_out = linear_stack(timbre_emb, timbre_emb)
         self.f_DF = DFBlock(timbre_emb, timbre_emb)
         self.l_DF = DFBlock(timbre_emb, timbre_emb)
         self.output_LR = linear_out(timbre_emb * 2, timbre_emb)
     
     def forward(self, timbre_emb, f_emb, l_emb):
-        f_h = self.f_LR(f_emb)
-        f = self.f_LR_out(f_h) + f_h
-        l_h = self.l_LR(l_emb)
-        l = self.l_LR_out(l_h) + l_h
+        f = self.f_LR(f_emb)
+        l = self.l_LR(l_emb)
         f_affine = self.f_DF(timbre_emb, f)
         l_affine = self.l_DF(timbre_emb, l)
         out_cat = torch.cat([f_affine, l_affine], dim=-1)
