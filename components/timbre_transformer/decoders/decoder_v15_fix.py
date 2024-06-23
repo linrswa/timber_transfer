@@ -20,6 +20,13 @@ def linear_stack(in_size, hidden_size):
         )
     return block
 
+def linear_out(in_size, out_size):
+    block = nn.Sequential(
+        nn.Linear(in_size, out_size),
+        nn.LeakyReLU()
+        )
+    return block
+
 
 class MLP(nn.Module):
     def __init__(self, in_size, hidden_size):
@@ -83,10 +90,12 @@ class TimbreFusionBlock(nn.Module):
             linear_stack(fl_emb_dim, timbre_emb_dim),
             linear_stack(timbre_emb_dim, timbre_emb_dim),
         )
+        self.f_LR_out = linear_stack(timbre_emb_dim, timbre_emb_dim)
         self.l_LR = nn.Sequential(
             linear_stack(fl_emb_dim, timbre_emb_dim),
             linear_stack(timbre_emb_dim, timbre_emb_dim),
         ) 
+        self.l_LR_out = linear_stack(timbre_emb_dim, timbre_emb_dim)
         self.fl_LR = linear_stack(timbre_emb_dim * 2, timbre_emb_dim)
         self.mix_LR = linear_stack(timbre_emb_dim * 3, timbre_emb_dim)
         self.tanh_l = nn.Sequential(
@@ -97,11 +106,13 @@ class TimbreFusionBlock(nn.Module):
             nn.Linear(timbre_emb_dim, timbre_emb_dim),
             nn.Sigmoid()
         )
-        self.output_LR = linear_stack(timbre_emb_dim, timbre_emb_dim)
+        self.output_LR = linear_out(timbre_emb_dim, timbre_emb_dim)
     
     def forward(self, timbre_emb, f_emb, l_emb): 
-        f = self.f_LR(f_emb)
-        l = self.l_LR(l_emb)
+        f_h = self.f_LR(f_emb)
+        f = self.f_LR_out(f_h) + f_h
+        l_h = self.l_LR(l_emb)
+        l = self.l_LR_out(l_h) + l_h
         fl_cat = torch.cat([f, l], dim=-1)  
         mix_cat = torch.cat([fl_cat, timbre_emb.expand_as(f)], dim=-1)
         fl = self.fl_LR(fl_cat)
@@ -119,17 +130,21 @@ class TimbreAffineBlcok(nn.Module):
             linear_stack(fl_emb, timbre_emb),
             linear_stack(timbre_emb, timbre_emb),
         )
+        self.f_LR_out = linear_stack(timbre_emb, timbre_emb)
         self.l_LR = nn.Sequential(
             linear_stack(fl_emb, timbre_emb),
             linear_stack(timbre_emb, timbre_emb),
         )
+        self.l_LR_out = linear_stack(timbre_emb, timbre_emb)
         self.f_DF = DFBlock(timbre_emb, timbre_emb)
         self.l_DF = DFBlock(timbre_emb, timbre_emb)
-        self.output_LR = linear_stack(timbre_emb * 2, timbre_emb)
+        self.output_LR = linear_out(timbre_emb * 2, timbre_emb)
     
     def forward(self, timbre_emb, f_emb, l_emb):
-        f = self.f_LR(f_emb)
-        l = self.l_LR(l_emb)
+        f_h = self.f_LR(f_emb)
+        f = self.f_LR_out(f_h) + f_h
+        l_h = self.l_LR(l_emb)
+        l = self.l_LR_out(l_h) + l_h
         f_affine = self.f_DF(timbre_emb, f)
         l_affine = self.l_DF(timbre_emb, l)
         out_cat = torch.cat([f_affine, l_affine], dim=-1)
@@ -139,21 +154,23 @@ class TimbreAffineBlcok(nn.Module):
 class TimbreZGenerator(nn.Module):
     def __init__(self, timbre_emb_dim, fl_emb):
         super().__init__()
-        self.t_affine_LR = linear_stack(timbre_emb_dim, timbre_emb_dim)
-        self.t_fusion_LR = linear_stack(timbre_emb_dim, timbre_emb_dim)
         self.fusion_block = TimbreFusionBlock(timbre_emb_dim, fl_emb)
         self.fusion_block_2 = TimbreFusionBlock(timbre_emb_dim, fl_emb)
         self.affine_block = TimbreAffineBlcok(timbre_emb_dim, fl_emb)
-        self.out_mixer = nn.Linear(timbre_emb_dim * 3, timbre_emb_dim)
+        self.mix_weight = nn.Parameter(torch.rand(256, 3))
     
     def forward(self, timbre_emb, f_emb, l_emb):
-        t_fusion = self.t_fusion_LR(timbre_emb)
-        t_affine = self.t_affine_LR(timbre_emb)
-        fusion = self.fusion_block(t_fusion, f_emb, l_emb)
+        fusion = self.fusion_block(timbre_emb, f_emb, l_emb)
         fusion = self.fusion_block_2(fusion, f_emb, l_emb)
-        affine = self.affine_block(t_affine, f_emb, l_emb)
-        mix = torch.cat([fusion, affine, timbre_emb.expand_as(fusion)], dim=-1)
-        out = self.out_mixer(mix)
+        affine = self.affine_block(timbre_emb, f_emb, l_emb)
+        mix = torch.cat([
+            fusion.unsqueeze(-1),
+            affine.unsqueeze(-1),
+            timbre_emb.expand_as(fusion).unsqueeze(-1)
+            ],
+            dim=-1)
+        mix_out = mix * self.mix_weight
+        out = mix_out.sum(dim=-1)
         return out
 
 class Decoder(nn.Module):
@@ -168,10 +185,6 @@ class Decoder(nn.Module):
         super().__init__()
         self.f0_mlp = MLP(1, in_extract_size)
         self.l_mlp = MLP(1, in_extract_size)
-        self.timbre_mlp = nn.Sequential(
-            linear_stack(timbre_emb_size, timbre_emb_size * 2),
-            linear_stack(timbre_emb_size * 2, timbre_emb_size),
-        )
         self.timbre_z_generator = TimbreZGenerator(timbre_emb_size, 1)
         cat_size = in_extract_size * 2 + timbre_emb_size
         self.mix_gru = nn.GRU(cat_size, timbre_emb_size, batch_first=True)
@@ -185,8 +198,6 @@ class Decoder(nn.Module):
     def forward(self, f0, loudness, engry, timbre_emb):
         out_f0_mlp = self.f0_mlp(f0)
         out_l_mlp = self.l_mlp(loudness)
-        out_timbre_mlp = self.timbre_mlp(timbre_emb)
-        timbre_emb = timbre_emb + out_timbre_mlp
         timbre_z = self.timbre_z_generator(timbre_emb, f0, engry)
         timbre_P = timbre_emb.permute(1, 0, 2).contiguous()
         cat_input = torch.cat(
