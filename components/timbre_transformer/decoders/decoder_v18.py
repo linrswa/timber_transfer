@@ -215,6 +215,10 @@ class Decoder(nn.Module):
         super().__init__()
         self.f0_mlp = MLP(1, in_extract_size)
         self.l_mlp = MLP(1, in_extract_size)
+        self.t_mlp = nn.Sequential(
+            linear_stack(timbre_emb_size, timbre_emb_size),
+            linear_stack(timbre_emb_size, timbre_emb_size),
+        )
         self.timbre_z_generator = TimbreZGenerator(timbre_emb_size, 1)
         cat_size = in_extract_size * 2 + timbre_emb_size
         self.mix_gru = nn.GRU(cat_size, timbre_emb_size, batch_first=True)
@@ -230,7 +234,8 @@ class Decoder(nn.Module):
     def forward(self, f0, loudness, engry, timbre_emb):
         out_f0_mlp = self.f0_mlp(f0)
         out_l_mlp = self.l_mlp(loudness)
-        timbre_z = self.timbre_z_generator(timbre_emb, engry)
+        out_t_mlp = self.t_mlp(timbre_emb)
+        timbre_z = self.timbre_z_generator(out_t_mlp, engry)
         timbre_P = timbre_emb.permute(1, 0, 2).contiguous()
         cat_input = torch.cat(
             [
