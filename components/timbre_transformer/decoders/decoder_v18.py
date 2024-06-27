@@ -17,7 +17,10 @@ def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7):
 class EnhanceHarmonicHead(nn.Module):
     def __init__(self, input_dim=512, hidden_dim=128, enhance_dim=40):
         super().__init__()
-        self.dense_condition = nn.Linear(input_dim, hidden_dim)
+        self.dense_condition = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.LeakyReLU(0.2),
+        )
         self.dense_harm = nn.Linear(input_dim, enhance_dim + 1)
         self.enhance_multiplier= nn.Sequential(OrderedDict([
             ("linear1", nn.Linear(hidden_dim, enhance_dim)),
