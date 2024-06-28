@@ -31,7 +31,7 @@ f0, _ = seperate_f0_confidence(f0_with_confidence)
 l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE(timbre_emb_dim=256).to("cpu")
-pt_file = f"{pt_file_dir}/decoder_v18_2(mfcc)_addmfft_generator_best_20.pt"
+pt_file = f"{pt_file_dir}/decoder_v18_5(mfcc)_addmfft_generator_best_0.pt"
 ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
 synthsizer = HarmonicOscillator(is_smooth=True).to("cpu")

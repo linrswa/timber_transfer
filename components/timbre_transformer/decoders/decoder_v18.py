@@ -243,7 +243,7 @@ class Decoder(nn.Module):
         cat_input = torch.cat(
             [
                 out_f0_mlp, 
-                out_f0_mlp, 
+                out_l_mlp, 
                 timbre_z,
                 ],
             dim=-1)
