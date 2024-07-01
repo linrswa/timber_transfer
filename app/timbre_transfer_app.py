@@ -36,7 +36,7 @@ def transform_frequency(frequency, semitone_shift):
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        run_name = "decoder_v19_3_addmfft"
+        run_name = "decoder_v19_5_addmfft_energy_nolinear"
         self.current_pt_file_name = f"{run_name}_generator_best_0.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
@@ -71,28 +71,28 @@ class GlobalInfo:
         target_fn = self.target_audio_file_name
         _, source_s, source_l, source_f = self.dataset.getitem_by_filename(source_fn)
         _, target_s, target_l, target_f = self.dataset.getitem_by_filename(target_fn)
-        s = target_s if self.model_input_selection[0] == "target" else source_s
+        timbre_s = target_s if self.model_input_selection[0] == "target" else source_s
         l = target_l if self.model_input_selection[1] == "target" else source_l
         f = target_f if self.model_input_selection[2] == "target" else source_f
-        return s, l, f
+        return source_s, l, f, timbre_s
         
     def generate_output(self):
         get_midi = lambda x: int(x.split("_")[-1].split(".")[0].split("-")[1])
-        s, l, f = self.generate_model_input()
+        s, l, f, timbre_s = self.generate_model_input()
         source_midi = get_midi(self.source_audio_file_name) 
         traget_midi = get_midi(self.target_audio_file_name) 
         semitone_shift = traget_midi - source_midi
-        print(f"{source_midi} -> {traget_midi} = {semitone_shift}")
+        # print(f"{source_midi} -> {traget_midi} = {semitone_shift}")
         new_f = transform_frequency(f, semitone_shift)
-        rec_s = self.model_gen(s, cal_loudness_norm(l), new_f).squeeze().detach().numpy()
+        rec_s = self.model_gen(s, cal_loudness_norm(l), new_f, timbre_s).squeeze().detach().numpy()
         fig_rec_s = create_fig(rec_s)
         return (16000, rec_s), fig_rec_s
 
-    def model_gen(self, s: ndarray, l_norm: ndarray, f:ndarray):
+    def model_gen(self, s: ndarray, l_norm: ndarray, f:ndarray, timbre_s: ndarray):
         transfrom = lambda x_array: torch.from_numpy(x_array).unsqueeze(0)
-        s, l_norm, f = transfrom(s), transfrom(l_norm), transfrom(f)
+        s, l_norm, f, timbre_s = transfrom(s), transfrom(l_norm), transfrom(f), transfrom(timbre_s)
         f = f[:, :-1, 0]
-        _, _, rec_s, _, _, _ = self.model(s, l_norm, f)
+        _, _, rec_s, _, _, _ = self.model(s, l_norm, f, timbre_s)
         return rec_s
     
     def change_dataset(self, data_mode: str) -> str:

@@ -14,7 +14,7 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v19_3_addmfft"
+run_name = "decoder_v19_5_addmfft_energy_nolinear"
 notes = "minor change MLP"
 batch_size = 16
 
