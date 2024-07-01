@@ -60,9 +60,9 @@ class TimbreTransformer(nn.Module):
             is_smooth=is_smooth,
         )
     
-    def forward(self, signal, loudness, f0):
+    def forward(self, signal, loudness, f0, timbre_signal):
         f0, l, engry = self.encoder(signal, loudness, f0)
-        mu, logvar = self.timbre_encoder(signal)
+        mu, logvar = self.timbre_encoder(timbre_signal)
         timbre_emb = self.sample(mu, logvar)
 
         harmonic_head_output, noise_head_output, f0, enhance_head_output = self.decoder(f0, l, engry, timbre_emb)

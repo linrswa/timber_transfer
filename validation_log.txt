@@ -290,3 +290,15 @@ valid: decoder_v18_3(mfcc)_addmfft_generator_best_34.pt
 valid: decoder_v19_1_addmfft_generator_best_89.pt
 	loudness loss: 0.08736556277073457
 	pitch loss: 0.02489446887419733
+valid: decoder_v19_4_addmfft_generator_best_4.pt
+	loudness loss: 0.09388390162379734
+	pitch loss: 0.027867503583067388
+valid: decoder_v19_3_addmfft_generator_best_2.pt
+	loudness loss: 0.08939113417229279
+	pitch loss: 0.026164981370938905
+valid: decoder_v19_5_addmfft_energy_nolinear_generator_best_1.pt
+	loudness loss: 0.09255841923855802
+	pitch loss: 0.026809529135127144
+valid: decoder_v19_5_addmfft_energy_nolinear_generator_best_5.pt
+	loudness loss: 0.09190582500899211
+	pitch loss: 0.026937583692345467

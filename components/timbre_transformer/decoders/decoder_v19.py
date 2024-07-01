@@ -234,17 +234,15 @@ class Decoder(nn.Module):
 
         self.enhance_harmonic_head = EnhanceHarmonicHead()
         
-    def forward(self, f0, loudness, engry, timbre_emb):
+    def forward(self, f0, loudness, energry, timbre_emb):
         out_f0_mlp = self.f0_mlp(f0)
-        out_f0_linear = self.f0_linear(out_f0_mlp) + out_f0_mlp
         out_l_mlp = self.l_mlp(loudness)
-        out_l_linear = self.l_linear(out_l_mlp) + out_l_mlp
         out_t_mlp = self.t_mlp(timbre_emb)
-        timbre_z = self.timbre_z_generator(out_t_mlp, engry)
+        timbre_z = self.timbre_z_generator(out_t_mlp, energry)
         cat_input = torch.cat(
             [
-                out_f0_linear,
-                out_l_linear,
+                out_f0_mlp,
+                out_l_mlp,
                 timbre_z,
                 ],
             dim=-1)

@@ -51,7 +51,7 @@ energy = energy_encoder(s).view(-1)
 s = s.view(-1)
 # Convert to log scale
 log_mel_spec = torch.log(mel_spec + 1e-9)
-log_stft_spec = torch.log(stft_spec + 1e-9)
+log_stft_spec = torch.log(stft_spec + 1e-9) * 1000
 
 # Normalize
 log_mel_spec = (log_mel_spec - log_mel_spec.min()) / (log_mel_spec.max() - log_mel_spec.min())
