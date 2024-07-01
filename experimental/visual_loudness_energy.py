@@ -18,7 +18,7 @@ USE_SMOOTH = True
 output_dir = "../output"
 pt_file_dir = "../pt_file"
 
-train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE, dir_path="../../nsynth-subset")
+train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=FREQUENCY_WITH_CONFIDENCE)
 
 fn_with_path = random.choice(train_dataset.audio_list)
 fn = fn_with_path.split("/")[-1][:-4]

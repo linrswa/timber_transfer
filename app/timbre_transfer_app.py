@@ -36,7 +36,7 @@ def transform_frequency(frequency, semitone_shift):
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        run_name = "decoder_v19_1_addmfft"
+        run_name = "decoder_v19_3_addmfft"
         self.current_pt_file_name = f"{run_name}_generator_best_0.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
