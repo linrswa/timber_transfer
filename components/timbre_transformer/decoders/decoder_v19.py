@@ -241,7 +241,6 @@ class Decoder(nn.Module):
         out_l_linear = self.l_linear(out_l_mlp) + out_l_mlp
         out_t_mlp = self.t_mlp(timbre_emb)
         timbre_z = self.timbre_z_generator(out_t_mlp, engry)
-        timbre_P = timbre_emb.permute(1, 0, 2).contiguous()
         cat_input = torch.cat(
             [
                 out_f0_linear,
@@ -249,7 +248,7 @@ class Decoder(nn.Module):
                 timbre_z,
                 ],
             dim=-1)
-        out_mix_gru, _ = self.mix_gru(cat_input, timbre_P)
+        out_mix_gru, _ = self.mix_gru(cat_input)
         out_mix = self.timbre_transformer(out_mix_gru, timbre_emb)
         cat_final = torch.cat([out_f0_mlp, out_l_mlp, out_mix], dim=-1)
 
