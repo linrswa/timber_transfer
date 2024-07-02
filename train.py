@@ -14,7 +14,7 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v19_5_addmfft_energy_nolinear"
+run_name = "decoder_v19_6_addmfft_energy_loud_nolinear"
 notes = "minor change MLP"
 batch_size = 16
 
@@ -88,7 +88,7 @@ for epoch in tqdm(range(num_epochs)):
 
         l_norm = cal_mean_std_loudness(l, mean_std_dict)
         
-        add, sub, y_g_hat, mu, logvar, global_amp = generator(s, l_norm, f)
+        add, sub, y_g_hat, mu, logvar, global_amp = generator(s, l_norm, f, s)
 
         y_mel = mel_spectrogram(s, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)
         y_g_hat_mel = mel_spectrogram(y_g_hat, h.n_fft, h.num_mels, h.sampling_rate, h.hop_size, h.win_size, h.fmin, h.fmax, center=False)

@@ -15,7 +15,7 @@ from components.timbre_transformer.TimberTransformer import TimbreTransformer
 class GlobalInfo:
     def __init__(self):
         pt_dir = "../pt_file"
-        run_name = "decoder_v19_5_addmfft_energy_nolinear"
+        run_name = "decoder_v19_6_addmfft_energy_loud_nolinear"
         self.current_pt_file_name = f"{run_name}_generator_best_0.pt"
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
@@ -24,19 +24,19 @@ class GlobalInfo:
         self.model.eval()
         self.model.load_state_dict(torch.load(self.pt_file))
 
-    def model_gen(self, s: ndarray, l_norm: ndarray, f:ndarray):
+    def model_gen(self, s: ndarray, l_norm: ndarray, f:ndarray, timbre_s: ndarray):
         def transfrom(np_array: ndarray) -> torch.Tensor:
             return torch.from_numpy(np_array).unsqueeze(0)
         s, l_norm, f = transfrom(s), transfrom(l_norm), transfrom(f)
         f = f[:, :-1, 0]
-        _, _, rec_s, _, _, _ = self.model(s, l_norm, f)
+        _, _, rec_s, _, _, _ = self.model(s, l_norm, f, s)
         return rec_s
 
     def generate_data(self):
         fn, s, l, f = self.sample_data()
         # create a matplotlib.figure.Figure for s
         fig_s = create_fig(s)
-        rec_s = self.model_gen(s, cal_loudness_norm(l), f).squeeze().detach().numpy()
+        rec_s = self.model_gen(s, cal_loudness_norm(l), f, s).squeeze().detach().numpy()
         fig_rec_s = create_fig(rec_s)
         
         return fn, (16000, s), fig_s, (16000, rec_s), fig_rec_s

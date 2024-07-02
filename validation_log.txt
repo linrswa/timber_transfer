@@ -302,3 +302,6 @@ valid: decoder_v19_5_addmfft_energy_nolinear_generator_best_1.pt
 valid: decoder_v19_5_addmfft_energy_nolinear_generator_best_5.pt
 	loudness loss: 0.09190582500899211
 	pitch loss: 0.026937583692345467
+valid: decoder_v19_6_addmfft_energy_loud_nolinear_generator_best_1.pt
+	loudness loss: 0.0834686241365694
+	pitch loss: 0.02306287454731659
