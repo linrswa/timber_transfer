@@ -14,7 +14,7 @@ def modified_sigmoid(x, exponent=10.0, max_value=2.0, threshold=1e-7):
 
 
 
-class EnhanceHarmonicHead(nn.Module):
+class NonIntHarmonicHead(nn.Module):
     def __init__(self, input_dim=512, hidden_dim=128, enhance_dim=40):
         super().__init__()
         self.dense_condition = nn.Sequential(
@@ -215,14 +215,14 @@ class Decoder(nn.Module):
         ):
         super().__init__()
         self.f0_mlp = MLP(1, in_extract_size, timbre_emb_size)
-        self.f0_linear = nn.Linear(timbre_emb_size, timbre_emb_size)
+        self.f0_linear = linear_stack(timbre_emb_size, timbre_emb_size) 
         self.l_mlp = MLP(1, in_extract_size, timbre_emb_size)
-        self.l_linear = nn.Linear(timbre_emb_size, timbre_emb_size)
+        self.l_linear = linear_stack(timbre_emb_size, timbre_emb_size)
         self.t_mlp = nn.Sequential(
             linear_stack(timbre_emb_size, timbre_emb_size),
             linear_stack(timbre_emb_size, timbre_emb_size),
         )
-        self.timbre_z_generator = TimbreZGenerator(timbre_emb_size, 2)
+        self.timbre_z_generator = TimbreZGenerator(timbre_emb_size, 1)
         cat_size = timbre_emb_size * 3
         self.mix_gru = nn.GRU(cat_size, timbre_emb_size, batch_first=True)
         self.timbre_transformer = TimbreTransformer(timbre_emb_size)
@@ -232,17 +232,19 @@ class Decoder(nn.Module):
         self.harmonic_head = HarmonicHead(final_embedding_size, n_harms)
         self.noise_head = NoiseHead(final_embedding_size, noise_filter_bank)
 
-        self.enhance_harmonic_head = EnhanceHarmonicHead()
+        self.enhance_harmonic_head = NonIntHarmonicHead()
         
-    def forward(self, f0, loudness, energry, timbre_emb):
+    def forward(self, f0, loudness, energy, timbre_emb):
         out_f0_mlp = self.f0_mlp(f0)
+        out_f0_linear = self.f0_linear(out_f0_mlp) + out_f0_mlp
         out_l_mlp = self.l_mlp(loudness)
+        out_l_linear = self.l_linear(out_l_mlp) + out_l_mlp
         out_t_mlp = self.t_mlp(timbre_emb)
-        timbre_z = self.timbre_z_generator(out_t_mlp, torch.cat((energry, loudness), dim=-1))
+        timbre_z = self.timbre_z_generator(out_t_mlp, energy)
         cat_input = torch.cat(
             [
-                out_f0_mlp,
-                out_l_mlp,
+                out_f0_linear,
+                out_l_linear,
                 timbre_z,
                 ],
             dim=-1)
