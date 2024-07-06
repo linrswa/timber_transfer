@@ -14,8 +14,8 @@ from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v20_1_addmfft_energy"
-notes = "Add linear to timbre"
+run_name = "decoder_v21_1_addmfft_energy"
+notes = "try new timbre z generator"
 batch_size = 16
 
 h = get_hyparam()
