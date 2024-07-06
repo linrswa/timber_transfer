@@ -19,7 +19,7 @@ fn, s, l, f = next(iter(train_loader))
 
 timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, n_harms=101, timbre_emb_dim=256)
 
-add, sub, rec, mu, logvar, global_amp = timbre_transformer(s, l, f)
+add, sub, rec, mu, logvar, global_amp = timbre_transformer(s, l, f, s)
 
 def calculate_model_size(model: nn.Module):
     param_size = 0
@@ -44,7 +44,7 @@ calculate_model_size(mrd)
 
 # summary(ddsp_origin, [s.shape, l.shape, f.shape], device="cpu")
 
-summary(timbre_transformer, input_data=(s, l, f), device="cpu")
+summary(timbre_transformer, input_data=(s, l, f, s), device="cpu")
 # summary(mpd, [s.shape, s.shape], device="cpu")
 # summary(mrd, [s.shape, s.shape], device="cpu")
 
