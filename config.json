@@ -13,7 +13,7 @@
     "fmax": 8000,
     "fmax_for_loss": null,
     "loss_weight": {
-        "gen_multiscale_fft": 1,
+        "gen_multiscale_fft": 2,
         "gen_mel": 45,
         "gen_kl": 0.01,
         "gen_fm_period": 2

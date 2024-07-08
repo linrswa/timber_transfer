@@ -86,9 +86,9 @@ if __name__ == "__main__":
     #     inquirer.List("pt_file", message="Choose a pt file", choices=pt_list_list)
     # }
     # pt_file = inquirer.prompt(pt_fonfirm)["pt_file"]
-    pt_file = "./pt_file/decoder_v20_1_addmfft_energy_generator_best_20.pt"
+    pt_file = "./pt_file/decoder_v21_test_2_addmfft_loudness_generator_best_2.pt"
 
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     generator = TimbreTransformer(is_smooth=True, n_harms=101, timbre_emb_dim=256).to(device)
     generator.load_state_dict(torch.load(pt_file))
 

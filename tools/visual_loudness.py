@@ -31,7 +31,7 @@ f0, _ = seperate_f0_confidence(f0_with_confidence)
 l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE(timbre_emb_dim=256).to("cpu")
-pt_file = f"{pt_file_dir}/decoder_v19_6_addmfft_energy_generator_best_9.pt"
+pt_file = f"{pt_file_dir}/decoder_v21_3_addmfftx2_energy_generator_best_1.pt"
 ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
 synthsizer = HarmonicOscillator(is_smooth=True).to("cpu")
@@ -79,8 +79,9 @@ def plot_result():
     p = plt.plot
     wf.write(f"{output_dir}/tmp/ori.wav", 16000, s)
     wf.write(f"{output_dir}/tmp/rec.wav", 16000, rec)
-    wf.write(f"{output_dir}/tmp/add.wav", 16000, add)
-    wf.write(f"{output_dir}/tmp/sub.wav", 16000, sub)
+    wf.write(f"{output_dir}/tmp/int.wav", 16000, add)
+    wf.write(f"{output_dir}/tmp/noise.wav", 16000, sub)
+    wf.write(f"{output_dir}/tmp/non-int.wav", 16000, enhance)
     plt.suptitle(fn[0])
     plt.subplot(431)
     p(s)
@@ -123,6 +124,41 @@ def plot_result():
 
 plot_result()
 #%%
+import torchaudio.transforms as transforms
+n_fft = 1024
+hop_length = 256
+mel_transform = transforms.MelSpectrogram(
+    sample_rate=16000,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    n_mels=128
+)
+ori_mel_spec = mel_transform(torch.from_numpy(s).unsqueeze(0))
+rec_mel_spec = mel_transform(torch.from_numpy(rec).unsqueeze(0))
+int_mel_spec = mel_transform(torch.from_numpy(add).unsqueeze(0))
+nint_mel_spec = mel_transform(torch.from_numpy(enhance).unsqueeze(0))
+ori_log_mel_spec = torch.log(ori_mel_spec + 1e-9)
+rec_log_mel_spec = torch.log(rec_mel_spec + 1e-9)
+int_log_mel_spec = torch.log(int_mel_spec + 1e-9)
+nint_log_mel_spec = torch.log(nint_mel_spec + 1e-9)
+p = plt.plot
+plt.suptitle(fn[0])
+plt.subplot(211)
+plt.imshow(ori_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
+plt.title("ori log mel spectrogram")
+plt.subplot(212)
+plt.imshow(rec_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
+plt.title("rec log mel spectrogram")
+plt.tight_layout()
+#%%
+plt.subplot(211)
+plt.imshow(int_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
+plt.title("int harm log mel spectrogram")
+plt.subplot(212)
+plt.imshow(nint_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
+plt.title("non-int harm log mel spectrogram")
+plt.tight_layout()
+#%%
 out_dir = f"{output_dir}"
 file_list_in_output_dir = glob(f"{out_dir}/*")
 file_num = len(file_list_in_output_dir)
@@ -133,4 +169,3 @@ wf.write(f"{out_dir}/rec.wav", 16000, rec)
 wf.write(f"{out_dir}/Int_Harm.wav", 16000, add)
 wf.write(f"{out_dir}/Noise.wav", 16000, sub)
 wf.write(f"{out_dir}/Non-Int_Harm.wav", 16000, enhance)
-plt.savefig(f"{out_dir}/result.png")

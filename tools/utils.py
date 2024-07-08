@@ -96,8 +96,8 @@ def get_hyparam():
     return h
 
 def cal_loudness_norm(l: ndarray):
-    mean_loudness = -41.2733136704132
-    std_loudness = 36.28924789428713
+    mean_loudness = -20.22756776639393
+    std_loudness = 35.74932418725443
     return (l - mean_loudness) / std_loudness
 
 # write a funcion make frequency transofrom to MIDI

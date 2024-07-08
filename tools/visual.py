@@ -32,7 +32,7 @@ if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
 model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
-pt_file = "decoder_v19_6_addmfft_energy_loud_nolinear_generator_best_0.pt"
+pt_file = "decoder_v21_1_addmfft_energy_generator_best_24.pt"
 model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0, s)
 
@@ -88,6 +88,29 @@ def plot_result(s, rec, fn, rec_l, l):
 plot_result(s, rec, fn, rec_l, l)
 
 #%%
+import torchaudio.transforms as transforms
+n_fft = 1024
+hop_length = 256
+mel_transform = transforms.MelSpectrogram(
+    sample_rate=16000,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    n_mels=128
+)
+ori_mel_spec = mel_transform(torch.from_numpy(s).unsqueeze(0))
+rec_mel_spec = mel_transform(torch.from_numpy(rec).unsqueeze(0))
+ori_log_mel_spec = torch.log(ori_mel_spec + 1e-9)
+rec_log_mel_spec = torch.log(rec_mel_spec + 1e-9)
+p = plt.plot
+plt.suptitle(fn[0])
+plt.subplot(211)
+plt.imshow(ori_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
+plt.title("ori log mel spectrogram")
+plt.subplot(212)
+plt.imshow(rec_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
+plt.title("rec log mel spectrogram")
+plt.tight_layout()
+#%%
 out_dir = f"{output_dir}/{pt_file}"
 os.makedirs(out_dir, exist_ok=True)
 file_list_in_output_dir = glob(f"{out_dir}/*")
@@ -96,4 +119,3 @@ file_name_with_dir = f"{out_dir}/{file_num}"
 wf.write(f"{file_name_with_dir}_ori.wav", 16000, s)
 wf.write(f"{file_name_with_dir}_rec.wav", 16000, rec)
 plot_result(s, rec, fn, rec_l, l)
-plt.savefig(f"{file_name_with_dir}.png")
