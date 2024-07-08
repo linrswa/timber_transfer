@@ -64,6 +64,7 @@ def plot_result():
     
     plt.subplot(511)
     p(s)
+    plt.xlim(0, 64000)
     plt.title("signal")
     
     plt.subplot(512)

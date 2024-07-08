@@ -8,14 +8,15 @@ import wandb
 from components.timbre_transformer.TimberTransformer import TimbreTransformer
 from components.discriminators import MultiPeriodDiscriminator
 from components.timbre_transformer.utils import extract_loudness, get_A_weight
+from components.timbre_transformer.encoder import EngryEncoder
 from tools.utils import mel_spectrogram, get_hyparam, get_mean_std_dict, cal_mean_std_loudness
 from tools.loss_collector import LossCollector as L
 from data.dataset import NSynthDataset
 
 #MARK: Train setting
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-run_name = "decoder_v21_1_addmfft_energy"
-notes = "try new timbre z generator"
+run_name = "decoder_v21_3_addmfftx2_energy"
+notes = "mfft * 2"
 batch_size = 16
 
 h = get_hyparam()
@@ -113,7 +114,7 @@ for epoch in tqdm(range(num_epochs)):
         _, y_mpd_hat_g, fmap_mpd_r, fmap_mpd_g = mpd(s, y_g_hat)
         loss_gen_fm_period = L.feature_loss(fmap_mpd_r, fmap_mpd_g) * h.loss_weight["gen_fm_period"]
         loss_gen_period= L.generator_loss(y_mpd_hat_g)
-        loss_gen_all = loss_gen_period + loss_gen_fm_period + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft 
+        loss_gen_all = loss_gen_period + loss_gen_fm_period + loss_gen_mel + loss_gen_kl + loss_gen_multiscale_fft
         loss_gen_all.backward()
         optim_g.step() 
 
