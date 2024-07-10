@@ -44,7 +44,7 @@ class GlobalInfo:
         self.dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
         self.source_audio_file_name = None
         self.target_audio_file_name = None
-        self.model_input_selection = ("source", "source", "source")
+        self.model_input_selection = ("source", "source")
         self.model.eval()
         self.model.load_state_dict(torch.load(self.pt_file))
 
@@ -70,21 +70,32 @@ class GlobalInfo:
         source_fn = self.source_audio_file_name
         target_fn = self.target_audio_file_name
         _, source_s, source_l, source_f = self.dataset.getitem_by_filename(source_fn)
-        _, target_s, target_l, target_f = self.dataset.getitem_by_filename(target_fn)
-        timbre_s = target_s if self.model_input_selection[0] == "target" else source_s
-        l = target_l if self.model_input_selection[1] == "target" else source_l
-        f = target_f if self.model_input_selection[2] == "target" else source_f
-        return source_s, l, f, timbre_s
+        _, ref_s, ref_l, ref_f = self.dataset.getitem_by_filename(target_fn)
+        if self.model_input_selection[0] == "source":
+            s, l, f = source_s, source_l, source_f
+        else:
+           s, l, f = ref_s, ref_l, ref_f
+
+        if self.model_input_selection[1] == "source":
+            ref = source_s
+        else :
+            ref = ref_s
+        return s, l, f, ref
         
     def generate_output(self):
         get_midi = lambda x: int(x.split("_")[-1].split(".")[0].split("-")[1])
-        s, l, f, timbre_s = self.generate_model_input()
+        s, l, f, ref = self.generate_model_input()
         source_midi = get_midi(self.source_audio_file_name) 
         traget_midi = get_midi(self.target_audio_file_name) 
-        semitone_shift = traget_midi - source_midi
-        # print(f"{source_midi} -> {traget_midi} = {semitone_shift}")
-        new_f = transform_frequency(f, semitone_shift)
-        rec_s = self.model_gen(s, cal_loudness_norm(l), new_f, timbre_s).squeeze().detach().numpy()
+        if self.model_input_selection[0] == "source" and self.model_input_selection[1] == "ref":
+            semitone_shift = traget_midi - source_midi
+            new_f = transform_frequency(f, semitone_shift)
+        elif self.model_input_selection[0] == "ref" and self.model_input_selection[1] == "source":
+            semitone_shift = source_midi - traget_midi
+            new_f = transform_frequency(f, semitone_shift)
+        else: 
+            new_f = f
+        rec_s = self.model_gen(s, cal_loudness_norm(l), new_f, ref).squeeze().detach().numpy()
         fig_rec_s = create_fig(rec_s)
         return (16000, rec_s), fig_rec_s
 
@@ -107,13 +118,13 @@ class GlobalInfo:
             raise gr.Error("load model failed")
         return self.current_pt_file_name
     
-    def change_model_input(self, timbre:str , loudness:str, f0:str):
-        selection = [timbre, loudness, f0]
+    def change_model_input(self, source:str , ref:str):
+        selection = [source, ref]
         for i, item in enumerate(selection):
             if item == None:
                 selection[i] = "source"
         self.model_input_selection = selection
-        return f"T: {selection[0]}, L: {selection[1]}, F: {selection[2]}"
+        return f"Source: {selection[0]}, Ref: {selection[1]}"
 
 
 G = GlobalInfo()
@@ -131,28 +142,29 @@ with gr.Blocks() as app:
             signal_name = gr.Textbox(label="Dataset")
             pt_name = gr.Textbox(label="pt file", value=G.current_pt_file_name)
 
-    with gr.Column():
-        source_text = gr.Textbox(
-            label="source file",
-            value="T: source, L: source, F: source"
-            )
-        source_sample_button = gr.Button("source sample")
-        with gr.Row():
+    with gr.Row():
+        with gr.Column():
+            source_text = gr.Textbox(
+                label="source file",
+                value=G.source_audio_file_name
+                )
+            source_sample_button = gr.Button("source sample")
             source_image = gr.Plot(label="Source signal")
             source_audio = gr.Audio(label="Source signal")
 
-    with gr.Column():
-        target_text = gr.Textbox(label="target file", value=G.target_audio_file_name)
-        target_sample_button = gr.Button("target sample")
-        with gr.Row():
+        with gr.Column():
+            target_text = gr.Textbox(
+                label="target file",
+                value=G.target_audio_file_name
+                )
+            target_sample_button = gr.Button("target sample")
             target_image = gr.Plot(label="Target signal")
             target_audio = gr.Audio(label="Target signal")
     
     with gr.Column():
         with gr.Row():
-            timbre_selector = gr.Radio(["source", "target"], label="Timbre")
-            loudness_selector = gr.Radio(["source", "target"], label="Loudness")
-            f0_selector = gr.Radio(["source", "target"], label="F0")
+            source_selector = gr.Radio(["source", "ref"], label="Source")
+            ref_selector = gr.Radio(["source", "ref"], label="Reference")
 
     with gr.Column():
         generate_selection_text = gr.Textbox(label="generate selection", value=G.model_input_selection)
@@ -163,22 +175,18 @@ with gr.Blocks() as app:
 
     data_mode_selector.select(G.change_dataset, inputs=[data_mode_selector], outputs=[signal_name])
     pt_file_selector.change(G.change_pt_file, inputs=[pt_file_selector], outputs=[pt_name])
-    timbre_selector.change(
+
+    source_selector.change(
         G.change_model_input,
-        inputs=[timbre_selector, loudness_selector, f0_selector],
-        outputs=[generate_selection_text]
-        )
-    loudness_selector.change(
-        G.change_model_input,
-        inputs=[timbre_selector, loudness_selector, f0_selector],
-        outputs=[generate_selection_text]
-        )
-    f0_selector.change(
-        G.change_model_input,
-        inputs=[timbre_selector, loudness_selector, f0_selector],
+        inputs=[source_selector, ref_selector],
         outputs=[generate_selection_text]
         )
   
+    ref_selector.change(
+        G.change_model_input,
+        inputs=[source_selector, ref_selector],
+        outputs=[generate_selection_text]
+        )
 
     source_sample_button.click(
         G.sampel_source_audio_data,
