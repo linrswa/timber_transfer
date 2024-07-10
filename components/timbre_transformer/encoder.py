@@ -57,7 +57,87 @@ class TimbreEncoder(nn.Module):
         logvar = self.conv_covariance(x)
 
         return mu, logvar
+
+
+class ResBlock(nn.Module):
+    def __init__(self, dim_in, dim_out):
+        super(ResBlock, self).__init__()
+        self.dim_in = dim_in
+        self.dim_out = dim_out
+        if self.dim_in != self.dim_out:
+            self.s_conv = nn.utils.weight_norm(nn.Conv1d(self.dim_in, self.dim_out, (1, ), bias=False))
+        self.conv1 = nn.utils.weight_norm(nn.Conv1d(self.dim_in, self.dim_in, (3, ), padding=(1, )))
+        self.conv2 = nn.utils.weight_norm(nn.Conv1d(self.dim_in, self.dim_out, (1, )))
+        self.avgpool = nn.AvgPool1d(kernel_size=(2,))
+        self.lrelu = nn.LeakyReLU(0.2, inplace=True)
+
+    def forward(self, x):
+        sc = x.clone()
+        if self.dim_in != self.dim_out:
+            sc = self.s_conv(sc)
+            sc = self.avgpool(sc)
+        else:
+            sc = self.avgpool(sc)
+
+        x = self.lrelu(x)
+        x = self.conv1(x)
+        x = self.avgpool(x)
+        x = self.lrelu(x)
+        x = self.conv2(x)
+
+        return x + sc
+
+
+class TimbreEncoderX(nn.Module):
+    def __init__(
+        self,
+        sample_rate=16000,
+        n_fft=1024,
+        hop_length=256,
+        n_mels=80,
+        timbre_emb_dim=256,
+        ):
+
+        super().__init__()
+        self.dim = timbre_emb_dim
+        self.mel_spec = torchaudio.transforms.MelSpectrogram(
+            sample_rate=sample_rate,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            n_mels=n_mels,
+            f_min=20.0,
+            f_max=8000.0
+            )
+        self.conv1 = nn.utils.weight_norm(nn.Conv1d(80, 32, kernel_size=(3,), padding=(1, )))
+        self.res_block1 = ResBlock(32, 64)
+        self.res_block2 = ResBlock(64, 128)
+        self.res_block3 = ResBlock(128, 256)
+        self.res_block4 = ResBlock(256, 512)
+        self.res_block5 = ResBlock(512, 512)
+        self.avgpool = nn.AdaptiveAvgPool1d((1, ))
+        self.lrelu = nn.LeakyReLU(0.2, inplace=True)
+        self.m_conv = nn.utils.weight_norm(nn.Conv1d(512, self.dim, kernel_size=(1,)))
+        self.v_conv = nn.utils.weight_norm(nn.Conv1d(512, self.dim, kernel_size=(1,)))
+
     
+    def forward(self, x):
+        out = self.mel_spec(x)
+        out = torch.squeeze(out, 1)
+        # out = out * 1e4 + 1
+        out = torch.log(out + 1e-6)
+        out = self.conv1(out)
+        out = self.res_block1(out)
+        out = self.res_block2(out)
+        out = self.res_block3(out)
+        out = self.res_block4(out)
+        out = self.res_block5(out)
+        out = self.avgpool(out)
+        # out = torch.squeeze(out, -1)
+        out = self.lrelu(out)
+        mu = self.m_conv(out)
+        logvar = self.v_conv(out)
+        return mu, logvar
+ 
 class ZEncoder(nn.Module):
     def __init__(self, nfft=1024, hop_lenght=256, z_units=16, hidden_size=256):
         super().__init__()
@@ -88,6 +168,7 @@ class ZEncoder(nn.Module):
         x = self.gru(x)[0]
         x = self.dense(x)
         return x
+
 
 
 class ZMFCCEncoder(nn.Module):
