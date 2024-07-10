@@ -31,7 +31,7 @@ f0, _ = seperate_f0_confidence(f0_with_confidence)
 l_mod = cal_loudness_norm(l)
 
 ae = TimbreFusionAE(timbre_emb_dim=256).to("cpu")
-pt_file = f"{pt_file_dir}/decoder_v21_3_addmfftx2_energy_generator_best_1.pt"
+pt_file = f"{pt_file_dir}/decoder_v21_5_addmfftx2_energy_ftimbreE_generator_best_14.pt"
 ae.load_state_dict(torch.load(f"{pt_file}", map_location="cpu"))
 
 synthsizer = HarmonicOscillator(is_smooth=True).to("cpu")
@@ -124,39 +124,57 @@ def plot_result():
 
 plot_result()
 #%%
-import torchaudio.transforms as transforms
+from librosa.feature import melspectrogram
+import librosa
+sr = 16000
 n_fft = 1024
 hop_length = 256
-mel_transform = transforms.MelSpectrogram(
-    sample_rate=16000,
+ori_mel_spec = melspectrogram(
+    y=s,
+    sr=sr,
     n_fft=n_fft,
     hop_length=hop_length,
-    n_mels=128
-)
-ori_mel_spec = mel_transform(torch.from_numpy(s).unsqueeze(0))
-rec_mel_spec = mel_transform(torch.from_numpy(rec).unsqueeze(0))
-int_mel_spec = mel_transform(torch.from_numpy(add).unsqueeze(0))
-nint_mel_spec = mel_transform(torch.from_numpy(enhance).unsqueeze(0))
-ori_log_mel_spec = torch.log(ori_mel_spec + 1e-9)
-rec_log_mel_spec = torch.log(rec_mel_spec + 1e-9)
-int_log_mel_spec = torch.log(int_mel_spec + 1e-9)
-nint_log_mel_spec = torch.log(nint_mel_spec + 1e-9)
-p = plt.plot
-plt.suptitle(fn[0])
+    )
+ori_mel_spec = librosa.power_to_db(ori_mel_spec, ref=np.max)
+
+rec_mel_spec = melspectrogram(
+    y=rec,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    )
+rec_mel_spec = librosa.power_to_db(rec_mel_spec, ref=np.max)
+
+int_mel_spec = melspectrogram(
+    y=add,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    )
+int_mel_spec = librosa.power_to_db(int_mel_spec, ref=np.max)
+
+nint_mel_spec = melspectrogram(
+    y=enhance,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    )
+nint_mel_spec = librosa.power_to_db(nint_mel_spec, ref=np.max)
+
 plt.subplot(211)
-plt.imshow(ori_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
-plt.title("ori log mel spectrogram")
+librosa.display.specshow(ori_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("ori mel spectrogram")
 plt.subplot(212)
-plt.imshow(rec_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
-plt.title("rec log mel spectrogram")
+librosa.display.specshow(rec_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("rec mel spectrogram")
 plt.tight_layout()
 #%%
 plt.subplot(211)
-plt.imshow(int_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
-plt.title("int harm log mel spectrogram")
+librosa.display.specshow(int_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("int harm mel spectrogram")
 plt.subplot(212)
-plt.imshow(nint_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
-plt.title("non-int harm log mel spectrogram")
+librosa.display.specshow(nint_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("non-int harm mel spectrogram")
 plt.tight_layout()
 #%%
 out_dir = f"{output_dir}"

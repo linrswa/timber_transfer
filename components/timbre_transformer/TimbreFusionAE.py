@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .encoder import Encoder, TimbreEncoder
+from .encoder import Encoder, TimbreEncoderX
 from .decoders import  Decoder
 
 class TimbreFusionAE(nn.Module):
@@ -21,12 +21,20 @@ class TimbreFusionAE(nn.Module):
 
         self.is_train = is_train
 
-        self.timbre_encoder = TimbreEncoder(
+        # self.timbre_encoder = TimbreEncoder(
+        #     sample_rate=sample_rate,
+        #     n_fft=n_fft,
+        #     hop_length=hop_length,
+        #     n_mels=n_mels,
+        #     n_mfcc=n_mfcc,
+        #     timbre_emb_dim=timbre_emb_dim, 
+        # )
+
+        self.timbre_encoder = TimbreEncoderX(
             sample_rate=sample_rate,
             n_fft=n_fft,
             hop_length=hop_length,
-            n_mels=n_mels,
-            n_mfcc=n_mfcc,
+            n_mels=80,
             timbre_emb_dim=timbre_emb_dim, 
         )
 

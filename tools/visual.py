@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
 from glob import glob
 import os 
+import numpy as np
 
 import sys
 sys.path.append("..")
@@ -32,7 +33,7 @@ if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
 model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
-pt_file = "decoder_v21_1_addmfft_energy_generator_best_24.pt"
+pt_file = "decoder_v21_5_addmfftx2_energy_ftimbreE_generator_best_19.pt"
 model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
 add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0, s)
 
@@ -88,27 +89,32 @@ def plot_result(s, rec, fn, rec_l, l):
 plot_result(s, rec, fn, rec_l, l)
 
 #%%
-import torchaudio.transforms as transforms
+from librosa.feature import melspectrogram
+import librosa
+sr = 16000
 n_fft = 1024
 hop_length = 256
-mel_transform = transforms.MelSpectrogram(
-    sample_rate=16000,
+ori_mel_spec = melspectrogram(
+    y=s,
+    sr=sr,
     n_fft=n_fft,
     hop_length=hop_length,
-    n_mels=128
-)
-ori_mel_spec = mel_transform(torch.from_numpy(s).unsqueeze(0))
-rec_mel_spec = mel_transform(torch.from_numpy(rec).unsqueeze(0))
-ori_log_mel_spec = torch.log(ori_mel_spec + 1e-9)
-rec_log_mel_spec = torch.log(rec_mel_spec + 1e-9)
-p = plt.plot
-plt.suptitle(fn[0])
+    )
+ori_mel_spec = librosa.power_to_db(ori_mel_spec, ref=np.max)
+
+rec_mel_spec = melspectrogram(
+    y=rec,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    )
+rec_mel_spec = librosa.power_to_db(rec_mel_spec, ref=np.max)
 plt.subplot(211)
-plt.imshow(ori_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
-plt.title("ori log mel spectrogram")
+librosa.display.specshow(ori_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("ori mel spectrogram")
 plt.subplot(212)
-plt.imshow(rec_log_mel_spec[0].detach().numpy(), aspect='auto', origin='lower', interpolation='nearest', cmap='viridis')
-plt.title("rec log mel spectrogram")
+librosa.display.specshow(rec_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("rec mel spectrogram")
 plt.tight_layout()
 #%%
 out_dir = f"{output_dir}/{pt_file}"
