@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-sys.path.append('..')
+sys.path.append('.')
 from components.timbre_transformer.component import HarmonicOscillator
 
 # Define t_torch

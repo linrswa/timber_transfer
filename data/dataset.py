@@ -8,7 +8,7 @@ class NSynthDataset(torch.utils.data.Dataset):
     def __init__(
         self,
         data_mode: str,
-        dir_path: str = "/dataset/NSynth/nsynth-subset",
+        dir_path: str = "../nsynth-subset",
         sr: int = 16000,
         frequency_with_confidence: bool = False,
         with_f0_distanglement: bool = False,

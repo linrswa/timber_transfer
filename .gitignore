@@ -160,7 +160,8 @@ cython_debug/
 #.idea/
 
 wandb/
-pt_file/
 *.wav
 tmp.py
 output/
+nsynth-subset/
+.DS_Store

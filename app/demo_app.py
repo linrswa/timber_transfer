@@ -46,7 +46,7 @@ class GlobalInfo:
         self.target_audio_file_name = None
         self.model_input_selection = ("source", "source")
         self.model.eval()
-        self.model.load_state_dict(torch.load(self.pt_file))
+        self.model.load_state_dict(torch.load(self.pt_file, map_location=torch.device('cpu')))
 
 
     def sample_data(self, t: str = "source"):
@@ -113,7 +113,7 @@ class GlobalInfo:
     def change_pt_file(self, pt_file: str):
         self.current_pt_file_name = pt_file.split("/")[-1]
         try:
-            self.model.load_state_dict(torch.load(pt_file))
+            self.model.load_state_dict(torch.load(pt_file, map_location=torch.device('cpu') ))
         except:
             raise gr.Error("load model failed")
         return self.current_pt_file_name
