@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.fft as fft
-import  math
+import math
 
 
 def fft_convolve(signal, kernel):
