@@ -48,7 +48,6 @@ class GlobalInfo:
         self.model.eval()
         self.model.load_state_dict(torch.load(self.pt_file, map_location=torch.device('cpu')))
 
-
     def sample_data(self, t: str = "source"):
         fn_with_path = random.choice(self.dataset.audio_list)
         fn = fn_with_path.split("/")[-1][:-4]
@@ -87,14 +86,13 @@ class GlobalInfo:
         s, l, f, ref = self.generate_model_input()
         source_midi = get_midi(self.source_audio_file_name) 
         traget_midi = get_midi(self.target_audio_file_name) 
-        if self.model_input_selection[0] == "source" and self.model_input_selection[1] == "ref":
-            semitone_shift = traget_midi - source_midi
-            new_f = transform_frequency(f, semitone_shift)
-        elif self.model_input_selection[0] == "ref" and self.model_input_selection[1] == "source":
-            semitone_shift = source_midi - traget_midi
-            new_f = transform_frequency(f, semitone_shift)
-        else: 
-            new_f = f
+        midi_table = {
+            "source": source_midi,
+            "ref": traget_midi,
+            "custom": 60
+        }
+        semitone_shift = midi_table[self.model_input_selection[1]] - midi_table[self.model_input_selection[0]]
+        new_f = transform_frequency(f, semitone_shift)
         rec_s = self.model_gen(s, cal_loudness_norm(l), new_f, ref).squeeze().detach().numpy()
         fig_rec_s = create_fig(rec_s)
         return (16000, rec_s), fig_rec_s
@@ -163,7 +161,7 @@ with gr.Blocks() as app:
     
     with gr.Column():
         with gr.Row():
-            source_selector = gr.Radio(["source", "ref"], label="Source")
+            source_selector = gr.Radio(["source", "ref", "custom"], label="Source")
             ref_selector = gr.Radio(["source", "ref"], label="Reference")
 
     with gr.Column():
