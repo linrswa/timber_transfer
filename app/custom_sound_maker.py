@@ -24,7 +24,7 @@ class CustomSoundMaker():
         self.duration = 1.0  # Duration of each note in seconds
         self.fade_out = 0.2  # Fade-out duration in seconds
         self.sample_rate = 16000  # Number of samples per second
-        self.play_notes = ['Do', 'Re', 'Mi', 'Fa']
+        self.play_notes = ['So', 'Mi', 'Mi', 'Fa']
 
     def create_sound(self):
         # Generate the time axis for one note

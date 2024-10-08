@@ -130,7 +130,7 @@ class CombinedEncoder(nn.Module):
 # f0, l, z = encoder(encoder_input)
 
 # print(f"f0: {f0.shape}, z: {z.shape}, l: {l.shape}")
-
+###############################################
 def f0_method_compare():
     from components.timbre_transformer.utils import get_extract_pitch_needs, extract_pitch
 
@@ -206,4 +206,5 @@ def loudness_method_compare():
     plt.tight_layout()
     plt.show()
 
+# f0_method_compare()
 loudness_method_compare()
