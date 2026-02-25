@@ -1,112 +1,316 @@
-./pt_file/train12_generator_best_0.pt: 0.2822103881525907
-./pt_file/train12_generator_best_0.pt: 0.2821992149258067
-./pt_file/train12_generator_best_1.pt: 0.2817839070629962
-./pt_file/train 12_generator_10.pt: 0.28176950212647417
-valid: train 12_generator_best_15.pt: 0.27357032540326054
-valid: train 12_generator_best_27.pt: 0.2735390350694222
-valid: train 13_generator_best_13.pt: 0.2611295505167721
-valid: train 15_generator_best_6.pt: 0.4662052943059177
-valid: train 15_generator_40.pt: 0.46622052522255636
-valid: train18_generator_best_16.pt: 0.45914800358700597
-valid: train19_generator_best_18.pt: 0.48750409298927977
-valid: train19_generator_best_18.pt: 0.48756144426916237
-valid: New_train_7_generator_best_50.pt: 35.700526761772196
-valid: New_train_7_generator_best_50.pt: 0.4666186979774474
-valid: New_train_7_generator_best_12.pt: 0.46808044361800377
-valid: New_train_6_generator_best_7.pt: 0.46995553270474083
-valid: New_train_7_generator_best_83.pt: 0.4685766180045472
-valid: New_train_8_generator_140.pt: 0.5325781725028648
-valid: New_train_8_generator_best_13.pt: 0.5325786003414851
-
-valid: New_train_8_generator_best_150.pt	
-    loudness loss: 0.5325796876297633	
-    pitch loss: 0.545508240014089valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.5327055830098146
-	pitch loss: 0.5439615357265228
-valid: New_train_8_generator_best_150.pt
-	loudness loss: nan
-	pitch loss: 0.5487882497993168
-valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.5327033993629191
-	pitch loss: 0.5439344986674135
-valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.4291030011154243
-	pitch loss: inf
-valid: New_train_8_generator_best_150.pt
-	loudness loss: 0.42910321431486675
-	pitch loss: 0.0331912164201283
-valid: New_train_9_generator_best_26.pt
-	loudness loss: 0.4279452206448942
-	pitch loss: 0.02512945405764086
-valid: New_train_9_generator_50.pt
-	loudness loss: 0.4279438823996939
-	pitch loss: 0.025166375382338447
-valid: New_train_9_generator_80.pt
-	loudness loss: 0.4279433681310481
-	pitch loss: 0.025377369669562153
-valid: New_train_10_generator_10.pt
-	loudness loss: 0.4264158074054281
-	pitch loss: 0.02459814443577464
-valid: New_train_10_generator_10.pt
-	loudness loss: 0.5436962834184748
-	pitch loss: 0.025052957515511582
-valid: New_train_10_generator_30.pt
-	loudness loss: 0.5436930239571222
-	pitch loss: 0.0245194834236333
-valid: New_train_11_generator_best_0.pt
-	loudness loss: 0.4681375637941522
-	pitch loss: 0.05923541690183314
-valid: New_train_11_generator_best_46.pt
-	loudness loss: 0.46811415430811376
-	pitch loss: 0.06002716178078754
-valid: New_train_12_generator_best_0.pt
-	loudness loss: 0.4812050902072296
-	pitch loss: 0.024696675716249283
-valid: New_train_12_generator_best_3.pt
-	loudness loss: 0.48104494680307297
-	pitch loss: 0.024557855554530026
-valid: New_train_13_generator_best_3.pt
-	loudness loss: 0.537605888138645
-	pitch loss: 0.025147628276213824
-valid: New_train_13_generator_best_22.pt
-	loudness loss: 0.5376068948240957
-	pitch loss: 0.025040653144597625
-valid: train1_generator_best_22.pt
-	loudness loss: 0.6096788377404401
-	pitch loss: 0.02160621682965924
-valid: train5_generator_best_1.pt
-	loudness loss: 0.3029804934180444
-	pitch loss: 0.02789820166774865
-valid: train5_generator_best_7.pt
-	loudness loss: 0.3029823147767841
-	pitch loss: 0.02777782599722967
+TimbreTransformer_new start
+valid: train1_generator_best_2.pt
+	loudness loss: 0.32472448420019095
+	pitch loss: 0.04983267461637265
+valid: train1_generator_best_21.pt
+	loudness loss: 0.32471703126271306
+	pitch loss: 0.04982115614171381
+valid: train2_generator_best_1.pt
+	loudness loss: 0.311230944256958
+	pitch loss: 0.091051697567136
+valid: train3_generator_best_30.pt
+	loudness loss: 0.35308861397240626
+	pitch loss: 0.05719890774278094
+valid: train3_generator_best_4.pt
+	loudness loss: 0.35308834902255365
+	pitch loss: 0.05713236607655662
+valid: train3_generator_best_4.pt
+	loudness loss: 0.3530885016561559
+	pitch loss: 0.05726562357810226
+valid: train3_generator_best_0.pt
+	loudness loss: 0.3455538709845154
+	pitch loss: 0.062335522767641906
+valid: train5_generator_best_49.pt
+	loudness loss: 0.7974860170023576
+	pitch loss: 0.26321226135132025
+valid: train5_generator_150.pt
+	loudness loss: 0.7974862029017055
+	pitch loss: 0.2628519368110013
+valid: train6_generator_best_0.pt
+	loudness loss: 0.616901825777588
+	pitch loss: 0.043114716684228206
 valid: train6_generator_best_2.pt
-	loudness loss: 0.2903095741927137
-	pitch loss: 0.026080760532604823
-valid: train6_generator_best_4.pt
-	loudness loss: 0.2903090531194262
-	pitch loss: 0.025741389549877168
-valid: train6_generator_best_18.pt
-	loudness loss: 0.29030869704927176
-	pitch loss: 0.02567111616036679
-valid: train6_generator_20.pt
-	loudness loss: 0.29030769677082474
-	pitch loss: 0.0257392702964414
-valid: train7_generator_best_0.pt
-	loudness loss: 0.3613075446154137
-	pitch loss: 0.05001371550654225
-valid: train8_generator_best_13.pt
-	loudness loss: 0.3675548182447269
-	pitch loss: 0.038590929490060516
-valid: train8_generator_best_18.pt
-	loudness loss: 0.36755470452119754
-	pitch loss: 0.03830424253347604
-valid: train9_generator_best_2.pt
-	loudness loss: 0.31616985951394205
-	pitch loss: 0.0669894928288849
-valid: train9_generator_best_1.pt
-	loudness loss: 0.3161700706476061
-	pitch loss: 0.06687618401346529
-valid: train10_generator_best_13.pt
-	loudness loss: 0.3486895417335885
-	pitch loss: 0.05135258949463519
+	loudness loss: 0.6327595732403805
+	pitch loss: 0.044390397791755874
+valid: train6_generator_best_36.pt
+	loudness loss: 0.6327477039992706
+	pitch loss: 0.044421630077006044
+valid: train7_generator_best_2.pt
+	loudness loss: 0.48227566936402944
+	pitch loss: 0.03780733920776456
+valid: train10_generator_best_40.pt
+	loudness loss: 1.3982999633906434
+	pitch loss: 0.048277407324041025
+valid: train10_generator_best_1.pt
+	loudness loss: 1.4007980781963207
+	pitch loss: 0.04799270705607418
+valid: train11_generator_best_4.pt
+	loudness loss: 1.490909631415636
+	pitch loss: 0.027220707170568327
+valid: train11_generator_best_4.pt
+	loudness loss: 0.16512199444035658
+	pitch loss: 0.03628724751064996
+valid: train12_generator_best_2.pt
+	loudness loss: 0.16447581328229668
+	pitch loss: 0.03183468377593473
+valid: train13_generator_best_0.pt
+	loudness loss: 0.1672716359434069
+	pitch loss: 0.026417428758244793
+valid: train14_generator_best_33.pt
+	loudness loss: 0.15349806552378936
+	pitch loss: 0.08940822469475163
+valid: base_generator_best_5.pt
+	loudness loss: 0.1635995056992418
+	pitch loss: 0.028242539589277794
+valid: decoder_new_7_generator_best_42.pt
+	loudness loss: 0.18286837607245313
+	pitch loss: 0.06549016948462047
+valid: base_7_generator_best_2.pt
+	loudness loss: 0.11472107284957374
+	pitch loss: 0.4570063317280387
+valid: base_8_generator_best_0.pt
+	loudness loss: 0.10453003683474361
+	pitch loss: 0.06030791859081279
+valid: base_8_generator_best_3.pt
+	loudness loss: 0.10497971894026772
+	pitch loss: 0.0782118501515759
+valid: base_8_generator_best_4.pt
+	loudness loss: 0.10497858070997876
+	pitch loss: 0.07840285574058112
+valid: base_9_generator_best_2.pt
+	loudness loss: 0.10073794985379592
+	pitch loss: 0.16709509195431715
+valid: decoder_new_1_generator_best_1.pt
+	loudness loss: 0.10791063254793372
+	pitch loss: 0.0768558547709391
+valid: decoder_new_1_generator_best_36.pt
+	loudness loss: 0.10718925083440727
+	pitch loss: 0.07869863674811294
+valid: decoder_new_2_generator_best_2.pt
+	loudness loss: 0.11002543974142863
+	pitch loss: 0.033829834732618705
+valid: decoder_new_3_generator_best_1.pt
+	loudness loss: 0.11397850490254952
+	pitch loss: 0.024100945199684583
+valid: decoder_new_3_generator_best_4.pt
+	loudness loss: 0.11526549978361933
+	pitch loss: 0.024159597089414852
+valid: decoder_new_4_generator_150.pt
+	loudness loss: 0.09236000284547898
+	pitch loss: 0.02881627191818096
+valid: base_15_generator_best_211.pt
+	loudness loss: 0.09651385883657326
+	pitch loss: 0.045149258374540736
+valid: base_15_generator_best_177.pt
+	loudness loss: 0.09651309615508098
+	pitch loss: 0.04539354938336205
+valid: base_15_generator_best_17.pt
+	loudness loss: 0.09651349412046306
+	pitch loss: 0.04529931974643849
+valid: base_15_generator_best_1.pt
+	loudness loss: 0.0967125970407466
+	pitch loss: 0.04489020663792829
+valid: base_16_generator_best_31.pt
+	loudness loss: 0.10222324357705453
+	pitch loss: 0.023016465556825325
+valid: base_16_generator_best_7.pt
+	loudness loss: 0.10222782945096669
+	pitch loss: 0.023181447850949433
+valid: base_17_generator_best_2.pt
+	loudness loss: 0.09391331519043095
+	pitch loss: 0.02539111908707749
+valid: decoder_v0_with_f0_distanglement_1_generator_best_0.pt
+	loudness loss: 0.326927845890605
+	pitch loss: 0.09524021366357385
+valid: decoder_v0_with_f0_distanglement_1_generator_best_31.pt
+	loudness loss: 0.3412755059939071
+	pitch loss: 0.06415582665693247
+valid: decoder_v1_with_f0_distanglement_2_generator_best_0.pt
+	loudness loss: 0.41492449138223675
+	pitch loss: 0.03394320495133519
+valid: decoder_v1_with_f0_distanglement_2_generator_best_2.pt
+	loudness loss: 0.3894148308733673
+	pitch loss: 0.04193744076392787
+valid: decoder_v1_with_f0_distanglement_2_generator_best_6.pt
+	loudness loss: 0.3893578936652886
+	pitch loss: 0.041698749287103536
+valid: decoder_v1_with_f0_distanglement_3_generator_best_0.pt
+	loudness loss: 0.6489389404164488
+	pitch loss: nan
+valid: decoder_v1_with_f0_distanglement_3_generator_best_1.pt
+	loudness loss: 0.6579647355958467
+	pitch loss: nan
+valid: decoder_v1_1_generator_best_0.pt
+	loudness loss: 0.08477042963079066
+	pitch loss: 0.022801410463338223
+valid: decoder_v1_1_generator_best_27.pt
+	loudness loss: 0.08341593997315261
+	pitch loss: 0.022968385622171336
+valid: decoder_v2_with_f0_distanglement_2_generator_best_0.pt
+	loudness loss: 0.6001445630249765
+	pitch loss: 2.3597460086955304
+valid: decoder_v2_with_f0_distanglement_2_generator_best_1.pt
+	loudness loss: 0.5842743832383568
+	pitch loss: 2.2768823721418454
+valid: decoder_v2_1_generator_best_19.pt
+	loudness loss: 0.10883441790010634
+	pitch loss: 0.040037435038805406
+valid: decoder_v1_4_generator_best_1.pt
+	loudness loss: 0.09743735859658988
+	pitch loss: 0.03852655495850989
+valid: decoder_v1_4_generator_best_2.pt
+	loudness loss: 0.09736943533262672
+	pitch loss: 0.038079752593239063
+valid: decoder_v2.2_1_generator_best_15.pt
+	loudness loss: 0.18936846411455618
+	pitch loss: 0.19679326449288767
+valid: decoder_v2.2_1_with_f0_distanglement_generator_best_1.pt
+	loudness loss: 0.7468204117012325
+	pitch loss: nan
+valid: decoder_v2_2_generator_best_12.pt
+	loudness loss: 0.10143519063892929
+	pitch loss: 0.037533821207271625
+valid: decoder_v3_1_generator_best_64.pt
+	loudness loss: 0.09503822672832697
+	pitch loss: 0.034070942341067535
+valid: decoder_v3_2_generator_best_1.pt
+	loudness loss: 0.09496768337235964
+	pitch loss: 0.029496476210791808
+valid: decoder_v3_3_fix_generator_best_2.pt
+	loudness loss: 0.09627635750529336
+	pitch loss: 0.03680158264639391
+valid: decoder_v4_2_fix_generator_best_34.pt
+	loudness loss: 0.09646463073775172
+	pitch loss: 0.05824885255473956
+valid: decoder_v4_3_fix_generator_best_2.pt
+	loudness loss: 0.1006313007701367
+	pitch loss: 0.03607131401570813
+valid: decoder_v4_3_fix_generator_best_4.pt
+	loudness loss: 0.10063448955874639
+	pitch loss: 0.03620329035858636
+valid: decoder_v4_3_fix_generator_best_30.pt
+	loudness loss: 0.10063293969219024
+	pitch loss: 0.03652357443947522
+valid: decoder_v5_generator_best_0.pt
+	loudness loss: 0.0963014700805579
+	pitch loss: 0.02154280654639441
+valid: decoder_v5_generator_best_23.pt
+	loudness loss: 0.0960846224037466
+	pitch loss: 0.02197200709112288
+valid: decoder_v5_2_generator_best_2.pt
+	loudness loss: 0.09666393649236268
+	pitch loss: 0.030356491539169972
+valid: decoder_v6_1_generator_best_0.pt
+	loudness loss: 0.09718015905870198
+	pitch loss: 0.04250865730650723
+valid: decoder_v6_1_generator_90.pt
+	loudness loss: 0.09665215923160798
+	pitch loss: 0.04137680430231406
+valid: decoder_v6_2_generator_best_2.pt
+	loudness loss: 0.09415814669439679
+	pitch loss: 0.03239423550809741
+valid: decoder_v6_2_generator_best_5.pt
+	loudness loss: 0.0941555662983205
+	pitch loss: 0.03257292835123842
+valid: decoder_v7_1_generator_best_32.pt
+	loudness loss: 0.09385443442859563
+	pitch loss: 0.024502055785495955
+valid: decoder_v8_1_generator_best_1.pt
+	loudness loss: 0.09756778068720717
+	pitch loss: 0.026926593017121653
+valid: decoder_v8_1_generator_best_2.pt
+	loudness loss: 0.09793997657276778
+	pitch loss: 0.02713980534392917
+valid: decoder_v8_1_generator_best_8.pt
+	loudness loss: 0.09792967067805028
+	pitch loss: 0.026957349579928232
+valid: decoder_v8_1_generator_best_49.pt
+	loudness loss: 0.0979288785816698
+	pitch loss: 0.02709361814911526
+valid: decoder_v8_2_generator_best_3.pt
+	loudness loss: 0.09605629990402195
+	pitch loss: 0.02159112212823818
+valid: decoder_v8_3_generator_best_2.pt
+	loudness loss: 0.1015634190181332
+	pitch loss: 0.028474118067172184
+valid: decoder_v9_1_generator_best_0.pt
+	loudness loss: 0.0936469443105964
+	pitch loss: 0.025423671513039058
+valid: decoder_v9_1_generator_best_3.pt
+	loudness loss: 0.09271809666832709
+	pitch loss: 0.027076253681877004
+valid: decoder_v9_1_generator_best_43.pt
+	loudness loss: 0.09272145288398709
+	pitch loss: 0.026878821370311768
+valid: decoder_v10_1_generator_best_0.pt
+	loudness loss: 0.09784972379920505
+	pitch loss: 0.02225752278234471
+valid: decoder_v10_1_generator_best_1.pt
+	loudness loss: 0.0948460132384294
+	pitch loss: 0.04874140482698357
+valid: decoder_v11_1_generator_best_30.pt
+	loudness loss: 0.10089135754013075
+	pitch loss: 0.027309010999592362
+valid: decoder_v12_2_generator_best_3.pt
+	loudness loss: 0.09953064890009305
+	pitch loss: 0.022822692038056452
+valid: decoder_v13_1(mfcc)_generator_best_1.pt
+	loudness loss: 0.08820278310396741
+	pitch loss: 0.021648913017146228
+valid: decoder_v13_1(mfcc)_generator_best_22.pt
+	loudness loss: 0.08874926606928116
+	pitch loss: 0.02175326246593433
+valid: decoder_v13_1(mfcc)_generator_best_33.pt
+	loudness loss: 0.08875271415678761
+	pitch loss: 0.02162036421486174
+valid: decoder_v13_1(mfcc)_generator_best_33.pt
+	loudness loss: 0.08875292458742134
+	pitch loss: 0.021617016259125724
+valid: decoder_v13_1(mfcc)_generator_90.pt
+	loudness loss: 0.08874784378131785
+	pitch loss: 0.021795461675041435
+valid: decoder_v14_1(mfcc)_generator_best_19.pt
+	loudness loss: 0.10433545799554325
+	pitch loss: 0.03832977010578144
+valid: decoder_v14_1(mfcc)_test_generator_best_0.pt
+	loudness loss: 0.10231260210286254
+	pitch loss: 0.033925356962407005
+valid: decoder_v15_9(mfcc)_generator_best_8.pt
+	loudness loss: 0.09063956316009346
+	pitch loss: 0.027274091831224527
+valid: decoder_v18_2(mfcc)_addmfft_generator_best_20.pt
+	loudness loss: 0.08222084715683244
+	pitch loss: 0.023786726504398798
+valid: decoder_v18_2(mfcc)_addmfft_generator_40.pt
+	loudness loss: 0.08222365919260202
+	pitch loss: 0.023739516540345566
+valid: decoder_v18_3(mfcc)_addmfft_generator_best_34.pt
+	loudness loss: 0.08619982967177336
+	pitch loss: 0.025400660053252175
+valid: decoder_v19_1_addmfft_generator_best_89.pt
+	loudness loss: 0.08736556277073457
+	pitch loss: 0.02489446887419733
+valid: decoder_v19_4_addmfft_generator_best_4.pt
+	loudness loss: 0.09388390162379734
+	pitch loss: 0.027867503583067388
+valid: decoder_v19_3_addmfft_generator_best_2.pt
+	loudness loss: 0.08939113417229279
+	pitch loss: 0.026164981370938905
+valid: decoder_v19_5_addmfft_energy_nolinear_generator_best_1.pt
+	loudness loss: 0.09255841923855802
+	pitch loss: 0.026809529135127144
+valid: decoder_v19_5_addmfft_energy_nolinear_generator_best_5.pt
+	loudness loss: 0.09190582500899211
+	pitch loss: 0.026937583692345467
+valid: decoder_v19_6_addmfft_energy_loud_nolinear_generator_best_1.pt
+	loudness loss: 0.0834686241365694
+	pitch loss: 0.02306287454731659
+valid: decoder_v20_1_addmfft_energy_generator_best_20.pt
+	loudness loss: 0.08443325683951115
+	pitch loss: 0.022017069502588596
+valid: decoder_v21_2_addmfft_energy_generator_best_3.pt
+	loudness loss: 0.08529433113760937
+	pitch loss: 0.022429135660948393
+valid: decoder_v21_test_2_addmfft_loudness_generator_best_2.pt
+	loudness loss: 0.08655943047993082
+	pitch loss: 0.02238568300136584

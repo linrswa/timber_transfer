@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.io.wavfile as wf
 from glob import glob
 import os 
+import numpy as np
 
 import sys
 sys.path.append("..")
@@ -18,7 +19,7 @@ frequency_with_confidence = True
 output_dir = "../output"
 pt_file_dir = "../pt_file"
 
-train_dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=frequency_with_confidence)
+train_dataset = NSynthDataset(data_mode="valid", sr=16000, frequency_with_confidence=frequency_with_confidence)
 
 train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
        
@@ -27,13 +28,15 @@ fn, s, l, f0_with_confidence = next(iter(train_loader))
 if frequency_with_confidence:
     f0, _ = seperate_f0_confidence(f0_with_confidence)
 
+
 if use_mean_std:
     l_mod = cal_loudness_norm(l)
 
-ddsp = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=3, n_harms=101)
-pt_file = "train8_generator_best_13.pt"
-ddsp.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
-add, sub, rec, mu, logvar, global_amp = ddsp(s, l_mod, f0)
+model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
+pt_file = "decoder_v21_5_addmfftx2_energy_ftimbreE_generator_best_19.pt"
+model.load_state_dict(torch.load(f"{pt_file_dir}/{pt_file}"))
+add, sub, rec, mu, logvar, global_amp = model(s, l_mod, f0, s)
+
 
 A_weight = get_A_weight()
 rec_l = extract_loudness(rec.squeeze(dim=-1), A_weight)
@@ -86,6 +89,34 @@ def plot_result(s, rec, fn, rec_l, l):
 plot_result(s, rec, fn, rec_l, l)
 
 #%%
+from librosa.feature import melspectrogram
+import librosa
+sr = 16000
+n_fft = 1024
+hop_length = 256
+ori_mel_spec = melspectrogram(
+    y=s,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    )
+ori_mel_spec = librosa.power_to_db(ori_mel_spec, ref=np.max)
+
+rec_mel_spec = melspectrogram(
+    y=rec,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    )
+rec_mel_spec = librosa.power_to_db(rec_mel_spec, ref=np.max)
+plt.subplot(211)
+librosa.display.specshow(ori_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("ori mel spectrogram")
+plt.subplot(212)
+librosa.display.specshow(rec_mel_spec, y_axis="mel", fmax=8000, x_axis="time")
+plt.title("rec mel spectrogram")
+plt.tight_layout()
+#%%
 out_dir = f"{output_dir}/{pt_file}"
 os.makedirs(out_dir, exist_ok=True)
 file_list_in_output_dir = glob(f"{out_dir}/*")
@@ -94,4 +125,3 @@ file_name_with_dir = f"{out_dir}/{file_num}"
 wf.write(f"{file_name_with_dir}_ori.wav", 16000, s)
 wf.write(f"{file_name_with_dir}_rec.wav", 16000, rec)
 plot_result(s, rec, fn, rec_l, l)
-plt.savefig(f"{file_name_with_dir}.png")

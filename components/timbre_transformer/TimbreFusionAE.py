@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .encoders import Encoder, TimbreEncoder
+from .encoder import Encoder, TimbreEncoderX
 from .decoders import  Decoder
 
 class TimbreFusionAE(nn.Module):
@@ -13,7 +13,6 @@ class TimbreFusionAE(nn.Module):
         n_mfcc=80,
         n_mels=128,
         timbre_emb_dim=128,
-        mlp_layer=3,
         n_harms=101,
         noise_filter_bank=65, 
         is_train=False,
@@ -22,30 +21,38 @@ class TimbreFusionAE(nn.Module):
 
         self.is_train = is_train
 
-        self.timbre_encoder = TimbreEncoder(
+        # self.timbre_encoder = TimbreEncoder(
+        #     sample_rate=sample_rate,
+        #     n_fft=n_fft,
+        #     hop_length=hop_length,
+        #     n_mels=n_mels,
+        #     n_mfcc=n_mfcc,
+        #     timbre_emb_dim=timbre_emb_dim, 
+        # )
+
+        self.timbre_encoder = TimbreEncoderX(
             sample_rate=sample_rate,
             n_fft=n_fft,
             hop_length=hop_length,
-            n_mels=n_mels,
-            n_mfcc=n_mfcc,
+            n_mels=80,
             timbre_emb_dim=timbre_emb_dim, 
         )
 
         self.encoder = Encoder()
 
         self.decoder = Decoder(
-            mlp_layer=mlp_layer,
             n_harms=n_harms,
             noise_filter_bank=noise_filter_bank,
+            timbre_emb_size=timbre_emb_dim
         )
 
 
-    def forward(self, signal, loudness, f0):
-        f0, l = self.encoder(loudness, f0)
-        mu, logvar = self.timbre_encoder(signal)
+    def forward(self, target_timbre_signal, signal, loudness, f0):
+        f0, l, engry = self.encoder(signal, loudness, f0)
+        mu, logvar = self.timbre_encoder(target_timbre_signal)
         timbre_emb = self.sample(mu, logvar)
-        harmonic_head_output, noise_head_output = self.decoder(f0, l, timbre_emb)
-        return harmonic_head_output, f0, noise_head_output
+        harmonic_head_output, noise_head_output, f0, enhance_head_output = self.decoder(f0, l, engry, timbre_emb)
+        return harmonic_head_output, f0, noise_head_output, enhance_head_output
 
     def sample(self, mu, logvar):
         """ paper discription

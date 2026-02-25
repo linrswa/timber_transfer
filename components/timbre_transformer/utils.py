@@ -6,8 +6,13 @@ from typing import Union
 from .ptcrepe import crepe
 
 
-def safe_log(x):
-    return torch.log(x + 1e-7)
+def safe_log(x, eps=1e-7):
+    safe_x = torch.where(x == 0, torch.tensor(eps).to(x), x)
+    return torch.log(safe_x)
+
+def safe_divide(numerator, denominator, eps=1e-7):
+    safe_denominator = torch.where(denominator == 0, torch.tensor(eps).to(denominator), denominator)
+    return numerator / safe_denominator
 
 @torch.no_grad()
 def mean_std_loudness(dataset):
@@ -39,25 +44,6 @@ def multiscale_fft(signal, scales, overlap):
         stfts.append(S)
     return stfts
 
-
-def resample(x, factor: int):
-    batch, frame, channel = x.shape
-    x = x.permute(0, 2, 1).reshape(batch * channel, 1, frame)
-    
-    window = torch.hann_window(
-        factor * 2,
-        dtype=x.dtype,
-        device=x.device,
-    ).reshape(1, 1, -1)
-    y = torch.zeros(x.shape[0], x.shape[1], factor * x.shape[2]).to(x)
-    y[..., ::factor] = x
-    y[..., -1:] = x[..., -1:]
-    y = torch.nn.functional.pad(y, [factor, factor])
-    y = torch.nn.functional.conv1d(y, window)[..., :-1]
-
-    y = y.reshape(batch, channel, factor * frame).permute(0, 2, 1)
-    return y
-
 def get_A_weight(
     sampling_rate: int = 16000,
     n_fft: int = 1024,
@@ -74,7 +60,7 @@ def get_A_weight(
         ndarray or Tensor: Depends on output_torch.
     """
     f = li.fft_frequencies(sr=sampling_rate, n_fft=n_fft)
-    a_weight = li.A_weighting(f + 1e-20) 
+    a_weight = li.A_weighting(f + 1e-12) 
     
     if output_torch:
         return torch.from_numpy(a_weight.reshape(-1, 1))
@@ -83,6 +69,56 @@ def get_A_weight(
 
 @torch.no_grad()
 def extract_loudness(
+    signal: torch.Tensor,
+    a_weight: torch.Tensor,
+    hop_length: int = 256,
+    n_fft: int = 1024,
+    ) -> torch.Tensor:
+    """From a Tensor signal to a Tensor after loudness extraction.
+
+    Args:
+        signal (torch.Tensor): input shape should be (batch, frame)
+        a_weight (torch.Tensor): input a_weight from get_a_weight() 
+        hop_length (int, optional): n_fft/4 . Defaults to 256.
+        n_fft (int, optional): number of fft. Defaults to 1024.
+
+    Returns:
+        torch.Tensor: return shape (batch, (frame/hop_length) + 1).
+    """
+
+    def power_to_db(power, ref_db=0.0, range_db=80.0):
+        # Convert to decibels.
+        pmin = 10**-(range_db / 10.0)
+        power = torch.max(power, torch.tensor(pmin))
+        db = 10.0 * torch.log10(power)
+
+        # Set dynamic range.
+        db -= ref_db
+        db = torch.max(db, torch.tensor(-range_db))
+        return db
+
+    s = torch.stft(
+        signal,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=n_fft,
+        center=True,
+        return_complex=True,
+    )
+
+    amplitude = torch.abs(s)
+    power = amplitude ** 2
+
+    weighting = 10 ** (a_weight / 10)
+    power = power * weighting
+    
+    avg_power = torch.mean(power, dim=1)
+    loudness = power_to_db(avg_power)
+
+    return loudness
+
+@torch.no_grad()
+def extract_loudness_old(
     signal: torch.Tensor,
     a_weight: torch.Tensor,
     hop_length: int = 256,
@@ -119,7 +155,6 @@ def extract_loudness(
     loudness = 10.0 * torch.log10(torch.clamp(loudness, min=amin))
     
     return loudness 
-
     
 def get_extract_pitch_needs(
     device: str = "cuda",

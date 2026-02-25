@@ -13,14 +13,13 @@ from ddsp_ori.ddsp import DDSP as DDSP_origin
 
 train_dataset = NSynthDataset(data_mode="test", sr=16000)
 
-train_loader = DataLoader(train_dataset, batch_size=1, num_workers=4, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=4, num_workers=4, shuffle=True)
        
 fn, s, l, f = next(iter(train_loader)) 
 
-timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, mlp_layer=6, n_harms=101)
+timbre_transformer = TimbreTransformer(is_train=False, is_smooth=True, n_harms=101, timbre_emb_dim=256)
 
-add, sub, rec, mu, logvar, global_amp = timbre_transformer(s, l, f)
-
+add, sub, rec, mu, logvar, global_amp = timbre_transformer(s, l, f, s)
 
 def calculate_model_size(model: nn.Module):
     param_size = 0
@@ -45,7 +44,7 @@ calculate_model_size(mrd)
 
 # summary(ddsp_origin, [s.shape, l.shape, f.shape], device="cpu")
 
-summary(timbre_transformer, input_data=(s, l, f), device="cpu")
+summary(timbre_transformer, input_data=(s, l, f, s), device="cpu")
 # summary(mpd, [s.shape, s.shape], device="cpu")
 # summary(mrd, [s.shape, s.shape], device="cpu")
 
