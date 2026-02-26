@@ -62,42 +62,42 @@ This design gives strong controllability and interpretability: each branch has a
 
 ### Integer Harmonic Branch
 
-For frame/sample index \(t\), with \(K\) harmonics:
+For frame/sample index $t$, with $K$ harmonics:
 
-\[
+$$
 x_{\text{harm}}(t) = \sum_{k=1}^{K} a_k(t)\sin(\phi_k(t)),
 \quad
 \phi_k(t)=\sum_{\tau \le t}2\pi k f_0(\tau)/f_s
-\]
+$$
 
-with Nyquist masking (\(k f_0 < f_s/2\)).
+with Nyquist masking ($k f_0 < f_s/2$).
 
 ### Noise Branch
 
-Predicted magnitude response \(n_t\) is converted to impulse response \(h_t\), then:
+Predicted magnitude response $n_t$ is converted to impulse response $h_t$, then:
 
-\[
+$$
 x_{\text{noise}} = w * h
-\]
+$$
 
-where \(w\) is white noise and \(*\) is FFT convolution.
+where $w$ is white noise and $*$ is FFT convolution.
 
 ### Enhancement Branch
 
 The enhancement head predicts additional harmonic controls
-\((\tilde{h}, \tilde{a}, \alpha)\), then synthesizer generates:
+$(\tilde{h}, \tilde{a}, \alpha)$, then synthesizer generates:
 
-\[
+$$
 x_{\text{enh}}(t) = \sum_{k=1}^{K} \tilde{a}_k(t)\sin(\tilde{\phi}_k(t))
-\]
+$$
 
-In current implementation, \(\alpha\) is used in masking/conditioning before synthesis.
+In current implementation, $\alpha$ is used in masking/conditioning before synthesis.
 
 ### Final Reconstruction
 
-\[
+$$
 \hat{x}(t)=x_{\text{harm}}(t)+x_{\text{noise}}(t)+x_{\text{enh}}(t)
-\]
+$$
 
 ## Loss Coupling in Training
 

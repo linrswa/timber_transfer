@@ -64,39 +64,39 @@ The design uses:
 
 ## Mathematical Formulation
 
-Let source controls be \(c_t=[f0_t, l_t, e_t]\) and timbre embedding be \(z\).
+Let source controls be $c_t=[f0_t, l_t, e_t]$ and timbre embedding be $z$.
 Decoder predicts frame-wise parameters:
 
-\[
+$$
 \theta_t = \{a_t, h_t, n_t, \tilde{h}_t, \tilde{a}_t, \alpha_t\}
-\]
+$$
 
 where:
-- \(h_t\): integer harmonic distribution
-- \(a_t\): global harmonic amplitude
-- \(n_t\): noise filter-bank magnitudes
-- \((\tilde{h}_t,\tilde{a}_t,\alpha_t)\): enhancement-branch parameters
+- $h_t$: integer harmonic distribution
+- $a_t$: global harmonic amplitude
+- $n_t$: noise filter-bank magnitudes
+- $(\tilde{h}_t,\tilde{a}_t,\alpha_t)$: enhancement-branch parameters
 
 Non-negative parameterization in code:
 
-\[
+$$
 \operatorname{msig}(x)=m\cdot \sigma(x)^{\log(e)}+\tau
-\]
+$$
 
-(`modified_sigmoid`, with default \(m=2, e=10, \tau=10^{-7}\)).
+(`modified_sigmoid`, with default $m=2, e=10, \tau=10^{-7}$).
 
 Normalized harmonic distribution:
 
-\[
+$$
 h_t \leftarrow \frac{h_t}{\sum_k h_{t,k} + \varepsilon}
-\]
+$$
 
 ## Loss Coupling in Training
 
-Decoder outputs are supervised indirectly through synthesized waveform \(\hat{x}\) via:
-- adversarial loss (\(\mathcal{L}_{adv}^G\))
-- feature matching (\(\mathcal{L}_{fm}\))
-- mel reconstruction (\(\mathcal{L}_{mel}\))
-- multi-scale FFT (\(\mathcal{L}_{mfft}\))
+Decoder outputs are supervised indirectly through synthesized waveform $\hat{x}$ via:
+- adversarial loss ($\mathcal{L}_{adv}^G$)
+- feature matching ($\mathcal{L}_{fm}$)
+- mel reconstruction ($\mathcal{L}_{mel}$)
+- multi-scale FFT ($\mathcal{L}_{mfft}$)
 
 So decoder learns parameter quality by reducing waveform and spectral discrepancies rather than direct head-level labels.

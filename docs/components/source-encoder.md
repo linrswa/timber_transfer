@@ -53,13 +53,13 @@ Without explicit source controls, decoder outputs can drift in pitch and dynamic
 
 Source controls are tied to evaluation targets:
 
-\[
+$$
 \mathcal{L}_{\text{loudness}} = \left\lVert l(x)-l(\hat{x}) \right\rVert_1
-\]
+$$
 
-\[
+$$
 \mathcal{L}_{f0} = \operatorname{mean}\left(\left|midi(f0(x)) - midi(f0(\hat{x}))\right|\right)
-\]
+$$
 
 Current code usage:
 - `train.py`: loudness L1 is logged under `torch.no_grad()` (monitoring).

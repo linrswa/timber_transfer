@@ -58,35 +58,35 @@ Synthesizer 位於 decoder 之後，負責將參數轉為最終波形。
 
 ### 整數諧波分支
 
-\[
+$$
 x_{\text{harm}}(t) = \sum_{k=1}^{K} a_k(t)\sin(\phi_k(t)),
 \quad
 \phi_k(t)=\sum_{\tau \le t}2\pi k f_0(\tau)/f_s
-\]
+$$
 
-並施加 Nyquist 條件 \(k f_0 < f_s/2\)。
+並施加 Nyquist 條件 $k f_0 < f_s/2$。
 
 ### 噪聲分支
 
-\[
+$$
 x_{\text{noise}} = w * h
-\]
+$$
 
-其中 \(w\) 為白噪聲、\(*\) 表卷積（程式採 FFT convolution）。
+其中 $w$ 為白噪聲、$*$ 表卷積（程式採 FFT convolution）。
 
 ### 非整數諧波分支
 
-\[
+$$
 x_{\text{enh}}(t) = \sum_{k=1}^{K} \tilde{a}_k(t)\sin(\tilde{\phi}_k(t))
-\]
+$$
 
-目前實作中，\(\alpha\) 用於合成前的 masking/conditioning。
+目前實作中，$\alpha$ 用於合成前的 masking/conditioning。
 
 ### 最終輸出
 
-\[
+$$
 \hat{x}(t)=x_{\text{harm}}(t)+x_{\text{noise}}(t)+x_{\text{enh}}(t)
-\]
+$$
 
 ## 與 loss 的關聯
 

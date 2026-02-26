@@ -64,36 +64,36 @@ Head 端使用 `modified_sigmoid` 保證振幅與濾波器幅值非負，提升 
 
 ## 數學公式
 
-令來源控制為 \(c_t=[f0_t, l_t, e_t]\)，音色條件為 \(z\)，則 decoder 預測：
+令來源控制為 $c_t=[f0_t, l_t, e_t]$，音色條件為 $z$，則 decoder 預測：
 
-\[
+$$
 \theta_t = \{a_t, h_t, n_t, \tilde{h}_t, \tilde{a}_t, \alpha_t\}
-\]
+$$
 
 其中：
-- \(h_t\)：整數諧波分佈
-- \(a_t\)：全域諧波振幅
-- \(n_t\)：噪聲濾波器幅值
-- \((\tilde{h}_t,\tilde{a}_t,\alpha_t)\)：增強分支參數
+- $h_t$：整數諧波分佈
+- $a_t$：全域諧波振幅
+- $n_t$：噪聲濾波器幅值
+- $(\tilde{h}_t,\tilde{a}_t,\alpha_t)$：增強分支參數
 
 非負參數化：
 
-\[
+$$
 \operatorname{msig}(x)=m\cdot \sigma(x)^{\log(e)}+\tau
-\]
+$$
 
-（程式預設 \(m=2, e=10, \tau=10^{-7}\)）。
+（程式預設 $m=2, e=10, \tau=10^{-7}$）。
 
 諧波分佈正規化：
 
-\[
+$$
 h_t \leftarrow \frac{h_t}{\sum_k h_{t,k} + \varepsilon}
-\]
+$$
 
 ## 與 loss 的關聯
 
 Decoder 沒有 head-level 直接標註，主要透過合成後波形的間接監督學習：
-- 對抗損失 \(\mathcal{L}_{adv}^G\)
-- Feature matching \(\mathcal{L}_{fm}\)
-- Mel 重建 \(\mathcal{L}_{mel}\)
-- Multi-scale FFT \(\mathcal{L}_{mfft}\)
+- 對抗損失 $\mathcal{L}_{adv}^G$
+- Feature matching $\mathcal{L}_{fm}$
+- Mel 重建 $\mathcal{L}_{mel}$
+- Multi-scale FFT $\mathcal{L}_{mfft}$

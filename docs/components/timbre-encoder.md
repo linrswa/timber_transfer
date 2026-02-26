@@ -52,31 +52,31 @@ This keeps training expressive but inference consistent.
 
 ## Mathematical Formulation
 
-Given reference audio \(x_r\), the timbre encoder predicts:
+Given reference audio $x_r$, the timbre encoder predicts:
 
-\[
+$$
 q_\phi(z \mid x_r) = \mathcal{N}(\mu_\phi(x_r), \operatorname{diag}(\sigma_\phi^2(x_r)))
-\]
+$$
 
 Reparameterization:
 
-\[
+$$
 \epsilon \sim \mathcal{N}(0, I), \quad
 z = \mu + \sigma \odot \epsilon, \quad
 \sigma = \exp(0.5\,\logvar)
-\]
+$$
 
-Inference mode uses \(z=\mu\).
+Inference mode uses $z=\mu$.
 
 ## Loss Coupling in Training
 
 The timbre encoder is mainly regularized by KL loss:
 
-\[
+$$
 \mathcal{L}_{\text{kl}} = \frac{1}{2}\,\mathbb{E}
 \left[
 \sum_d \left(e^{\log\sigma_d^2} + \mu_d^2 -1-\log\sigma_d^2\right)
 \right]
-\]
+$$
 
 This term constrains latent space smoothness and improves timbre interpolation/generalization.

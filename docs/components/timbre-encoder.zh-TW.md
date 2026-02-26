@@ -47,27 +47,27 @@ Timbre Encoder 會從 reference 音訊中提取 `Timbre Z`，並盡量與來源�
 
 ## 數學公式
 
-\[
+$$
 q_\phi(z \mid x_r) = \mathcal{N}(\mu_\phi(x_r), \operatorname{diag}(\sigma_\phi^2(x_r)))
-\]
+$$
 
-\[
+$$
 \epsilon \sim \mathcal{N}(0, I), \quad
 z = \mu + \sigma \odot \epsilon, \quad
 \sigma = \exp(0.5\,\logvar)
-\]
+$$
 
-推論時使用 \(z=\mu\)。
+推論時使用 $z=\mu$。
 
 ## 與 loss 的關聯
 
 主要受 KL 正則化約束：
 
-\[
+$$
 \mathcal{L}_{\text{kl}} = \frac{1}{2}\,\mathbb{E}
 \left[
 \sum_d \left(e^{\log\sigma_d^2} + \mu_d^2 -1-\log\sigma_d^2\right)
 \right]
-\]
+$$
 
 此項有助於潛在空間平滑與音色泛化能力。

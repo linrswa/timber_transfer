@@ -47,13 +47,13 @@ Source Encoder 的目標是在音色轉換過程中保留「演奏內容」：
 
 ## 與指標/訓練的關聯
 
-\[
+$$
 \mathcal{L}_{\text{loudness}} = \left\lVert l(x)-l(\hat{x}) \right\rVert_1
-\]
+$$
 
-\[
+$$
 \mathcal{L}_{f0} = \operatorname{mean}\left(\left|midi(f0(x)) - midi(f0(\hat{x}))\right|\right)
-\]
+$$
 
 目前程式：
 - `train.py`：loudness L1 為監控項
