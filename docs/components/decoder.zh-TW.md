@@ -79,7 +79,7 @@ $$
 非負參數化：
 
 $$
-\operatorname{msig}(x)=m\cdot \sigma(x)^{\log(e)}+\tau
+\text{msig}(x)=m\cdot \sigma(x)^{\log(e)}+\tau
 $$
 
 （程式預設 $m=2, e=10, \tau=10^{-7}$）。

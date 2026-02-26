@@ -52,7 +52,7 @@ $$
 $$
 
 $$
-\mathcal{L}_{f0} = \operatorname{mean}\left(\left|midi(f0(x)) - midi(f0(\hat{x}))\right|\right)
+\mathcal{L}_{f0} = \text{mean}\left(\left|midi(f0(x)) - midi(f0(\hat{x}))\right|\right)
 $$
 
 目前程式：

@@ -80,7 +80,7 @@ where:
 Non-negative parameterization in code:
 
 $$
-\operatorname{msig}(x)=m\cdot \sigma(x)^{\log(e)}+\tau
+\text{msig}(x)=m\cdot \sigma(x)^{\log(e)}+\tau
 $$
 
 (`modified_sigmoid`, with default $m=2, e=10, \tau=10^{-7}$).

@@ -55,7 +55,7 @@ This keeps training expressive but inference consistent.
 Given reference audio $x_r$, the timbre encoder predicts:
 
 $$
-q_\phi(z \mid x_r) = \mathcal{N}(\mu_\phi(x_r), \operatorname{diag}(\sigma_\phi^2(x_r)))
+q_\phi(z \mid x_r) = \mathcal{N}(\mu_\phi(x_r), \text{diag}(\sigma_\phi^2(x_r)))
 $$
 
 Reparameterization:

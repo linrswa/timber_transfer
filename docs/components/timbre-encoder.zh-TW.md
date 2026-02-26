@@ -48,7 +48,7 @@ Timbre Encoder 會從 reference 音訊中提取 `Timbre Z`，並盡量與來源�
 ## 數學公式
 
 $$
-q_\phi(z \mid x_r) = \mathcal{N}(\mu_\phi(x_r), \operatorname{diag}(\sigma_\phi^2(x_r)))
+q_\phi(z \mid x_r) = \mathcal{N}(\mu_\phi(x_r), \text{diag}(\sigma_\phi^2(x_r)))
 $$
 
 $$
