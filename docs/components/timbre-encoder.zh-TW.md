@@ -54,7 +54,7 @@ $$
 $$
 \epsilon \sim \mathcal{N}(0, I), \quad
 z = \mu + \sigma \odot \epsilon, \quad
-\sigma = \exp(0.5\,\logvar)
+\sigma = \exp(0.5\,\text{logvar})
 $$
 
 推論時使用 $z=\mu$。
