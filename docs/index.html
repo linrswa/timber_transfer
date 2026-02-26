@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimbreTransformer — Audio Demo</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+    .subtitle a { color: var(--accent); text-decoration: none; }
+    .subtitle a:hover { text-decoration: underline; }
+    h2 {
+      font-size: 1.4rem;
+      margin: 2.5rem 0 0.5rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    p.desc {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    .demo-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .demo-card h3 {
+      font-size: 1.05rem;
+      margin-bottom: 0.75rem;
+    }
+    .arrow { color: var(--accent); font-weight: bold; }
+    .audio-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .audio-row.two-col {
+      grid-template-columns: 1fr 1fr;
+      max-width: 640px;
+    }
+    .audio-item label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+    }
+    audio {
+      width: 100%;
+      height: 40px;
+      border-radius: 6px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .badge-source { background: #1f3a5f; color: #58a6ff; }
+    .badge-ref { background: #1a3a2a; color: #3fb950; }
+    .badge-out { background: #3d1f00; color: #f0883e; }
+    .metrics-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    .metrics-table th, .metrics-table td {
+      padding: 0.6rem 1rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .metrics-table th {
+      background: var(--card);
+      font-weight: 600;
+    }
+    .metrics-table tr.highlight {
+      background: #1a2332;
+      font-weight: 600;
+    }
+    .arch-img {
+      display: block;
+      max-width: 100%;
+      margin: 1.5rem auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .audio-row { grid-template-columns: 1fr; }
+      .audio-row.two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TimbreTransformer</h1>
+    <p class="subtitle">
+      GAN-based Instrument Timbre Transfer &nbsp;|&nbsp;
+      <a href="https://github.com/linrswa/timber_transfer">GitHub Repo</a>
+    </p>
+
+    <!-- ===== Timbre Transfer ===== -->
+    <h2>Timbre Transfer Demos</h2>
+    <p class="desc">
+      The model takes a <strong>source</strong> instrument audio and a <strong>reference</strong> audio of a different instrument,
+      then synthesizes the source's melody with the reference's timbre.
+    </p>
+
+    <div class="demo-card">
+      <h3>
+        Mallet <span class="arrow">→</span> Guitar
+        <span class="badge badge-source">Source: Mallet</span>
+        <span class="badge badge-ref">Ref: Guitar</span>
+      </h3>
+      <div class="audio-row">
+        <div class="audio-item">
+          <label>Source (Mallet)</label>
+          <audio controls preload="none" src="../assets/demo/1_source_mallet.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Reference (Guitar)</label>
+          <audio controls preload="none" src="../assets/demo/1_ref_guitar.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Transferred</label>
+          <audio controls preload="none" src="../assets/demo/1_transform.wav"></audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>
+        String <span class="arrow">→</span> Reed
+        <span class="badge badge-source">Source: String</span>
+        <span class="badge badge-ref">Ref: Reed</span>
+      </h3>
+      <div class="audio-row">
+        <div class="audio-item">
+          <label>Source (String)</label>
+          <audio controls preload="none" src="../assets/demo/2_source_string.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Reference (Reed)</label>
+          <audio controls preload="none" src="../assets/demo/2_ref_reed.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Transferred</label>
+          <audio controls preload="none" src="../assets/demo/2_transform.wav"></audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>
+        Flute <span class="arrow">→</span> Brass
+        <span class="badge badge-source">Source: Flute</span>
+        <span class="badge badge-ref">Ref: Brass</span>
+      </h3>
+      <div class="audio-row">
+        <div class="audio-item">
+          <label>Source (Flute)</label>
+          <audio controls preload="none" src="../assets/demo/3_source_flute.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Reference (Brass)</label>
+          <audio controls preload="none" src="../assets/demo/3_ref_brass.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Transferred</label>
+          <audio controls preload="none" src="../assets/demo/3_transform.wav"></audio>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Resynthesis ===== -->
+    <h2>Resynthesis Demos</h2>
+    <p class="desc">
+      The model reconstructs the original audio from extracted features (F0, loudness, timbre embedding).
+      Compare the original and reconstructed audio below.
+    </p>
+
+    <div class="demo-card">
+      <h3>Audio Reconstruction</h3>
+      <div class="audio-row two-col">
+        <div class="audio-item">
+          <label>Original</label>
+          <audio controls preload="none" src="../assets/demo/resynthesis_ori.wav"></audio>
+        </div>
+        <div class="audio-item">
+          <label>Reconstructed</label>
+          <audio controls preload="none" src="../assets/demo/resynthesis_rec.wav"></audio>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Metrics ===== -->
+    <h2>Evaluation Metrics</h2>
+    <p class="desc">Resynthesis quality comparison on NSynth test set. Lower is better for both metrics.</p>
+
+    <table class="metrics-table">
+      <thead>
+        <tr><th>Model</th><th>Loudness L1 ↓</th><th>F0 L1 ↓</th><th>Params</th><th>Timbre Transfer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>WaveRNN</td><td>0.10</td><td>1.00</td><td>23M</td><td>✗</td></tr>
+        <tr><td>DDSP</td><td>0.07</td><td>0.02</td><td>7M</td><td>✗</td></tr>
+        <tr class="highlight"><td><strong>Ours</strong></td><td><strong>0.08</strong></td><td><strong>0.02</strong></td><td><strong>7.5M</strong></td><td>✓</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ===== Architecture ===== -->
+    <h2>Model Architecture</h2>
+    <img class="arch-img" src="../assets/architecture/model_architecture.png" alt="Model Architecture" />
+
+    <footer>
+      TimbreTransformer — Generative Adversarial Network Design for Instrument Timbre Transfer Application
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,5 +1,7 @@
 # TimbreTransformer — GAN-based Instrument Timbre Transfer
 
+**English** | [繁體中文](./README.zh-TW.md)
+
 <p align="center">
   <img src="assets/architecture/timbre_transfer_concept.png" width="600"/>
 </p>
@@ -36,6 +38,24 @@ The model consists of four main components:
 | **DDSP Synthesizer** | Generates audio from Integer Harmonic + Non-Integer Harmonic + Filtered Noise components |
 
 A **Multi-Period Discriminator (MPD)** from HiFi-GAN is used for adversarial training.
+
+### Component Docs
+
+Detailed component docs (based on the thesis design and architecture figures):
+
+- [Components Overview](docs/components/README.md)
+- [Source Encoder](docs/components/source-encoder.md)
+- [Timbre Encoder](docs/components/timbre-encoder.md)
+- [Decoder](docs/components/decoder.md)
+- [DDSP Synthesizer](docs/components/ddsp-synthesizer.md)
+
+Each component page includes:
+- Architecture diagram(s)
+- Design motivation (thesis-aligned)
+- Data flow and tensor interface
+- Code-to-design mapping
+- Mathematical formulation
+- Training objective / loss coupling
 
 <details>
 <summary><b>Decoder Architecture (click to expand)</b></summary>
