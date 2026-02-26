@@ -164,3 +164,6 @@ tmp.py
 output/
 nsynth-subset/
 .DS_Store
+
+# Gradio cache
+.gradio/

@@ -46,29 +46,6 @@ A **Multi-Period Discriminator (MPD)** from HiFi-GAN is used for adversarial tra
 
 ---
 
-## Audio Demos
-
-> **Note:** GitHub does not render `<audio>` tags natively. To listen, clone the repo and open the `.wav` files in the `assets/demo/` folder, or use the Gradio demo app.
-
-### Timbre Transfer Examples
-
-| | Source | Reference | Transferred |
-|---|---|---|---|
-| **1** | Mallet | Guitar | Mallet → Guitar |
-| | [1_source_mallet.wav](assets/demo/1_source_mallet.wav) | [1_ref_guitar.wav](assets/demo/1_ref_guitar.wav) | [1_transform.wav](assets/demo/1_transform.wav) |
-| **2** | String | Reed | String → Reed |
-| | [2_source_string.wav](assets/demo/2_source_string.wav) | [2_ref_reed.wav](assets/demo/2_ref_reed.wav) | [2_transform.wav](assets/demo/2_transform.wav) |
-| **3** | Flute | Brass | Flute → Brass |
-| | [3_source_flute.wav](assets/demo/3_source_flute.wav) | [3_ref_brass.wav](assets/demo/3_ref_brass.wav) | [3_transform.wav](assets/demo/3_transform.wav) |
-
-### Resynthesis Examples
-
-| Original | Reconstructed |
-|---|---|
-| [resynthesis_ori.wav](assets/demo/resynthesis_ori.wav) | [resynthesis_rec.wav](assets/demo/resynthesis_rec.wav) |
-
----
-
 ## Evaluation Results
 
 ### Resynthesis Quality (vs. baselines)
@@ -147,7 +124,7 @@ timber_transfer/
 ├── tools/                       # Training utilities, losses, visualization
 ├── train.py                     # Training script
 ├── validation.py                # Evaluation (Loudness L1, Pitch L1)
-└── assets/                      # Architecture diagrams & audio demos
+└── assets/                      # Architecture diagrams & result visualizations
 ```
 
 ---

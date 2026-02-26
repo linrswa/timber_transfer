@@ -20,7 +20,7 @@ class GlobalInfo:
         self.pt_file = f"{pt_dir}/{self.current_pt_file_name}"
         self.pt_file_list = sorted(glob(f"{pt_dir}/{run_name}*.pt"))
         self.model = TimbreTransformer(is_train=False, is_smooth=True, timbre_emb_dim=256)
-        self.dataset = NSynthDataset(data_mode="train", sr=16000, frequency_with_confidence=True)
+        self.dataset = NSynthDataset(data_mode="train", dir_path="../../nsynth-subset", sr=16000, frequency_with_confidence=True)
         self.model.eval()
         self.model.load_state_dict(torch.load(self.pt_file))
 
